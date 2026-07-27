@@ -74,8 +74,15 @@ python run.py smoke
 
 # 4) 官方 Text-to-Video demo
 python run.py t2v
-# 双卡
+# 双卡（profile=pro6000-2，nproc=cp=2）
 python run.py t2v --two-gpu
+# 关 compile + 显式透传官方参数
+python run.py t2v --no-compile -- --context_parallel_size 1
+# 资源档位
+python run.py t2v --profile a100-80-1
+
+# 只校验配置（不连云）
+python run.py validate-config --demo i2v --two-gpu
 
 # 其他官方 demo
 python run.py i2v
@@ -87,6 +94,27 @@ python run.py interactive
 python run.py pull-outputs
 ```
 
+### 配置优先级
+
+```text
+CLI 显式参数  >  配置文件（--config 或 configs/default.yaml）  >  代码默认值
+```
+
+基础设施（GPU 档位、CPU、内存、超时、compile 便捷开关）与官方脚本参数分离。  
+官方基础 Demo **真实 CLI 仅 3 项**：`--checkpoint_dir` / `--context_parallel_size` / `--enable_compile`。  
+prompt、分辨率、图/视频路径写死在官方脚本内，**不能**当作 CLI 伪造透传。
+
+透传示例：
+
+```bash
+python run.py t2v --script-arg context_parallel_size=1
+python run.py t2v -- --checkpoint_dir=/weights/LongCat-Video --enable_compile
+```
+
+资源档位（`lib/config.py` / `modal_app.RESOURCE_PROFILES`）：  
+`pro6000-1`（默认）、`pro6000-2`、`a100-80-1`、`a100-80-2`、`h100-1`。  
+云端用 Modal `Function.with_options` 覆盖 gpu/cpu/memory/timeout。
+
 等价的纯 Modal 调用：
 
 ```bash
@@ -95,6 +123,12 @@ modal run modal_app.py --action download
 modal run modal_app.py --action smoke
 modal run modal_app.py --action demo --demo t2v
 modal run modal_app.py --action demo --demo t2v --two-gpu
+```
+
+本地单测（不连云）：
+
+```bash
+cd 001-longcat-video && python -m unittest tests.test_config -v
 ```
 
 ## 与官方步骤的对应关系
