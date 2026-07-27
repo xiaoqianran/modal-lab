@@ -44,3 +44,5 @@ cd 001-longcat-video && python run.py status
 - 每个实验：`run.py` + `README.md`；权重 / 输出走 Modal Volume，不入库
 - GPU：`001-longcat-video` 默认 **RTX-PRO-6000**（96GB）；改配置前先看各实验 README
 - 上游代码可 vendoring 在实验目录内，便于对照官方 demo
+
+远程：https://github.com/xiaoqianran/modal-lab
