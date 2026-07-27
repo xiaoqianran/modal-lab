@@ -1,0 +1,8 @@
+weights/
+outputs/
+*.mp4
+__pycache__/
+.venv/
+.env
+# 上游 .git 可保留本地，不必强推
+# LongCat-Video/.git/

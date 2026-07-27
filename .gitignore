@@ -1,0 +1,22 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.env.*
+!.env.example
+
+# 权重 / 输出（走 Modal Volume，不入库）
+**/weights/
+**/outputs/
+**/*.mp4
+**/*.safetensors
+
+# 上游嵌套 git（若本地克隆保留 .git 则不入库）
+**/LongCat-Video/.git/
+
+# 本地缓存
+.cache/
+*.egg-info/
+.pytest_cache/
+.DS_Store
