@@ -7,6 +7,7 @@ import asyncio
 import base64
 import hashlib
 import json
+import os
 import queue
 import re
 import statistics
@@ -27,6 +28,7 @@ MODEL_DIR = Path("/models/Unlimited-OCR")
 DATA_DIR = Path("/data")
 DEFAULT_REMOTE_PDF = "/books/EN-算法导论4.pdf"
 DEFAULT_CONCURRENCY = 24
+GPU_TYPE = os.environ.get("MODAL_LAB_GPU_TYPE", "H100!")
 SERVER_URL = "http://127.0.0.1:10000"
 SERVED_MODEL_NAME = "Unlimited-OCR"
 SGLANG_WHEEL = (
@@ -193,7 +195,7 @@ def _summarize_gpu(samples: list[dict[str, float]]) -> dict[str, Any]:
 
 @app.cls(
     image=sglang_image,
-    gpu="H100!",
+    gpu=GPU_TYPE,
     volumes={"/models": model_volume, "/data": data_volume},
     timeout=45 * 60,
     cpu=8,
@@ -210,6 +212,25 @@ class UnlimitedOCR:
         if not (MODEL_DIR / "config.json").is_file():
             raise FileNotFoundError(f"模型不存在: {MODEL_DIR}")
 
+        gpu_line = subprocess.check_output(
+            [
+                "nvidia-smi",
+                "--query-gpu=name,memory.total,power.limit",
+                "--format=csv,noheader,nounits",
+            ],
+            text=True,
+        ).strip()
+        self.gpu_name, total_memory, power_limit = [
+            value.strip() for value in gpu_line.split(",")
+        ]
+        self.gpu_total_memory_mib = float(total_memory)
+        self.gpu_power_limit_w = float(power_limit)
+        self.attention_backend = (
+            "flashinfer"
+            if "RTX PRO 6000" in self.gpu_name.upper()
+            else "fa3"
+        )
+
         self.server_log = Path("/tmp/sglang-server.log")
         log_handle = self.server_log.open("w", encoding="utf-8")
         command = [
@@ -221,7 +242,7 @@ class UnlimitedOCR:
             "--served-model-name",
             SERVED_MODEL_NAME,
             "--attention-backend",
-            "fa3",
+            self.attention_backend,
             "--page-size",
             "1",
             "--mem-fraction-static",
@@ -265,25 +286,13 @@ class UnlimitedOCR:
         else:
             raise TimeoutError(f"SGLang 启动超时: {last_error}")
 
-        gpu_line = subprocess.check_output(
-            [
-                "nvidia-smi",
-                "--query-gpu=name,memory.total,power.limit",
-                "--format=csv,noheader,nounits",
-            ],
-            text=True,
-        ).strip()
         self.server_load_seconds = time.perf_counter() - started
-        self.gpu_name, total_memory, power_limit = [
-            value.strip() for value in gpu_line.split(",")
-        ]
-        self.gpu_total_memory_mib = float(total_memory)
-        self.gpu_power_limit_w = float(power_limit)
         print(
             json.dumps(
                 {
                     "event": "sglang_ready",
                     "gpu": self.gpu_name,
+                    "attention_backend": self.attention_backend,
                     "memory_total_mib": self.gpu_total_memory_mib,
                     "power_limit_w": self.gpu_power_limit_w,
                     "seconds": round(self.server_load_seconds, 3),
@@ -540,6 +549,7 @@ class UnlimitedOCR:
         summary = {
             "app": APP_NAME,
             "backend": "sglang",
+            "attention_backend": self.attention_backend,
             "gpu": self.gpu_name,
             "server_load_seconds": round(self.server_load_seconds, 3),
             "pdf": str(pdf_path),
@@ -832,6 +842,7 @@ class UnlimitedOCR:
         summary = {
             "app": APP_NAME,
             "backend": "sglang",
+            "attention_backend": self.attention_backend,
             "model_id": MODEL_ID,
             "model_revision": MODEL_REVISION,
             "gpu": self.gpu_name,

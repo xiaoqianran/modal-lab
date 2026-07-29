@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -22,14 +23,18 @@ def modal_cli() -> str:
     return executable
 
 
-def call_modal(args: list[str]) -> int:
+def call_modal(args: list[str], gpu: str | None = None) -> int:
     command = [modal_cli(), *args]
     print("+", " ".join(command), flush=True)
-    return subprocess.call(command, cwd=EXP_DIR)
+    env = os.environ.copy()
+    if gpu:
+        env["MODAL_LAB_GPU_TYPE"] = gpu
+    return subprocess.call(command, cwd=EXP_DIR, env=env)
 
 
 def add_parse_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--pdf", default=str(DEFAULT_PDF))
+    parser.add_argument("--gpu", default="H100!")
     parser.add_argument(
         "--backend",
         choices=("hybrid-engine", "pipeline", "vlm-engine"),
@@ -66,7 +71,7 @@ def main() -> int:
         print(f"default_pdf: {DEFAULT_PDF} exists={DEFAULT_PDF.is_file()}")
         print("app: modal-lab-mineru")
         print("version: MinerU 3.4.4")
-        print("gpu: H100!")
+        print("gpu: H100! by default; override with --gpu")
         print("default: hybrid-engine / effort=medium")
         print("volumes:")
         print("  modal-lab-mineru-models")
@@ -98,7 +103,7 @@ def main() -> int:
             args.extend(["--benchmark-pages", str(ns.pages)])
         if ns.no_resume:
             args.append("--no-resume")
-        return call_modal(args)
+        return call_modal(args, gpu=ns.gpu)
     if command == "pull":
         destination = Path(ns.dest).resolve()
         destination.mkdir(parents=True, exist_ok=True)

@@ -25,6 +25,7 @@ MODEL_DIR = Path("/models")
 DEFAULT_REMOTE_PDF = "/books/EN-算法导论4.pdf"
 DEFAULT_BACKEND = "hybrid-engine"
 DEFAULT_EFFORT = "medium"
+GPU_TYPE = os.environ.get("MODAL_LAB_GPU_TYPE", "H100!")
 
 EXP_DIR = Path(__file__).resolve().parent
 DEFAULT_LOCAL_PDF = EXP_DIR.parent / "books" / "EN-算法导论4.pdf"
@@ -232,7 +233,7 @@ def _output_slug(backend: str, effort: str) -> str:
 
 @app.function(
     image=inference_image,
-    gpu="H100!",
+    gpu=GPU_TYPE,
     volumes={"/models": model_volume, "/data": data_volume},
     timeout=4 * 60 * 60,
     cpu=16,

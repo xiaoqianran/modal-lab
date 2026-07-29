@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -22,10 +23,13 @@ def modal_cli() -> str:
     return executable
 
 
-def call_modal(args: list[str]) -> int:
+def call_modal(args: list[str], gpu: str | None = None) -> int:
     command = [modal_cli(), *args]
     print("+", " ".join(command), flush=True)
-    return subprocess.call(command, cwd=EXP_DIR)
+    env = os.environ.copy()
+    if gpu:
+        env["MODAL_LAB_GPU_TYPE"] = gpu
+    return subprocess.call(command, cwd=EXP_DIR, env=env)
 
 
 def main() -> int:
@@ -42,6 +46,7 @@ def main() -> int:
     benchmark.add_argument("--dpi", type=int, default=200)
     benchmark.add_argument("--max-tokens", type=int, default=4096)
     benchmark.add_argument("--concurrencies", default="24")
+    benchmark.add_argument("--gpu", default="H100!")
 
     parse = sub.add_parser("parse")
     parse.add_argument("--pdf", default=str(DEFAULT_PDF))
@@ -52,6 +57,7 @@ def main() -> int:
     parse.add_argument("--concurrency", type=int, default=24)
     parse.add_argument("--retries", type=int, default=3)
     parse.add_argument("--no-resume", action="store_true")
+    parse.add_argument("--gpu", default="H100!")
 
     pull = sub.add_parser("pull")
     pull.add_argument("--remote", default="/outputs")
@@ -67,7 +73,7 @@ def main() -> int:
         print("volumes:")
         print("  modal-lab-unlimited-ocr-weights")
         print("  modal-lab-unlimited-ocr-data")
-        print("gpu: H100! (SGLang concurrency=24)")
+        print("gpu: H100! by default; override with --gpu")
         return 0
     if command == "download":
         return call_modal(
@@ -92,7 +98,8 @@ def main() -> int:
                 str(ns.max_tokens),
                 "--concurrencies",
                 ns.concurrencies,
-            ]
+            ],
+            gpu=ns.gpu,
         )
     if command == "parse":
         args = [
@@ -118,7 +125,7 @@ def main() -> int:
         ]
         if ns.no_resume:
             args.append("--no-resume")
-        return call_modal(args)
+        return call_modal(args, gpu=ns.gpu)
     if command == "pull":
         destination = Path(ns.dest).resolve()
         destination.mkdir(parents=True, exist_ok=True)

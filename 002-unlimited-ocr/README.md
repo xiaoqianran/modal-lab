@@ -1,12 +1,14 @@
 # 002-unlimited-ocr
 
 基于百度开源的 [Unlimited-OCR](https://github.com/baidu/Unlimited-OCR)，
-在 Modal H100 上识别 `books/EN-算法导论4.pdf`（1677 页）。
+在 Modal H100 / RTX PRO 6000 上识别
+`books/EN-算法导论4.pdf`（1677 页）。
 
 ## 当前方案
 
 - 后端：百度仓库自带的 SGLang wheel，使用 continuous batching。
-- GPU：Modal `H100!`，默认并发 24（实测吞吐最高）。
+- GPU：默认 Modal `H100!`，可通过 `--gpu RTX-PRO-6000` 切换；两张卡
+  的实测最优并发均为 24。
 - 流水线：PDF 顺序渲染与 24 路 OCR 并行，避免先生成全部页面。
 - 可靠性：每页最多重试 3 次，每 100 页提交一次 Modal Volume。
 - 断点续跑：固定输出目录；已有 raw/clean/JSON 三个文件的页面会跳过。
@@ -46,6 +48,20 @@ KV cache，因此 `nvidia-smi` 显示约 65.7 GiB，但日志中的实际 cache
 - c4/c8/c16 共同完成的前 432 页，去坐标后 82.18% 文本完全一致。
 - 其余页面三档之间平均最低字符相似度为 98.96%。
 - 抽查差异页未发现 c24 系统性质量下降。
+
+### H100 与 RTX PRO 6000
+
+2026-07-30 用相同 PDF 和参数在 RTX PRO 6000 Blackwell Server Edition
+重跑 5 分钟并发扫描：
+
+| GPU | 最优并发 | 页/分钟 | 输出 token/s | GPU util 均值 / P95 | attention backend |
+|---|---:|---:|---:|---:|---|
+| H100 SXM 80 GB | 24 | **167.348** | **1,667.128** | 38.17% / 68% | FlashAttention 3 |
+| RTX PRO 6000 96 GB | 24 | 145.081 | 1,433.662 | 51.35% / 76% | FlashInfer |
+
+H100 快 15.35%；按 2026-07-30 Modal 公示单价只计算 GPU，RTX 的单页
+成本低约 11.47%。完整 c16/c24/c32、冷启动、功耗和成本数据见
+[仓库 GPU 对比](../GPU_COMPARISON.md)。
 
 ## 正式整书结果
 
@@ -91,6 +107,13 @@ python run.py parse
 
 ```bash
 python run.py benchmark --seconds 300 --concurrencies 24
+```
+
+切换到 RTX PRO 6000：
+
+```bash
+python run.py benchmark --seconds 300 \
+  --concurrencies 16,24,32 --gpu RTX-PRO-6000
 ```
 
 并行比较多个并发档位：
