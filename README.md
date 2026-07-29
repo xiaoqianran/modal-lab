@@ -7,6 +7,7 @@ Modal 实验台：按 `NNN-topic` 编号做可复现实验（风格对齐 [Light
 ```text
 main.py                 # 入口，调度到 001 / 002 / …
 001-longcat-video/      # 美团 LongCat-Video 视频生成复现
+002-unlimited-ocr/      # 百度 Unlimited-OCR 文档解析
 ```
 
 命名约定：`NNN-topic`（序号 + 主题）。`python main.py 001 …` 等短号在唯一时可解析到对应目录。
@@ -38,6 +39,7 @@ cd 001-longcat-video && python run.py status
 | 目录 | 作用 |
 |------|------|
 | `001-longcat-video` | 复现 [LongCat-Video](https://github.com/meituan-longcat/LongCat-Video)（T2V / I2V / 续写等，跑在 Modal GPU） |
+| `002-unlimited-ocr` | 用 [Unlimited-OCR](https://github.com/baidu/Unlimited-OCR) 在 Modal 上逐页解析 PDF |
 
 ## 约定
 

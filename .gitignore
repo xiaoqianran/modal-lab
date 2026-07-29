@@ -11,6 +11,7 @@ __pycache__/
 **/outputs/
 **/*.mp4
 **/*.safetensors
+books/*.pdf
 
 # 上游嵌套 git（若本地克隆保留 .git 则不入库）
 **/LongCat-Video/.git/
