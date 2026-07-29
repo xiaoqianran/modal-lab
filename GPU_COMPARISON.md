@@ -1,9 +1,10 @@
-# H100 与 RTX PRO 6000 实测
+# H100、RTX PRO 6000 与 A100 实测
 
 2026-07-30 在 Modal 上使用同一份 1677 页
 `books/EN-算法导论4.pdf`，对 002 Unlimited-OCR 和 003 MinerU 分别进行
-H100 与 RTX PRO 6000 对照。这里的 RTX 卡是 Modal 实际分配的
-**NVIDIA RTX PRO 6000 Blackwell Server Edition**，不是同名工作站卡。
+H100 与 RTX PRO 6000 对照，并补测 A100 40GB/80GB 价格档。这里的 RTX
+卡是 Modal 实际分配的 **NVIDIA RTX PRO 6000 Blackwell Server Edition**，
+不是同名工作站卡。
 
 ## 测试条件
 
@@ -33,6 +34,7 @@ Modal 说明所有平台 H100 都是 SXM 版本，并建议基准测试使用 `H
 - [Modal GPU 类型和 H100! 说明](https://modal.com/docs/guide/gpu)
 - [Modal 当前资源单价](https://modal.com/pricing)
 - [NVIDIA H100 官方规格](https://www.nvidia.com/en-us/data-center/h100/)
+- [NVIDIA A100 官方规格](https://www.nvidia.com/en-us/data-center/a100/)
 - [NVIDIA RTX PRO 6000 Blackwell Server Edition](https://www.nvidia.com/en-us/data-center/rtx-pro-6000-blackwell-server-edition/)
 - [NVIDIA 支持 GPU 与 Compute Capability](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/supported-gpus.html)
 
@@ -73,6 +75,68 @@ RTX 每秒价格低 **23.25%**，所以只计算 GPU 的持续推理成本时，
 RTX 实测任务：
 [Modal run ap-vcerfAZeNLWa9wkRS36iY2](https://modal.com/apps/seachenxyt/main/ap-vcerfAZeNLWa9wkRS36iY2)
 
+### A100 补测
+
+Modal 当前 A100 80GB 为 $0.000694/秒，A100 40GB 为 $0.000583/秒。
+同样使用 200 DPI、`gundam`、`max_tokens=4096` 和 FA3。
+
+40GB 冒烟确实拿到 `NVIDIA A100-SXM4-40GB`，c24 在 30 秒窗口完成 55 页：
+
+| 页/分钟 | 输出 token/s | GPU util 均值 / P95 / 最大 | 显存峰值 / 总量 | 功耗均值 / 峰值 |
+|---:|---:|---:|---:|---:|
+| 95.575 | 753.649 | 38.41% / 70% / 80% | 34,638 / 40,960 MiB（84.57%） | 154.24 / 326.52 W |
+
+正式 300 秒三档测试请求 `A100-40GB` 时，Modal 实际免费升级为三张
+`A100 80GB PCIe 300W`。这里按 40GB 请求价格计算，但不能称作原生 40GB
+性能：
+
+| 请求档 / 实际设备 | 并发 | 页/分钟 | 输出 token/s | GPU util 均值 / P95 | 显存峰值 |
+|---|---:|---:|---:|---:|---:|
+| A100-40GB / A100 80GB PCIe | 16 | 104.558 | 1,030.830 | 56.14% / 74% | 67,204 MiB |
+| **A100-40GB / A100 80GB PCIe** | **24** | **115.388** | **1,149.302** | **53.57% / 73%** | **67,206 MiB** |
+| A100-40GB / A100 80GB PCIe | 32 | 109.946 | 1,091.618 | 46.61% / 72% | 67,204 MiB |
+
+`A100-80GB` 请求拿到 SXM 设备，但不同容器的功率上限为 400W 或 500W，
+吞吐差异明显：
+
+| 实际设备 | 并发 | 功率上限 | 页/分钟 | 输出 token/s | GPU util 均值 / P95 |
+|---|---:|---:|---:|---:|---:|
+| A100-SXM4-80GB | 16 | 400W | 91.299 | 897.171 | 47.38% / 72% |
+| A100-SXM4-80GB | 24 | 400W | 111.924 | 1,109.820 | 50.83% / 69% |
+| A100-SXM4-80GB | 32 | 500W | **137.343** | **1,356.007** | 54.10% / 73% |
+| A100-SXM4-80GB（复验） | 24 | 400W | 96.573 | 949.507 | 44.36% / 66% |
+| A100-SXM4-80GB（复验） | 32 | 400W | 116.112 | 1,155.969 | 45.08% / 67% |
+
+这说明 A100 结果受实际 PCIe/SXM、功率上限和宿主机影响，不能只采用
+137.343 页/分钟的最好成绩。按请求价格只计算持续 GPU 成本：
+
+| 方案 | 实测速度范围 | GPU 成本/页范围 | 相对 RTX |
+|---|---:|---:|---:|
+| A100 80GB c32 | 116.112–137.343 页/分钟 | $0.000359–$0.000303 | 慢节点贵约 3.0%，快节点便宜约 12.9% |
+| A100 40GB 价格档 c24（被升级） | 96.573–115.388 页/分钟 | $0.000362–$0.000303 | 慢节点贵约 4.0%，快节点便宜约 12.9% |
+| 原生 A100 40GB c24 冒烟 | 95.575 页/分钟 | $0.000366 | 贵约 5.1%，短样本仅供参考 |
+
+把各次实测冷启动也计入 1677 页外推：
+
+| 请求档 | 预计总时长 | 预计 GPU 成本 |
+|---|---:|---:|
+| RTX PRO 6000 c24 | 12.94 分钟 | $0.654 |
+| A100 80GB c32 | 13.26–16.30 分钟 | $0.552–$0.679 |
+| A100 40GB 价格档 c24（被升级） | 16.22–19.15 分钟 | $0.567–$0.670 |
+
+因此，A100 **可能是最低单页成本，但不稳定地更便宜**。如果离线批任务能
+接受吞吐波动，A100 80GB c32 值得使用；如果需要可预测速度，本轮 RTX
+PRO 6000 的 145.081 页/分钟更稳。费用均只含 GPU；所有任务无请求错误和
+OOM。
+
+A100 任务：
+
+- [40GB 冒烟](https://modal.com/apps/seachenxyt/main/ap-yCu8xH31i2A15XbbwQVgRN)
+- [40GB 价格档三路测试](https://modal.com/apps/seachenxyt/main/ap-Te3rOomGdDG4JJIP5NoH3u)
+- [80GB 三路测试](https://modal.com/apps/seachenxyt/main/ap-waiGrZ3MgqHoU4GXHNgqjw)
+- [c24 复验](https://modal.com/apps/seachenxyt/main/ap-pl7TE2UioCk5dOKyft9yIm)
+- [c32 复验](https://modal.com/apps/seachenxyt/main/ap-0rD6PXjqsHiPr450mtMQ1n)
+
 ## 003 MinerU
 
 条件：Hybrid Engine、`effort=medium`、vLLM、64 页窗口、从第一页开始解析
@@ -105,16 +169,18 @@ RTX 实测任务：
 
 ## 结论
 
-- **Unlimited-OCR：优先速度选 H100，优先 GPU 单价/页选 RTX PRO 6000。**
-  H100 快 15.35%，但 RTX 的单页 GPU 成本低 11.47%。
+- **Unlimited-OCR：优先速度选 H100，优先稳定性价比选 RTX PRO 6000。**
+  A100 在较快分配上单页成本最低，但不同 A100 实例的速度波动足以逆转
+  成本结论，不宜只看最好成绩。
 - **MinerU：当前直接选 H100。** 它同时有更低延迟、更高持续吞吐和略低的
   GPU 成本。
 - **模型或上下文无法装入 H100 80 GB 时再优先 RTX。** RTX 的 96 GB 是
   硬优势；本次两项负载都能在 H100 上完成。不同 attention backend 会使用
   不同的预留策略，不能把 `nvidia-smi` 峰值直接当作最低显存需求。
 - 两套程序的 GPU 平均利用率都不能单独用来判断是否“拉满”。002 是视觉
-  prefill 与自回归 decode 混合负载，c32 已比 c24 退化；003 是多阶段异构
-  流水线，CPU、多个 GPU 模型、VLM 和写盘交替运行，局部 GPU 已到 100%。
+  prefill 与自回归 decode 混合负载：H100/RTX 的 c32 比 c24 退化，A100
+  则可能继续受益，但节点规格波动很大。003 是多阶段异构流水线，CPU、多个
+  GPU 模型、VLM 和写盘交替运行，局部 GPU 已到 100%。
 
 ## 复现
 
@@ -124,6 +190,10 @@ python main.py 002 benchmark --seconds 300 \
   --concurrencies 16,24,32 --gpu 'H100!'
 python main.py 002 benchmark --seconds 300 \
   --concurrencies 16,24,32 --gpu RTX-PRO-6000
+python main.py 002 benchmark --seconds 300 \
+  --concurrencies 16,24,32 --gpu A100-40GB
+python main.py 002 benchmark --seconds 300 \
+  --concurrencies 16,24,32 --gpu A100-80GB
 
 # 003：相同前 100 页
 python main.py 003 benchmark --pages 100 --gpu 'H100!'

@@ -43,7 +43,7 @@ cd 001-longcat-video && python run.py status
 | `002-unlimited-ocr` | 用 [Unlimited-OCR](https://github.com/baidu/Unlimited-OCR) 在 Modal 上逐页解析 PDF |
 | `003-mineru` | 用 [MinerU](https://github.com/opendatalab/MinerU) 在 Modal 上解析 PDF，并与 002 对照 |
 
-H100 与 RTX PRO 6000 的同书实测、费用和选卡结论见
+H100、RTX PRO 6000 与 A100 的同书实测、费用和选卡结论见
 [GPU_COMPARISON.md](GPU_COMPARISON.md)。
 
 ## 约定
