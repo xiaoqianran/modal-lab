@@ -1,0 +1,30 @@
+# 004-minimax-h3 defaults — 单卡 PRO 6000，尽量 GPU 常驻
+gpu: RTX-PRO-6000
+cpu: 8
+memory_mb: 65536
+timeout_s: 7200
+
+# 出片
+seconds: 5
+width: 864
+height: 480
+steps: 20
+fps: 24
+seed: 42
+sampler: res_multistep
+scheduler: simple
+
+# 权重文件名（相对 Comfy models/）
+unet: minimax_h3_fl2va_pruned_int8_convrot.safetensors
+clip: qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors
+video_vae: minimax_h3_video_vae_fp16.safetensors
+audio_vae: minimax_h3_audio_vae_fp32.safetensors
+
+# Comfy 启动：gpu-only = 尽量把模型放在 GPU，少用系统内存卸载
+comfy_flags:
+  - --gpu-only
+  - --disable-auto-launch
+  - --listen
+  - 127.0.0.1
+  - --port
+  - "8188"
