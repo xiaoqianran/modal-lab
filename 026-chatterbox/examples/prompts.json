@@ -1,0 +1,17 @@
+{
+  "smoke_mtl_en": {
+    "model": "multilingual",
+    "lang": "en",
+    "text": "Chatterbox is running on Modal. This is the multilingual V3 model."
+  },
+  "smoke_mtl_zh": {
+    "model": "multilingual",
+    "lang": "zh",
+    "text": "你好，今天天气真不错，希望你有一个愉快的周末。"
+  },
+  "smoke_turbo": {
+    "model": "turbo",
+    "voice": "Lucy",
+    "text": "Hi there [chuckle], have you got one minute to chat?"
+  }
+}

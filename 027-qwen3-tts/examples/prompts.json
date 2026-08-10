@@ -1,0 +1,28 @@
+{
+  "smoke_custom_zh": {
+    "model": "custom_1.7",
+    "lang": "Chinese",
+    "speaker": "Vivian",
+    "instruct": "用自然、温和的语气说",
+    "text": "你好，这是 modal-lab 第零二七号 Qwen3-TTS 实验。"
+  },
+  "smoke_custom_en": {
+    "model": "custom_1.7",
+    "lang": "English",
+    "speaker": "Ryan",
+    "instruct": "Speak cheerfully and clearly.",
+    "text": "Hello from Modal lab experiment zero two seven."
+  },
+  "smoke_design_zh": {
+    "model": "design_1.7",
+    "lang": "Chinese",
+    "instruct": "体现撒娇稚嫩的萝莉女声…",
+    "text": "哥哥，你回来啦，人家等了你好久好久了，要抱抱！"
+  },
+  "smoke_clone_en": {
+    "model": "base_1.7",
+    "lang": "English",
+    "ref_audio": "https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen3-TTS-Repo/clone.wav",
+    "text": "I am solving the equation on the board."
+  }
+}

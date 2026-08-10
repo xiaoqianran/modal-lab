@@ -63,6 +63,14 @@ def main() -> int:
         print("  + gpu-gallery/")
         n += 1
 
+    # tts-gallery hub (parent may hold only gallery/ subdir — covered by glob;
+    # also allow flat tts-gallery/index.html)
+    tts = ROOT / "tts-gallery"
+    if (tts / "index.html").is_file() and not (tts / "gallery" / "index.html").is_file():
+        copytree(tts, OUT / "tts-gallery")
+        print("  + tts-gallery/ (flat)")
+        n += 1
+
     # nojekyll for GH Pages
     (OUT / ".nojekyll").write_text("")
     # simple 404 → home

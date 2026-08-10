@@ -14,6 +14,11 @@ Modal 实验台：按 `NNN-topic` 编号做可复现实验。
 | 022 Hunyuan3D-2.1 | https://xiaoqianran.github.io/modal-lab/gpu-gallery/#hunyuan3d21 |
 | **023-a SPAR3D Mesh Studio** | https://xiaoqianran.github.io/modal-lab/023-a-spar3d/ |
 | **023-b SF3D Mesh Studio** | https://xiaoqianran.github.io/modal-lab/023-b-sf3d/ |
+| **TTS Signal Desk（025–028）** | https://xiaoqianran.github.io/modal-lab/tts-gallery/ |
+| 025 Kokoro | https://xiaoqianran.github.io/modal-lab/025-kokoro/ |
+| 026 Chatterbox | https://xiaoqianran.github.io/modal-lab/026-chatterbox/ |
+| 027 Qwen3-TTS | https://xiaoqianran.github.io/modal-lab/027-qwen3-tts/ |
+| 028 Fish S2 | https://xiaoqianran.github.io/modal-lab/028-fish-s2/ |
 | 各实验 gallery | `https://xiaoqianran.github.io/modal-lab/<NNN-topic>/` |
 
 ### 每位作者请记住：出了 HTML 结果 → 部署到 Pages
@@ -79,6 +84,11 @@ I2V_GPU_ROADMAP.md      # image→3D 卡池约定与结论
 022-hunyuan3d-2.1/      # Hunyuan3D-2.1 PBR（L40S+PRO6000 · smoke full 完成 · Pages）
 023-a-spar3d/           # SPAR3D point-aware（L40S+PRO6000 · Gallery 已上 Pages）
 023-b-sf3d/             # SF3D fast path（L40S+PRO6000 · Gallery 已上 Pages）
+025-kokoro/              # Kokoro-82M TTS 用量榜#1（默认 T4 · Apache）
+026-chatterbox/          # Chatterbox TTS Tier S2（默认 L4 · MIT · 多语/克隆）
+027-qwen3-tts/           # Qwen3-TTS Tier S3（默认 L4 · Apache · 中英+三模式）
+028-fish-s2/             # Fish Audio S2 Pro Tier S4（默认 L40S · Research · Elo#1）
+tts-gallery/             # TTS Signal Desk 全量 Listening Room（025–028）
 ```
 
 命名约定：`NNN-topic`（序号 + 主题）。`python main.py 001 …` 等短号在唯一时可解析到对应目录。
@@ -153,8 +163,13 @@ cd 022-hunyuan3d-2.1 && python run.py probe --gpu L40S
 | `022-hunyuan3d-2.1` | [Hunyuan3D-2.1](https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1) **PBR 纹理**；L40S+PRO6000 · Community License |
 | `023-a-spar3d` | [SPAR3D](https://github.com/Stability-AI/stable-point-aware-3d) point-aware 图生网格；**L40S/PRO · [Gallery](https://xiaoqianran.github.io/modal-lab/023-a-spar3d/)** |
 | `023-b-sf3d` | [SF3D](https://github.com/Stability-AI/stable-fast-3d) 快速图生网格；**infer PRO ~0.96s · [Gallery](https://xiaoqianran.github.io/modal-lab/023-b-sf3d/)** |
+| `025-kokoro` | [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) TTS 基线；**T4 · ~$0.001 · [Gallery](https://xiaoqianran.github.io/modal-lab/025-kokoro/)** |
+| `026-chatterbox` | [Chatterbox](https://github.com/resemble-ai/chatterbox) 多语/克隆；**L4 · ~$0.014 · [Gallery](https://xiaoqianran.github.io/modal-lab/026-chatterbox/)** |
+| `027-qwen3-tts` | [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) 三模式；**L4 · ~$0.005 · [Gallery](https://xiaoqianran.github.io/modal-lab/027-qwen3-tts/)** |
+| `028-fish-s2` | [Fish S2 Pro](https://github.com/fishaudio/fish-speech) Elo 开源#1；**L40S · ~$0.06 · [Gallery](https://xiaoqianran.github.io/modal-lab/028-fish-s2/)** |
+| `tts-gallery` | **TTS Signal Desk** 025–028 全量试听与成本可视化 · [Room](https://xiaoqianran.github.io/modal-lab/tts-gallery/) |
 | `gpu-gallery` | **L40S × PRO 6000 对照预览**（020 / 021 / 005） |
-| — | 音乐队列总览见 [MUSIC_ROADMAP.md](MUSIC_ROADMAP.md) · image→3D 卡池见 [I2V_GPU_ROADMAP.md](I2V_GPU_ROADMAP.md) |
+| — | 音乐队列见 [MUSIC_ROADMAP.md](MUSIC_ROADMAP.md) · TTS 见 [TTS_ROADMAP.md](TTS_ROADMAP.md) · image→3D 见 [I2V_GPU_ROADMAP.md](I2V_GPU_ROADMAP.md) |
 
 统一预览（L40S × PRO 6000）：[`gpu-gallery/`](gpu-gallery/) · 路线图 [`I2V_GPU_ROADMAP.md`](I2V_GPU_ROADMAP.md)
 

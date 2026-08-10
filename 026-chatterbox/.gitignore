@@ -1,0 +1,6 @@
+outputs/
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+inputs/voices_raw/

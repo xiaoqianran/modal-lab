@@ -1,7 +1,125 @@
 {
   "lab": "modal-lab",
-  "tagline": "Modal 实验橱窗 · Image→3D 双卡对照已上线",
+  "tagline": "Signal Desk · TTS Tier S 全量试听 · Image→3D 对照",
   "experiments": [
+    {
+      "id": "tts-gallery",
+      "num": "TTS",
+      "title": "TTS Signal Desk",
+      "subtitle": "025–028 全量 13 条 · 波形/成本可视化",
+      "blurb": "Kokoro · Chatterbox · Qwen3-TTS · Fish S2 Pro。13 条 Modal 实测音频，带波形解码、成本/VRAM 条形图与实时频谱。",
+      "href": "tts-gallery/",
+      "tags": [
+        "audio",
+        "tts",
+        "featured",
+        "bench"
+      ],
+      "mood": "audio",
+      "featured": true,
+      "stats": {
+        "tracks": "13",
+        "models": "4",
+        "viz": "wave+bars"
+      },
+      "accent": "#fbbf24",
+      "available": true,
+      "badge": "NEW"
+    },
+    {
+      "id": "025-kokoro",
+      "num": "025",
+      "title": "Kokoro-82M",
+      "subtitle": "HF 下载榜 #1 · 最便宜基线",
+      "blurb": "82M 参数 · T4 上 ~$0.001/次 · 中英预设音色 smoke 已通。",
+      "href": "025-kokoro/",
+      "tags": [
+        "audio",
+        "tts",
+        "featured"
+      ],
+      "mood": "audio",
+      "featured": true,
+      "stats": {
+        "GPU": "T4",
+        "VRAM": "0.8GB",
+        "usd": "$0.001"
+      },
+      "accent": "#6ea8fe",
+      "available": true,
+      "badge": "S1"
+    },
+    {
+      "id": "026-chatterbox",
+      "num": "026",
+      "title": "Chatterbox",
+      "subtitle": "多语 + Turbo 克隆 · MIT",
+      "blurb": "Multilingual V3 中英 smoke + Turbo Lucy 克隆与 [chuckle] 标签。",
+      "href": "026-chatterbox/",
+      "tags": [
+        "audio",
+        "tts",
+        "clone"
+      ],
+      "mood": "audio",
+      "featured": true,
+      "stats": {
+        "GPU": "L4",
+        "VRAM": "3.5GB",
+        "usd": "$0.014"
+      },
+      "accent": "#c084fc",
+      "available": true,
+      "badge": "S2"
+    },
+    {
+      "id": "027-qwen3-tts",
+      "num": "027",
+      "title": "Qwen3-TTS",
+      "subtitle": "Custom / Design / Clone",
+      "blurb": "1.7B 三模式：预设+instruct、文本造声、3 秒克隆。中英 smoke 全绿。",
+      "href": "027-qwen3-tts/",
+      "tags": [
+        "audio",
+        "tts",
+        "clone",
+        "featured"
+      ],
+      "mood": "audio",
+      "featured": true,
+      "stats": {
+        "GPU": "L4",
+        "VRAM": "4.5GB",
+        "usd": "$0.005"
+      },
+      "accent": "#2dd4bf",
+      "available": true,
+      "badge": "S3"
+    },
+    {
+      "id": "028-fish-s2",
+      "num": "028",
+      "title": "Fish Audio S2 Pro",
+      "subtitle": "AA Elo 开源 #1 · Research",
+      "blurb": "4B Dual-AR 质量旗舰。随机音色 / 行内标签 / 克隆。L40S · ~$0.06/次。",
+      "href": "028-fish-s2/",
+      "tags": [
+        "audio",
+        "tts",
+        "featured",
+        "bench"
+      ],
+      "mood": "audio",
+      "featured": true,
+      "stats": {
+        "GPU": "L40S",
+        "VRAM": "22GB",
+        "usd": "$0.06"
+      },
+      "accent": "#fbbf24",
+      "available": true,
+      "badge": "S4"
+    },
     {
       "id": "023-a-spar3d",
       "num": "023-a",

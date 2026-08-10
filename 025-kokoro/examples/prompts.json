@@ -1,0 +1,19 @@
+{
+  "smoke_en": {
+    "model": "v1",
+    "voice": "af_heart",
+    "lang": "a",
+    "text": "Kokoro is an open-weight text-to-speech model with eighty-two million parameters."
+  },
+  "smoke_zh": {
+    "model": "v1.1-zh",
+    "voice": "zf_001",
+    "lang": "z",
+    "text": "你好，这是 modal-lab 第二十五号实验，Kokoro 文本转语音成本基线。"
+  },
+  "demo_bella": {
+    "model": "v1",
+    "voice": "af_bella",
+    "text": "Despite its lightweight architecture, Kokoro delivers strong quality while staying fast and cheap."
+  }
+}

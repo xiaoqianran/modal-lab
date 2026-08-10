@@ -1,0 +1,15 @@
+{
+  "smoke_en": {
+    "text": "Fish Audio S2 Pro is running on Modal."
+  },
+  "smoke_zh": {
+    "text": "你好，这是 modal-lab 第零二八号 Fish Audio S2 Pro 实验。"
+  },
+  "smoke_tags": {
+    "text": "Hi there [excited], welcome! [whisper] Soft parts work too."
+  },
+  "smoke_clone": {
+    "ref_url": "https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen3-TTS-Repo/clone.wav",
+    "text": "I am solving the equation on the board."
+  }
+}
