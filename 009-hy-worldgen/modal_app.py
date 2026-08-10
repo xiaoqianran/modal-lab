@@ -214,6 +214,126 @@ def _ensure_vllm() -> None:
     print("[vlm] vllm installed")
 
 
+
+def _write_hf_vlm_server(path: Path) -> None:
+    """Minimal OpenAI-compatible server for Qwen3-VL (chat.completions + image_url)."""
+    path.write_text(r"""#!/usr/bin/env python3
+import base64, io, os, traceback
+from typing import Any
+import torch
+from fastapi import FastAPI
+from pydantic import BaseModel, Field
+from PIL import Image
+import uvicorn
+
+MODEL_ID = os.environ.get("VLM_MODEL_PATH", "Qwen/Qwen3-VL-8B-Instruct")
+SERVED = os.environ.get("VLM_SERVED_NAME", "Qwen/Qwen3-VL-8B-Instruct")
+PORT = int(os.environ.get("VLM_PORT", "8000"))
+DTYPE = torch.bfloat16 if torch.cuda.is_available() else torch.float32
+
+print(f"[hf-vlm] loading {MODEL_ID} dtype={DTYPE}", flush=True)
+processor = None
+model = None
+
+def load():
+    global processor, model
+    from transformers import AutoProcessor
+    try:
+        from transformers import Qwen3VLForConditionalGeneration as M
+    except Exception:
+        from transformers import AutoModelForImageTextToText as M
+    processor = AutoProcessor.from_pretrained(MODEL_ID, trust_remote_code=True)
+    model = M.from_pretrained(
+        MODEL_ID, torch_dtype=DTYPE, device_map="auto", trust_remote_code=True
+    )
+    model.eval()
+    print("[hf-vlm] ready", flush=True)
+
+load()
+app = FastAPI()
+
+class ChatReq(BaseModel):
+    model: str | None = None
+    messages: list[dict[str, Any]]
+    max_tokens: int = 1024
+    temperature: float = 0.0
+    seed: int | None = None
+
+def _to_qwen_messages(messages):
+    out = []
+    for m in messages:
+        role = m.get("role", "user")
+        content = m.get("content")
+        if isinstance(content, str):
+            out.append({"role": role, "content": [{"type": "text", "text": content}]})
+            continue
+        parts = []
+        if isinstance(content, list):
+            for c in content:
+                if not isinstance(c, dict):
+                    continue
+                if c.get("type") == "text":
+                    parts.append({"type": "text", "text": c.get("text", "")})
+                elif c.get("type") == "image_url":
+                    url = (c.get("image_url") or {}).get("url", "")
+                    if url.startswith("data:"):
+                        b64 = url.split(",", 1)[-1]
+                        img = Image.open(io.BytesIO(base64.b64decode(b64))).convert("RGB")
+                        parts.append({"type": "image", "image": img})
+                    else:
+                        parts.append({"type": "image", "image": url})
+        out.append({"role": role, "content": parts or [{"type": "text", "text": ""}]})
+    return out
+
+@app.get("/v1/models")
+def models():
+    return {"object": "list", "data": [{"id": SERVED, "object": "model", "owned_by": "modal-lab"}]}
+
+@app.get("/health")
+def health():
+    return {"ok": True}
+
+@app.post("/v1/chat/completions")
+def chat(req: ChatReq):
+    try:
+        if req.seed is not None:
+            torch.manual_seed(int(req.seed))
+        qmsgs = _to_qwen_messages(req.messages)
+        # processor.apply_chat_template path
+        text = processor.apply_chat_template(qmsgs, tokenize=False, add_generation_prompt=True)
+        images = []
+        for m in qmsgs:
+            for c in m.get("content", []):
+                if c.get("type") == "image" and hasattr(c.get("image"), "size"):
+                    images.append(c["image"])
+        inputs = processor(text=[text], images=images or None, return_tensors="pt", padding=True)
+        inputs = {k: v.to(model.device) if hasattr(v, "to") else v for k, v in inputs.items()}
+        with torch.inference_mode():
+            out = model.generate(**inputs, max_new_tokens=int(req.max_tokens), do_sample=False)
+        # decode only new tokens
+        trim = out[:, inputs["input_ids"].shape[-1]:]
+        content = processor.batch_decode(trim, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+        return {
+            "id": "chatcmpl-modal",
+            "object": "chat.completion",
+            "model": SERVED,
+            "choices": [{"index": 0, "message": {"role": "assistant", "content": content}, "finish_reason": "stop"}],
+        }
+    except Exception as e:
+        traceback.print_exc()
+        return {
+            "id": "chatcmpl-err",
+            "object": "chat.completion",
+            "model": SERVED,
+            "choices": [{"index": 0, "message": {"role": "assistant", "content": f"ERROR: {e}"}, "finish_reason": "stop"}],
+        }
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=PORT, log_level="info")
+""")
+    print(f"[vlm] wrote HF server → {path}")
+
+
 def _vlm_model_path() -> str:
     """Prefer volume snapshot; fall back to HF id."""
     local = Path(WEIGHTS_MOUNT) / "Qwen3-VL-8B-Instruct"
@@ -271,9 +391,9 @@ def _start_vlm(
     gpu_mem_util: float = VLM_DEFAULT_MEM_UTIL,
     max_model_len: int = VLM_MAX_MODEL_LEN,
     cuda_devices: str | None = None,
+    backend: str = "hf",  # hf | vllm
 ) -> subprocess.Popen:
-    """Launch official Qwen3-VL-8B with vLLM. Returns the process handle."""
-    _ensure_vllm()
+    """Launch official Qwen3-VL-8B. Default: HF transformers server (stable)."""
     if _vlm_ready():
         print("[vlm] already serving — reuse")
         return None  # type: ignore
@@ -284,22 +404,40 @@ def _start_vlm(
         env["CUDA_VISIBLE_DEVICES"] = cuda_devices
     env.setdefault("HF_HOME", str(HF_HOME))
     env.setdefault("HUGGINGFACE_HUB_CACHE", str(HF_HOME))
-    env["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
-
     log_path = Path("/tmp/vllm_vlm.log")
-    cmd = [
-        "vllm", "serve", model,
-        "--served-model-name", VLM_MODEL,
-        "--host", "0.0.0.0",
-        "--port", str(VLM_PORT),
-        "--trust-remote-code",
-        "--dtype", "bfloat16",
-        "--gpu-memory-utilization", str(gpu_mem_util),
-        "--max-model-len", str(max_model_len),
-        "--enforce-eager",
-    ]
+
+    if backend == "vllm":
+        _ensure_vllm()
+        env["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
+        env["VLLM_USE_V1"] = "0"
+        cmd = [
+            "vllm", "serve", model,
+            "--served-model-name", VLM_MODEL,
+            "--host", "0.0.0.0",
+            "--port", str(VLM_PORT),
+            "--trust-remote-code",
+            "--dtype", "bfloat16",
+            "--gpu-memory-utilization", str(gpu_mem_util),
+            "--max-model-len", str(max_model_len),
+            "--enforce-eager",
+        ]
+    else:
+        # HF transformers + FastAPI (OpenAI-compatible). Avoids vLLM engine core crashes.
+        import sys
+        server = Path("/tmp/hf_vlm_server.py")
+        _write_hf_vlm_server(server)
+        env["VLM_MODEL_PATH"] = model
+        env["VLM_SERVED_NAME"] = VLM_MODEL
+        env["VLM_PORT"] = str(VLM_PORT)
+        # ensure fastapi/uvicorn
+        try:
+            import fastapi, uvicorn  # noqa: F401
+        except Exception:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "fastapi", "uvicorn", "pillow"])
+        cmd = [sys.executable, str(server)]
+
     print("[vlm] starting:", " ".join(cmd), flush=True)
-    print(f"[vlm] model={model} mem_util={gpu_mem_util} max_len={max_model_len}", flush=True)
+    print(f"[vlm] backend={backend} model={model}", flush=True)
     log_f = open(log_path, "w")
     proc = subprocess.Popen(cmd, env=env, stdout=log_f, stderr=subprocess.STDOUT)
     try:
