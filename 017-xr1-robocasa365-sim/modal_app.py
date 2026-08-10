@@ -161,9 +161,10 @@ sim_image = (
     )
     .run_commands(
         "git clone --depth 1 https://github.com/ARISE-Initiative/robosuite.git /opt/robosuite",
-        "cd /opt/robosuite && pip install -e . --no-cache-dir",
+        # no-deps: avoid teleop extras (pynput/evdev) on headless Modal
+        "cd /opt/robosuite && pip install -e . --no-deps --no-cache-dir",
+        "pip install --no-cache-dir 'mujoco>=3.0' 'scipy' 'Pillow' 'opencv-python-headless' 'numba' 'termcolor' 'gymnasium'",
         "git clone --depth 1 https://github.com/robocasa/robocasa.git /opt/robocasa",
-        # skip shadowed pins; deps already installed above
         "cd /opt/robocasa && pip install -e . --no-deps --no-cache-dir",
         # non-interactive private macros
         "python -c \"import shutil, robocasa, os; "
