@@ -51,6 +51,7 @@ python main.py 008 smoke          # HY-Pano 轻量 Qwen（PRO 6000）
 python main.py 009 status         # worldgen 全景→3D 世界（分 stage）
 python main.py 010 smoke          # ACE-Step 1.5 音乐（L4 · 20s 器乐）
 python main.py 011 smoke          # Stable Audio 3 Medium（L4 · 20s）
+python main.py 014 smoke          # DiffRhythm 2（L4 · 60s）
 python main.py 013 smoke          # YuE（L40S · 2 segments）
 python main.py 012 smoke          # LeVo 2（L40S · v2-medium）
 python main.py 016 smoke          # MusicGen small（T4 · 15s）

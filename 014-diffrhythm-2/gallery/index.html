@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>014 · DiffRhythm 2 · 试听</title>
+  <style>
+    :root { --bg:#0a0e14; --elev:#121a24; --line:rgba(255,255,255,.08); --fg:#eef2f7; --muted:#8b95a8; --accent:#5eead4; --ok:#3dd68c; }
+    body { margin:0; color:var(--fg); font-family:system-ui,sans-serif; background:radial-gradient(900px 480px at 15% -10%,rgba(94,234,212,.14),transparent 55%),var(--bg); line-height:1.5; }
+    .wrap { width:min(960px,calc(100% - 2rem)); margin:0 auto; padding:1.75rem 0 3rem; }
+    .eyebrow { font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); font-weight:600; }
+    h1 { margin:.4rem 0 .5rem; font-size:1.85rem; }
+    .lede { color:var(--muted); max-width:62ch; }
+    .card { margin-top:1.1rem; background:var(--elev); border:1px solid var(--line); border-radius:16px; padding:1.15rem 1.25rem; }
+    .chip { display:inline-block; border:1px solid rgba(255,255,255,.12); border-radius:999px; padding:.18rem .6rem; font-size:.76rem; color:var(--muted); margin:.15rem; }
+    .ok { border-color:rgba(61,214,140,.35); color:#b8f5d3; background:rgba(61,214,140,.1); }
+    .box { margin:.7rem 0; padding:.75rem .9rem; border-radius:12px; background:rgba(0,0,0,.28); border:1px solid var(--line); font-size:.9rem; }
+    .k { display:block; font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:.2rem; }
+    audio { width:100%; }
+    .metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:.5rem; margin-top:.9rem; }
+    .metric { background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:12px; padding:.65rem; }
+    .metric .v { font-weight:700; margin-top:.15rem; }
+    footer { margin-top:1.5rem; color:var(--muted); font-size:.82rem; }
+    code { background:rgba(255,255,255,.05); padding:.1rem .3rem; border-radius:6px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">014 · DiffRhythm 2 · Gallery</div>
+    <h1>全曲生成试听</h1>
+    <p class="lede">ASLP-lab DiffRhythm 2（谛韵）· 半自回归扩散。默认 <strong>L4</strong>，比 YuE 快一个数量级、更便宜。Apache 2.0。</p>
+    <article class="card">
+      <h2 style="margin:0;font-size:1.15rem">smoke_en60</h2>
+      <div>
+        <span class="chip">GPU <strong>L4</strong></span>
+        <span class="chip">max <strong>60s</strong></span>
+        <span class="chip">steps <strong>16</strong></span>
+        <span class="chip">seed <strong>42</strong></span>
+        <span class="chip ok">OK</span>
+      </div>
+      <div class="box"><span class="k">Style</span>Pop, Piano, Bass, Drums, Happy, uplifting female vocal</div>
+      <div class="box"><span class="k">Lyrics</span>[verse]+[chorus] English smoke lyrics</div>
+      <audio controls preload="metadata" src="assets/smoke_en60.mp3"></audio>
+      <div class="metrics">
+        <div class="metric"><div class="k">墙钟</div><div class="v">70.8 s</div></div>
+        <div class="metric"><div class="k">加载 / 生成</div><div class="v">45.6 / 22.0 s</div></div>
+        <div class="metric"><div class="k">估费</div><div class="v">$0.016</div></div>
+        <div class="metric"><div class="k">VRAM</div><div class="v">7.7 GB</div></div>
+      </div>
+    </article>
+    <p class="lede" style="margin-top:1rem">对比：YuE 2-seg ~13min / $0.43；DiffRhythm2 60s 音频 ~71s / $0.016。</p>
+    <footer>实验 <code>014-diffrhythm-2</code></footer>
+  </div>
+</body>
+</html>

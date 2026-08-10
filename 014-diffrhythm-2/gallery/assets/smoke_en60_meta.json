@@ -1,0 +1,38 @@
+{
+  "run_name": "smoke_en60",
+  "gpu_requested": "L4",
+  "wall_s": 70.8,
+  "est_gpu_usd": 0.0157,
+  "payload": {
+    "lyrics": "[start]\n[intro]\n[verse]\nStaring at the sunset colors paint the sky\nThoughts of you keep swirling I cannot deny\nI know I let you down I made mistakes\nBut I am here to mend the heart I did not break\n[chorus]\nEvery road you take I will be one step behind\nEvery dream you chase I am reaching for the light\nYou cannot fight this feeling now\nI will not back down\n[end]\n",
+    "style_prompt": "Pop, Piano, Bass, Drums, Happy, uplifting female vocal",
+    "max_secs": 60.0,
+    "steps": 16,
+    "cfg_strength": 2.0,
+    "seed": 42
+  },
+  "result": {
+    "success": true,
+    "error": null,
+    "wall_s": 70.8,
+    "load_s": 45.6,
+    "generate_s": 22.03,
+    "est_gpu_usd": 0.0157,
+    "gpu": "L4",
+    "model": "ASLP-lab/DiffRhythm2",
+    "max_secs": 60.0,
+    "steps": 16,
+    "cfg_strength": 2.0,
+    "seed": 42,
+    "vram_peak_gb": 7.749,
+    "primary_audio": {
+      "path": "/outputs/runs/smoke_en60/song.mp3",
+      "size_bytes": 2401920,
+      "name": "song.mp3"
+    },
+    "style_prompt": "Pop, Piano, Bass, Drums, Happy, uplifting female vocal",
+    "lyrics_preview": "[start]\n[intro]\n[verse]\nStaring at the sunset colors paint the sky\nThoughts of you keep swirling I cannot deny\nI know I let you down I made mistakes\nBut I am here to mend the heart I did not break\n[ch"
+  },
+  "created_utc": "2026-08-10T16:15:24.558379+00:00",
+  "license_note": "Apache 2.0 — DiffRhythm 2 by ASLP-lab"
+}

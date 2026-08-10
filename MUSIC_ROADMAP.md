@@ -1,6 +1,6 @@
 # 音乐实验路线图
 
-> 更新：2026-08-10 — **MusicGen 占 016**（用户确认；014 计划废弃）。  
+> 更新：2026-08-10 — **014 = DiffRhythm 2**；MusicGen 仍为 **016**。  
 > 017 为仿真线，不占用音乐号。
 
 ## 编号
@@ -12,12 +12,12 @@
 | **012** | `012-levo-2` | LeVo 2 v2-medium | L40S | ✅ |
 | **013** | `013-yue` | YuE en-cot | L40S | ✅ smoke ~13min / $0.43 |
 | **016** | `016-musicgen` | **MusicGen** small | **T4** | ✅ smoke OK · T4 ~$0.005 |
-| 014 | — | （原 MusicGen 计划作废） | — | free / unused |
+| **014** | `014-diffrhythm-2` | DiffRhythm 2 | **L4** | ✅ smoke 60s · ~$0.016 |
 | 015 | robotics | Xiaomi | — | 非音乐 |
 | 017 | sim | XR1 RoboCasa | — | 非音乐 |
 
 ```text
-010 ACE → 011 SA3 → 012 LeVo2 → 013 YuE → … → 016 MusicGen
+010 ACE → 011 SA3 → 012 LeVo2 → 013 YuE → 014 DiffRhythm2 → 016 MusicGen
 ```
 
 ## GPU 原则
