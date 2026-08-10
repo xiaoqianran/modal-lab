@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Pixal3D · RTX PRO 6000 (sm_120)</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b0d12; --panel: rgba(18,22,32,.88); --line: rgba(255,255,255,.08);
+        --text: #f3f5f9; --muted: #9aa3b5; --accent: #f472b6; --accent2: #a78bfa;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0; height: 100%; color: var(--text);
+        font-family: system-ui, sans-serif;
+        background:
+          radial-gradient(1100px 560px at 18% -12%, rgba(244,114,182,.14), transparent 55%),
+          radial-gradient(900px 480px at 92% 8%, rgba(167,139,250,.12), transparent 50%),
+          var(--bg);
+      }
+      .app { min-height: 100%; display: grid; grid-template-rows: auto 1fr auto; }
+      header, footer {
+        padding: 14px 18px; background: var(--panel); backdrop-filter: blur(12px);
+      }
+      header { border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; }
+      footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+      h1 { margin: 0; font-size: 16px; }
+      h1 span { color: var(--muted); font-weight: 500; }
+      .badge {
+        margin-left: 8px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;
+        color: #3b0764; background: linear-gradient(135deg, #f472b6, #c084fc);
+      }
+      .meta { display: flex; flex-wrap: wrap; gap: 8px; }
+      .chip {
+        border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px;
+        font-size: 12px; color: var(--muted); background: rgba(255,255,255,.03); text-decoration: none;
+      }
+      .chip strong { color: var(--text); }
+      a.chip:hover { border-color: rgba(244,114,182,.45); color: var(--text); }
+      .stage { position: relative; }
+      model-viewer { width: 100%; min-height: min(78vh, 840px); background: transparent; }
+      .side {
+        position: absolute; top: 16px; right: 16px; width: min(230px, calc(100vw - 32px));
+        border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--panel);
+        backdrop-filter: blur(12px); box-shadow: 0 12px 40px rgba(0,0,0,.35);
+      }
+      .side img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: #111; }
+      .side .cap { padding: 10px 12px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+      .side .cap b { color: var(--text); }
+      .side .stats { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); display: grid; gap: 4px; }
+      .side .stats div { display: flex; justify-content: space-between; gap: 8px; }
+      .side .stats span:last-child { color: var(--text); font-variant-numeric: tabular-nums; }
+      .progress { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); z-index: 1; pointer-events: none; }
+      .progress.hidden { display: none; }
+      a { color: #f9a8d4; }
+      code { font-size: 12px; background: rgba(255,255,255,.05); padding: 1px 5px; border-radius: 4px; }
+      @media (max-width: 640px) {
+        .side { top: auto; bottom: 64px; left: 12px; right: 12px; width: auto; }
+        .side img { aspect-ratio: 16/7; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <h1>Pixal3D <span>· smoke_pro6000.glb</span><span class="badge">PRO 6000 · sm_120</span></h1>
+        <div class="meta">
+          <div class="chip">GPU <strong>RTX PRO 6000</strong></div>
+          <div class="chip">SM <strong>sm_120</strong></div>
+          <div class="chip">stack <strong>torch2.11+cu128</strong></div>
+          <div class="chip">time <strong id="t">~230s</strong></div>
+          <div class="chip">VRAM <strong id="v">~15.6 GB</strong></div>
+          <div class="chip">cost <strong id="c">~$0.19</strong></div>
+          <div class="chip">size <strong id="s">41 MB</strong></div>
+          <a class="chip" href="./smoke_pro6000.glb" download>⬇ GLB</a>
+          <a class="chip" href="./smoke_pro6000_meta.json" download>meta</a>
+        </div>
+      </header>
+      <main class="stage">
+        <div class="progress" id="progress">Loading 3D model…</div>
+        <model-viewer
+          id="mv" src="./smoke_pro6000.glb"
+          camera-controls auto-rotate shadow-intensity="0.9"
+          environment-image="neutral" exposure="1.05"
+          touch-action="pan-y" ar
+        ></model-viewer>
+        <div class="side">
+          <img src="./input.webp" alt="input" />
+          <div class="cap">
+            <b>Input</b><br />Official sample · seed 42<br />005-v3 Plan A*
+            <div class="stats">
+              <div><span>GPU</span><span>PRO 6000</span></div>
+              <div><span>Infer</span><span id="st">230.3 s</span></div>
+              <div><span>VRAM</span><span id="sv">15.58 GB</span></div>
+              <div><span>Cost</span><span id="sc">$0.194</span></div>
+            </div>
+          </div>
+        </div>
+      </main>
+      <footer>
+        Generated with <a href="https://github.com/TencentARC/Pixal3D">TencentARC/Pixal3D</a>
+        on Modal · <code>005-v3-pixal3d-pro6000</code>
+        · Blackwell <code>sm_120</code> source wheels · torch 2.11.0+cu128
+      </footer>
+    </div>
+    <script>
+      const mv = document.getElementById("mv");
+      const progress = document.getElementById("progress");
+      mv.addEventListener("load", () => progress.classList.add("hidden"));
+      mv.addEventListener("error", () => { progress.textContent = "Failed to load GLB"; });
+      fetch("./smoke_pro6000_meta.json").then(r => r.ok ? r.json() : null).then(m => {
+        if (!m) return;
+        if (m.seconds_total != null) {
+          document.getElementById("t").textContent = "~" + Math.round(m.seconds_total) + "s";
+          document.getElementById("st").textContent = m.seconds_total + " s";
+        }
+        const vram = m.vram?.peak_mem_used_gb;
+        if (vram != null) {
+          document.getElementById("v").textContent = "~" + vram + " GB";
+          document.getElementById("sv").textContent = vram + " GB";
+        }
+        if (m.est_cost_usd_total != null) {
+          document.getElementById("c").textContent = "~$" + Number(m.est_cost_usd_total).toFixed(2);
+          document.getElementById("sc").textContent = "$" + Number(m.est_cost_usd_total).toFixed(3);
+        }
+        if (m.bytes) document.getElementById("s").textContent = (m.bytes/1e6).toFixed(0) + " MB";
+      }).catch(() => {});
+    </script>
+  </body>
+</html>

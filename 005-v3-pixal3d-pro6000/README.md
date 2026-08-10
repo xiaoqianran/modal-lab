@@ -1,40 +1,46 @@
-# 005-v3-pixal3d-pro6000 — Pixal3D × **RTX PRO 6000 (sm_120)**
+# 005-v3-pixal3d-pro6000 — Pixal3D on **RTX PRO 6000 (sm_120)**
 
-> **第二轮方案已收紧 · 仍未实跑 GPU。** 详见 [`SOLUTION.md`](SOLUTION.md)。
+> **状态：已在 Modal PRO 6000 端到端跑通**（smoke → GLB）。方案见 [`SOLUTION.md`](SOLUTION.md)，实测见 [`GPU_BENCHMARK.md`](GPU_BENCHMARK.md)。
 
-## 一句话
+| | 005 | 005-v2 | **005-v3** |
+|--|-----|--------|------------|
+| GPU | H100 | L40S | **RTX-PRO-6000** |
+| SM | 90 | 89 | **120** |
+| torch | 2.6 cu124 | 2.6 cu124 | **2.11.0+cu128** |
+| 出 GLB | ✅ | ✅ | ✅ **~230s · ~$0.19** |
 
-**有方案，且 Linux 上已有同架构先例**（5090 跑通 TRELLIS.2 GLB；PRO 6000 有 Pixal3D 专用安装文档）。  
-Modal 落地 = **torch 2.11+cu128 + `TORCH_CUDA_ARCH_LIST=12.0` 源码编扩展 + sdpa**，**不是** 005/v2 改一行 GPU。
+## 实测 smoke
 
-## 黄金配方（Plan A*）
+| GPU | 时间 | VRAM | 估费 |
+|-----|------|------|------|
+| **PRO 6000** | **230 s** | **15.6 GB** | **~$0.19** |
 
-| 项 | 值 |
-|----|-----|
-| 证据 | animede/image-3d `requirements-pixal3d.txt`（**PRO 6000 实机**） |
-| torch | **2.11.0+cu128** |
-| arch | **12.0** |
-| 扩展 | o-voxel(FlexGEMM/CuMesh) · **drtk** · natten 0.21 · (可选 nvdiffrast) |
-| 注意力 | **sdpa only**（不装 flash_attn） |
-| 编译 | CUDA **12.8** devel，**CUDA_HOME 勿漂到 13.x**，gcc **≤13** |
+本地：[`viewer/index.html`](viewer/index.html) + [`viewer/smoke_pro6000.glb`](viewer/smoke_pro6000.glb)
 
-次要证据：TRELLIS.2#143 · RTX 5090 WSL · 同 sm_120 · 端到端 GLB。
+## 栈（Plan A*）
 
-## 和 L40S 比
+```text
+镜像: nvidia/cuda:12.8.1-devel-ubuntu24.04
+torch: 2.11.0+cu128
+TORCH_CUDA_ARCH_LIST=12.0
+NATTEN_CUDA_ARCH=12.0
+ATTN_BACKEND=sdpa
+扩展: nvdiffrast · nvdiffrec · flex_gemm · cumesh · o_voxel · drtk · natten
+```
 
-| | v2 L40S | v3 PRO 6000 |
-|--|---------|-------------|
-| 状态 | ✅ 已出片 ~$0.17 | 🔒 方案可执行、未跑 |
-| 难度 | 中（只重编扩展） | **高（换 torch+CUDA+重编）** |
-| 建议 | **默认出片** | 卡池必须用再做 B0 探针 |
+## 用法
 
-## 目录
+```bash
+python run.py probe
+python run.py build-sm120 --i-know-this-costs-money
+python run.py verify --i-know-this-costs-money
+python run.py smoke --i-know-this-costs-money
 
-- [`SOLUTION.md`](SOLUTION.md) — 配方 α/β/γ、门禁、风险  
-- [`PLAN.md`](PLAN.md) — 阶段  
-- **无 modal 推理入口**（防误烧钱）
+modal volume get modal-lab-pixal3d-pro6000-outputs meshes/smoke_pro6000.glb ./viewer/
+```
 
-## 若开跑
+## 相关
 
-只允许：B0 认卡 → B1 o-voxel → B2 光栅 → B3 natten → B4 smoke。  
-生产出片请用 [`../005-v2-pixal3d-l40s`](../005-v2-pixal3d-l40s) 或 [`../005-pixal3d`](../005-pixal3d)。
+- 官版 H100：[`005-pixal3d`](../005-pixal3d/)  
+- L40S：[`005-v2-pixal3d-l40s`](../005-v2-pixal3d-l40s/)  
+- 上游 MIT：见 [UPSTREAM.md](UPSTREAM.md)

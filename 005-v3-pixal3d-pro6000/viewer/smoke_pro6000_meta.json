@@ -1,0 +1,56 @@
+{
+  "output_name": "smoke_pro6000",
+  "seed": 42,
+  "low_vram": true,
+  "resolution": 1024,
+  "fov": -1.0,
+  "model_path": "/weights/Pixal3D",
+  "gpu_request": "RTX-PRO-6000",
+  "gpu_actual": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "sm": "sm_120",
+  "capability": [
+    12,
+    0
+  ],
+  "vram_total_gb": 95.0,
+  "price_per_sec_usd": 0.000842,
+  "upstream": "TencentARC/Pixal3D",
+  "stack": "005-v3 Plan A* sm_120 torch2.11+cu128",
+  "wheels": [
+    "cumesh-0.0.1-cp310-cp310-linux_x86_64.whl",
+    "drtk-0.1.0-cp310-cp310-linux_x86_64.whl",
+    "flex_gemm-1.0.0-cp310-cp310-linux_x86_64.whl",
+    "natten-0.21.0-cp310-cp310-linux_x86_64.whl",
+    "nvdiffrast-0.4.0-cp310-cp310-linux_x86_64.whl",
+    "nvdiffrec_render-0.0.0-cp310-cp310-linux_x86_64.whl",
+    "o_voxel-0.0.1-cp310-cp310-linux_x86_64.whl"
+  ],
+  "vram_idle": {
+    "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "mem_used_mib": 563.0,
+    "mem_total_mib": 97887.0,
+    "util_gpu_pct": 0.0
+  },
+  "seconds_total": 230.3,
+  "seconds_infer": 230.3,
+  "est_cost_usd_total": 0.1939,
+  "vram": {
+    "gpu_name_smi": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "peak_mem_used_mib": 15955.0,
+    "peak_mem_used_gb": 15.58,
+    "mem_total_mib": 97887.0,
+    "mem_total_gb": 95.59,
+    "peak_util_gpu_pct": 100.0,
+    "n_samples": 103
+  },
+  "input_volume_path": "inputs/smoke_pro6000.webp",
+  "volume_name": "modal-lab-pixal3d-pro6000-outputs",
+  "volume_paths": {
+    "named": "meshes/smoke_pro6000.glb",
+    "latest": "meshes/latest.glb",
+    "meta": "meshes/smoke_pro6000_meta.json",
+    "benchmark": "benchmarks/smoke_pro6000.json"
+  },
+  "bytes": 41049472,
+  "cli_get": "modal volume get modal-lab-pixal3d-pro6000-outputs meshes/smoke_pro6000.glb ./smoke_pro6000.glb"
+}
