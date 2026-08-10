@@ -3,6 +3,54 @@
   "tagline": "Modal 实验橱窗 · Image→3D 双卡对照已上线",
   "experiments": [
     {
+      "id": "023-a-spar3d",
+      "num": "023-a",
+      "title": "SPAR3D",
+      "subtitle": "Point-aware 图生网格",
+      "blurb": "Stability SPAR3D · L40S × PRO 6000 同图对照，可拖拽 3D、看推理瀑布与估费。",
+      "href": "023-a-spar3d/",
+      "tags": [
+        "3D",
+        "mesh",
+        "featured",
+        "bench"
+      ],
+      "mood": "mesh",
+      "featured": true,
+      "stats": {
+        "infer": "1.4s",
+        "GPU": "PRO 6000",
+        "VRAM": "11GB"
+      },
+      "accent": "#e8a54b",
+      "available": true,
+      "badge": "NEW"
+    },
+    {
+      "id": "023-b-sf3d",
+      "num": "023-b",
+      "title": "SF3D",
+      "subtitle": "Stable Fast 3D",
+      "blurb": "更快更省显存的图生网格；同页可切到 SPAR3D，双卡并排对照。",
+      "href": "023-b-sf3d/",
+      "tags": [
+        "3D",
+        "mesh",
+        "featured",
+        "bench"
+      ],
+      "mood": "mesh",
+      "featured": true,
+      "stats": {
+        "infer": "0.96s",
+        "GPU": "PRO 6000",
+        "VRAM": "7GB"
+      },
+      "accent": "#3ecfbf",
+      "available": true,
+      "badge": "NEW"
+    },
+    {
       "id": "009-hy-worldgen",
       "num": "009",
       "title": "HY-World",

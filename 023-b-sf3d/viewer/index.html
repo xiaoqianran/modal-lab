@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>SF3D · 023-b stable-fast-3d</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b0d12;
+        --panel: rgba(18, 22, 32, 0.88);
+        --line: rgba(255, 255, 255, 0.08);
+        --text: #f3f5f9;
+        --muted: #9aa3b5;
+        --accent: #fbbf24;
+        --accent-2: #38bdf8;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        height: 100%;
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        background:
+          radial-gradient(1100px 560px at 18% -12%, rgba(251, 191, 36, 0.12), transparent 55%),
+          radial-gradient(900px 480px at 92% 8%, rgba(56, 189, 248, 0.1), transparent 50%),
+          var(--bg);
+      }
+      .app { min-height: 100%; display: grid; grid-template-rows: auto 1fr auto; }
+      header, footer {
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+        background: var(--panel);
+      }
+      footer {
+        border-bottom: 0;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      header {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      h1 { margin: 0; font-size: 16px; font-weight: 650; letter-spacing: 0.02em; }
+      h1 span { color: var(--muted); font-weight: 500; }
+      .badge {
+        display: inline-block;
+        margin-left: 8px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #1c1917;
+        background: linear-gradient(135deg, #34d399, #a7f3d0);
+        vertical-align: middle;
+      }
+      .meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      .chip {
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.03);
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .chip b { color: var(--text); font-weight: 600; }
+      .stage { position: relative; min-height: 0; }
+      model-viewer {
+        width: 100%;
+        height: 100%;
+        min-height: min(72vh, 720px);
+        background: transparent;
+        --poster-color: transparent;
+      }
+      .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+      .tabs button {
+        appearance: none;
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.04);
+        color: var(--muted);
+        border-radius: 10px;
+        padding: 7px 12px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .tabs button.active {
+        color: #0b0d12;
+        background: linear-gradient(135deg, var(--accent), #fde68a);
+        border-color: transparent;
+        font-weight: 650;
+      }
+      .hint {
+        position: absolute;
+        left: 14px;
+        bottom: 14px;
+        z-index: 2;
+        padding: 8px 12px;
+        border-radius: 10px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 12px;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <h1>
+          SF3D <span>023-b stable-fast-3d</span>
+          <span class="badge">Community</span>
+        </h1>
+        <div class="tabs" id="tabs">
+          <button type="button" data-src="smoke_l40s.glb" data-gpu="L40S" class="active">L40S</button>
+          <button type="button" data-src="smoke_pro6000.glb" data-gpu="PRO 6000">PRO 6000</button>
+        </div>
+        <div class="meta" id="meta">
+          <span class="chip">model <b>stabilityai/stable-fast-3d</b></span>
+          <span class="chip" id="chip-gpu">GPU <b>L40S</b></span>
+          <span class="chip">UV textured · tex 1024</span>
+        </div>
+      </header>
+      <div class="stage">
+        <model-viewer
+          id="viewer"
+          src="smoke_l40s.glb"
+          alt="mesh"
+          camera-controls
+          touch-action="pan-y"
+          auto-rotate
+          shadow-intensity="0.6"
+          exposure="1.05"
+          environment-image="neutral"
+        ></model-viewer>
+        <div class="hint">拖拽旋转 · 滚轮缩放 · 双指平移</div>
+      </div>
+      <footer>快速 UV 纹理档（TripoSR 后继）。对照：023-a SPAR3D · 020 TripoSR · 021 TRELLIS.2。默认 L40S；可选 RTX PRO 6000。</footer>
+    </div>
+    <script>
+      const viewer = document.getElementById("viewer");
+      const chip = document.getElementById("chip-gpu");
+      document.getElementById("tabs").addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-src]");
+        if (!btn) return;
+        document.querySelectorAll("#tabs button").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        const src = btn.dataset.src;
+        chip.innerHTML = "GPU <b>" + btn.dataset.gpu + "</b>";
+        fetch(src, { method: "HEAD" })
+          .then((r) => {
+            if (r.ok) viewer.src = src;
+            else chip.innerHTML = "GPU <b>" + btn.dataset.gpu + " · 尚未生成</b>";
+          })
+          .catch(() => {
+            chip.innerHTML = "GPU <b>" + btn.dataset.gpu + " · 尚未生成</b>";
+          });
+      });
+    </script>
+  </body>
+</html>

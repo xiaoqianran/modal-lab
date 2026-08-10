@@ -12,6 +12,8 @@ Modal 实验台：按 `NNN-topic` 编号做可复现实验。
 | 009 HY-World 世界馆 | https://xiaoqianran.github.io/modal-lab/009-hy-worldgen/ |
 | Image→3D Lab（L40S×PRO） | https://xiaoqianran.github.io/modal-lab/gpu-gallery/ |
 | 022 Hunyuan3D-2.1 | https://xiaoqianran.github.io/modal-lab/gpu-gallery/#hunyuan3d21 |
+| **023-a SPAR3D Mesh Studio** | https://xiaoqianran.github.io/modal-lab/023-a-spar3d/ |
+| **023-b SF3D Mesh Studio** | https://xiaoqianran.github.io/modal-lab/023-b-sf3d/ |
 | 各实验 gallery | `https://xiaoqianran.github.io/modal-lab/<NNN-topic>/` |
 
 ### 每位作者请记住：出了 HTML 结果 → 部署到 Pages
@@ -75,6 +77,8 @@ I2V_GPU_ROADMAP.md      # image→3D 卡池约定与结论
 020-triposr/            # TripoSR image→mesh 速度基线（L40S+PRO6000 · 已出 GLB）
 021-trellis2/           # TRELLIS.2-4B 质量主线 MIT（L40S+PRO6000 · 已出 GLB）
 022-hunyuan3d-2.1/      # Hunyuan3D-2.1 PBR（L40S+PRO6000 · smoke full 完成 · Pages）
+023-a-spar3d/           # SPAR3D point-aware（L40S+PRO6000 · Gallery 已上 Pages）
+023-b-sf3d/             # SF3D fast path（L40S+PRO6000 · Gallery 已上 Pages）
 ```
 
 命名约定：`NNN-topic`（序号 + 主题）。`python main.py 001 …` 等短号在唯一时可解析到对应目录。
@@ -147,6 +151,8 @@ cd 022-hunyuan3d-2.1 && python run.py probe --gpu L40S
 | `020-triposr` | [TripoSR](https://github.com/VAST-AI-Research/TripoSR) **速度基线**；**L40S ~14s / PRO6000 ~10s · ~$0.01** |
 | `021-trellis2` | [TRELLIS.2](https://github.com/microsoft/TRELLIS.2) **质量主线 MIT**；**L40S ~215s / PRO6000 ~122s · 已出 GLB** |
 | `022-hunyuan3d-2.1` | [Hunyuan3D-2.1](https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1) **PBR 纹理**；L40S+PRO6000 · Community License |
+| `023-a-spar3d` | [SPAR3D](https://github.com/Stability-AI/stable-point-aware-3d) point-aware 图生网格；**L40S/PRO · [Gallery](https://xiaoqianran.github.io/modal-lab/023-a-spar3d/)** |
+| `023-b-sf3d` | [SF3D](https://github.com/Stability-AI/stable-fast-3d) 快速图生网格；**infer PRO ~0.96s · [Gallery](https://xiaoqianran.github.io/modal-lab/023-b-sf3d/)** |
 | `gpu-gallery` | **L40S × PRO 6000 对照预览**（020 / 021 / 005） |
 | — | 音乐队列总览见 [MUSIC_ROADMAP.md](MUSIC_ROADMAP.md) · image→3D 卡池见 [I2V_GPU_ROADMAP.md](I2V_GPU_ROADMAP.md) |
 

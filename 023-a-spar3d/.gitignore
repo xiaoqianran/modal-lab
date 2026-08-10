@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.log
+outputs/
+*.glb
+*.obj
+*.ply
+!viewer/*.glb
+!gallery/**/*.glb
+!examples/*

@@ -1,0 +1,40 @@
+{
+  "model": "zimengxiong/Modelr-SPAR3D",
+  "model_official": "stabilityai/stable-point-aware-3d",
+  "upstream": "Stability-AI/stable-point-aware-3d",
+  "license": "Stability AI Community License",
+  "gpu_request": "RTX-PRO-6000",
+  "gpu_actual": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "output_name": "smoke_pro6000",
+  "texture_resolution": 1024,
+  "foreground_ratio": 1.3,
+  "low_vram_mode": false,
+  "remesh": "none",
+  "format": "glb",
+  "uv_textured": true,
+  "seconds_load": 16.01,
+  "seconds_preprocess": 4.62,
+  "seconds_infer": 1.43,
+  "seconds_export": 0.03,
+  "seconds_total": 22.14,
+  "peak_vram_gb": 11.23,
+  "est_cost_usd": 0.0186,
+  "price_per_sec_usd": 0.000842,
+  "image_url": "https://raw.githubusercontent.com/VAST-AI-Research/TripoSR/main/examples/chair.png",
+  "smi_end": {
+    "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "mem_used_mib": 11501.0,
+    "mem_total_mib": 97887.0,
+    "util_gpu_pct": 15.0
+  },
+  "input_volume_path": "inputs/smoke_pro6000.png",
+  "volume_name": "modal-lab-spar3d-outputs",
+  "volume_paths": {
+    "mesh": "meshes/smoke_pro6000.glb",
+    "latest": "meshes/latest.glb",
+    "meta": "meshes/smoke_pro6000_meta.json",
+    "benchmark": "benchmarks/smoke_pro6000.json"
+  },
+  "bytes": 914884,
+  "cli_get": "modal volume get modal-lab-spar3d-outputs meshes/smoke_pro6000.glb ./smoke_pro6000.glb"
+}
