@@ -4,60 +4,47 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
-  <meta name="description" content="HY-World 2.0 generated 3D world — interactive point cloud, trajectories, and 3DGS metrics." />
-  <title>HY-World · Generated World</title>
+  <meta name="theme-color" content="#06080d" />
+  <meta name="description" content="HY-World 2.0 — interactive 3D world generated from a single panorama on one RTX PRO 6000." />
+  <title>009 · HY-World Observatory</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
   <style>
     :root {
-      --bg: #09090b;
-      --bg-elevated: #111113;
-      --bg-subtle: #18181b;
-      --bg-hover: #1f1f23;
-      --fg: #f4f4f5;
-      --fg-muted: #a1a1aa;
-      --fg-subtle: #71717a;
-      --border: color-mix(in oklab, var(--fg) 10%, transparent);
-      --border-strong: color-mix(in oklab, var(--fg) 18%, transparent);
-      --accent: #e4e4e7;
-      --accent-fg: #09090b;
+      --ink: #06080d;
+      --ink-2: #0b0f18;
+      --panel: #101621;
+      --panel-2: #161d2b;
+      --line: rgba(232, 214, 180, 0.10);
+      --line-strong: rgba(232, 214, 180, 0.22);
+      --sand: #e8d6b4;
+      --sand-dim: #b8a888;
+      --ember: #ff7a45;
+      --ember-soft: rgba(255, 122, 69, 0.16);
+      --teal: #5eead4;
+      --teal-soft: rgba(94, 234, 212, 0.14);
+      --mist: #93a0b8;
+      --fog: #5c6a82;
       --ok: #86efac;
-      --warn: #fcd34d;
-      --shadow: 0 24px 64px rgba(0,0,0,.55);
-      --radius-xs: 4px;
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 16px;
-      --radius-xl: 24px;
-      --space-1: 4px;
-      --space-2: 8px;
-      --space-3: 12px;
-      --space-4: 16px;
-      --space-5: 24px;
-      --space-6: 32px;
-      --space-7: 48px;
-      --space-8: 64px;
-      --font-display: "Instrument Serif", "Times New Roman", serif;
-      --font-body: "IBM Plex Sans", system-ui, sans-serif;
-      --font-mono: "IBM Plex Mono", ui-monospace, monospace;
-      --text-xs: 0.75rem;
-      --text-sm: 0.875rem;
-      --text-base: 1rem;
-      --text-lg: 1.125rem;
-      --text-xl: clamp(1.35rem, 1.1rem + 1vw, 1.65rem);
-      --text-2xl: clamp(1.85rem, 1.3rem + 2vw, 2.75rem);
-      --text-3xl: clamp(2.4rem, 1.6rem + 3.5vw, 3.75rem);
-      --leading-tight: 1.12;
-      --leading-snug: 1.3;
-      --leading-normal: 1.55;
-      --tracking-display: -0.03em;
-      --nav-h: 56px;
-      --motion-quick: 150ms;
-      --motion-fast: 250ms;
-      --motion-slow: 400ms;
-      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-      --max: 1120px;
+      --text: #f2efe8;
+      --radius: 18px;
+      --radius-sm: 12px;
+      --radius-xs: 8px;
+      --nav: 64px;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --font-display: "Syne", system-ui, sans-serif;
+      --font-body: "Manrope", system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --max: 1180px;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -74,158 +61,152 @@
     body {
       margin: 0;
       min-height: 100%;
-      color: var(--fg);
+      color: var(--text);
       font-family: var(--font-body);
-      font-size: var(--text-base);
-      line-height: var(--leading-normal);
-      background: var(--bg);
+      font-size: 16px;
+      line-height: 1.55;
+      background:
+        radial-gradient(1200px 600px at 80% -10%, rgba(255,122,69,0.10), transparent 55%),
+        radial-gradient(900px 500px at -10% 20%, rgba(94,234,212,0.07), transparent 50%),
+        var(--ink);
       -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
     }
 
-    button, [role="button"], a.btn, select, input[type="range"] { cursor: pointer; }
-    button:disabled { cursor: not-allowed; opacity: .5; }
     a { color: inherit; }
+    button { font: inherit; color: inherit; }
     img, video { max-width: 100%; display: block; }
-    :focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 3px;
-    }
+    :focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
 
-    
-    .lab-home {
-      position: fixed; top: calc(var(--nav-h) + 10px); right: 14px; z-index: 50;
-      display: inline-flex; align-items: center; gap: .4rem;
-      padding: .5rem .85rem; border-radius: 999px;
-      background: color-mix(in oklab, var(--fg) 92%, transparent); color: var(--bg);
-      font-size: 12px; font-weight: 600; text-decoration: none;
-      box-shadow: 0 10px 28px rgba(0,0,0,.35);
-      transition: transform .2s cubic-bezier(.22,1,.36,1), background .2s;
-    }
-    .lab-home:hover { transform: translateY(-2px) scale(1.03); background: #fff; }
-    @media (max-width: 640px) {
-      .lab-home { top: auto; bottom: 16px; right: 12px; left: 12px; justify-content: center; }
-    }
-
-    /* —— Nav —— */
-    .nav {
+    /* —— top bar —— */
+    .topbar {
       position: sticky;
       top: 0;
-      z-index: 40;
-      height: var(--nav-h);
+      z-index: 60;
+      height: var(--nav);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: var(--space-4);
-      padding: 0 max(var(--space-4), env(safe-area-inset-right)) 0 max(var(--space-4), env(safe-area-inset-left));
-      background: color-mix(in oklab, var(--bg) 86%, transparent);
-      backdrop-filter: blur(14px) saturate(1.2);
-      border-bottom: 1px solid var(--border);
+      gap: 16px;
+      padding: 0 max(18px, env(safe-area-inset-right)) 0 max(18px, env(safe-area-inset-left));
+      background: color-mix(in oklab, var(--ink) 78%, transparent);
+      backdrop-filter: blur(16px) saturate(1.2);
+      border-bottom: 1px solid var(--line);
     }
-    .nav-brand {
+    .brand {
       display: flex;
-      align-items: baseline;
-      gap: var(--space-2);
+      align-items: center;
+      gap: 12px;
       text-decoration: none;
       min-width: 0;
     }
-    .nav-brand .mark {
-      font-family: var(--font-display);
-      font-size: 1.2rem;
-      letter-spacing: var(--tracking-display);
-      font-style: italic;
-    }
-    .nav-brand .exp {
-      color: var(--fg-subtle);
-      font-family: var(--font-mono);
-      font-size: var(--text-xs);
-      letter-spacing: .04em;
-    }
-    .nav-links {
-      display: none;
-      gap: var(--space-1);
-      align-items: center;
-    }
-    @media (min-width: 820px) {
-      .nav-links { display: flex; }
-    }
-    .nav-links a {
-      text-decoration: none;
-      color: var(--fg-muted);
-      font-size: var(--text-sm);
-      font-weight: 500;
-      padding: .45rem .7rem;
-      border-radius: 999px;
-      transition: color var(--motion-quick) var(--ease-out), background var(--motion-quick) var(--ease-out);
-    }
-    .nav-links a:hover { color: var(--fg); background: var(--bg-subtle); }
-    .nav-meta {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background:
+        conic-gradient(from 210deg, var(--ember), var(--sand), var(--teal), var(--ember));
+      display: grid;
+      place-items: center;
       flex-shrink: 0;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 8px 24px rgba(255,122,69,0.2);
     }
-    .chip {
-      font-family: var(--font-mono);
-      font-size: 11px;
-      letter-spacing: .02em;
-      color: var(--fg-muted);
-      border: 1px solid var(--border);
-      background: var(--bg-elevated);
-      border-radius: 999px;
-      padding: .35rem .65rem;
+    .brand-mark span {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      background: var(--ink);
+    }
+    .brand-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+    .brand-text strong {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.02em;
       white-space: nowrap;
     }
-    .chip strong { color: var(--fg); font-weight: 500; }
-    .chip.ok { color: var(--ok); border-color: color-mix(in oklab, var(--ok) 30%, transparent); }
-
-    /* —— Layout —— */
-    .shell {
-      width: min(var(--max), calc(100% - 2rem));
-      margin: 0 auto;
-    }
-    section.block {
-      padding: var(--space-7) 0;
-    }
-    @media (min-width: 800px) {
-      section.block { padding: var(--space-8) 0; }
-    }
-    .section-kicker {
+    .brand-text em {
+      font-style: normal;
       font-family: var(--font-mono);
       font-size: 11px;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      color: var(--fg-subtle);
-      margin: 0 0 var(--space-2);
+      color: var(--fog);
+      letter-spacing: 0.04em;
     }
-    .section-title {
-      font-family: var(--font-display);
-      font-size: var(--text-2xl);
-      font-weight: 400;
-      letter-spacing: var(--tracking-display);
-      line-height: var(--leading-tight);
-      margin: 0 0 var(--space-3);
+    .top-nav {
+      display: none;
+      gap: 4px;
+      align-items: center;
     }
-    .section-lede {
-      margin: 0 0 var(--space-5);
-      color: var(--fg-muted);
-      max-width: 58ch;
-      font-size: var(--text-sm);
-      line-height: var(--leading-normal);
+    @media (min-width: 900px) {
+      .top-nav { display: flex; }
+    }
+    .top-nav a {
+      text-decoration: none;
+      color: var(--mist);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 999px;
+      transition: color .2s var(--ease), background .2s var(--ease);
+    }
+    .top-nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .top-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .pill {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      padding: 7px 11px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--mist);
+      white-space: nowrap;
+    }
+    .pill strong { color: var(--sand); font-weight: 600; }
+    .pill.live {
+      border-color: color-mix(in oklab, var(--ok) 40%, transparent);
+      color: var(--ok);
+    }
+    .pill.live::before {
+      content: "";
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--ok);
+      margin-right: 6px;
+      box-shadow: 0 0 10px var(--ok);
+      vertical-align: 1px;
+    }
+    .lab-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: var(--sand);
+      color: var(--ink);
+      transition: transform .2s var(--ease), background .2s;
+    }
+    .lab-link:hover { background: #fff; transform: translateY(-1px); }
+    @media (max-width: 640px) {
+      .pill:not(.live) { display: none; }
+      .lab-link { display: none; }
     }
 
-    /* —— Hero viewer —— */
-    .hero {
+    /* —— stage (3D) —— */
+    .stage {
       position: relative;
-      margin: 0;
-      border-bottom: 1px solid var(--border);
-      background: #050506;
+      isolation: isolate;
+      border-bottom: 1px solid var(--line);
+      background: #04060a;
     }
-    .hero-frame {
+    .stage-frame {
       position: relative;
-      height: min(78vh, 820px);
-      min-height: 420px;
-      overflow: hidden;
+      height: min(86vh, 880px);
+      min-height: 460px;
     }
     #world-canvas {
       width: 100%;
@@ -234,596 +215,733 @@
       touch-action: none;
       cursor: grab;
       background:
-        radial-gradient(ellipse 70% 55% at 50% 55%, #14161c 0%, #050506 72%);
+        radial-gradient(ellipse 55% 45% at 50% 58%, #121a28 0%, #04060a 70%);
     }
     #world-canvas:active { cursor: grabbing; }
 
-    .hero-overlay {
+    .stage-vignette {
+      pointer-events: none;
       position: absolute;
       inset: 0;
-      pointer-events: none;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: max(var(--space-4), env(safe-area-inset-top)) var(--space-4) var(--space-4);
       background:
-        linear-gradient(180deg, rgba(9,9,11,.72) 0%, transparent 28%),
-        linear-gradient(0deg, rgba(9,9,11,.85) 0%, transparent 38%);
+        linear-gradient(180deg, rgba(6,8,13,0.72) 0%, transparent 26%),
+        linear-gradient(0deg, rgba(6,8,13,0.92) 0%, transparent 34%),
+        linear-gradient(90deg, rgba(6,8,13,0.35) 0%, transparent 18%, transparent 82%, rgba(6,8,13,0.35) 100%);
     }
-    .hero-copy { max-width: 36rem; pointer-events: none; }
-    .hero-copy h1 {
+
+    .stage-copy {
+      position: absolute;
+      left: max(20px, env(safe-area-inset-left));
+      top: 22px;
+      right: 20px;
+      max-width: 34rem;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--sand-dim);
+      margin: 0 0 12px;
+    }
+    .eyebrow i {
+      width: 18px;
+      height: 1px;
+      background: var(--ember);
+      display: inline-block;
+    }
+    .stage-copy h1 {
+      margin: 0 0 10px;
       font-family: var(--font-display);
-      font-size: var(--text-3xl);
-      font-weight: 400;
-      letter-spacing: var(--tracking-display);
-      line-height: var(--leading-tight);
-      margin: 0 0 var(--space-3);
-      text-shadow: 0 2px 24px rgba(0,0,0,.5);
+      font-weight: 800;
+      font-size: clamp(2rem, 1.4rem + 3.2vw, 3.6rem);
+      line-height: 0.98;
+      letter-spacing: -0.035em;
+      text-shadow: 0 8px 40px rgba(0,0,0,0.55);
     }
-    .hero-copy h1 em {
-      font-style: italic;
-      color: color-mix(in oklab, var(--fg) 88%, #aab4c4);
+    .stage-copy h1 span {
+      background: linear-gradient(120deg, var(--sand) 10%, var(--ember) 55%, var(--teal) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
-    .hero-copy p {
+    .stage-copy p {
       margin: 0;
-      color: var(--fg-muted);
-      font-size: var(--text-sm);
-      max-width: 42ch;
-      text-shadow: 0 1px 12px rgba(0,0,0,.6);
+      color: var(--mist);
+      font-size: 14.5px;
+      max-width: 40ch;
+      text-shadow: 0 2px 16px rgba(0,0,0,0.6);
     }
 
-    .viewer-dock {
-      pointer-events: auto;
+    .hud {
+      position: absolute;
+      z-index: 3;
+      left: max(16px, env(safe-area-inset-left));
+      right: max(16px, env(safe-area-inset-right));
+      bottom: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: stretch;
+      justify-content: space-between;
+    }
+    .hud-panel {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: var(--space-2);
-      padding: var(--space-2);
-      background: color-mix(in oklab, var(--bg-elevated) 92%, transparent);
-      border: 1px solid var(--border);
-      border-radius: calc(var(--radius-md) + var(--space-2));
-      backdrop-filter: blur(12px);
-      box-shadow: var(--shadow);
-      max-width: 100%;
+      gap: 8px;
+      padding: 10px;
+      border-radius: 16px;
+      background: color-mix(in oklab, var(--panel) 88%, transparent);
+      border: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 18px 50px rgba(0,0,0,0.45);
     }
-    .dock-group {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: var(--space-2);
-    }
-    .dock-group + .dock-group {
-      padding-left: var(--space-2);
-      border-left: 1px solid var(--border);
-    }
-    @media (max-width: 640px) {
-      .dock-group + .dock-group {
-        border-left: 0;
-        padding-left: 0;
-        width: 100%;
-      }
-    }
-
     .seg {
       display: inline-flex;
       padding: 3px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 999px;
       gap: 2px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid var(--line);
     }
     .seg button {
       appearance: none;
       border: 0;
       background: transparent;
-      color: var(--fg-muted);
-      font: 500 var(--text-xs)/1 var(--font-body);
-      padding: .45rem .7rem;
+      color: var(--mist);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 12px;
       border-radius: 999px;
-      transition: background var(--motion-quick) var(--ease-out), color var(--motion-quick) var(--ease-out);
+      cursor: pointer;
+      transition: background .15s, color .15s;
     }
     .seg button[aria-pressed="true"] {
-      background: var(--accent);
-      color: var(--accent-fg);
+      background: var(--sand);
+      color: var(--ink);
     }
-    .seg button:hover:not([aria-pressed="true"]) { color: var(--fg); }
+    .seg button:hover:not([aria-pressed="true"]) { color: var(--text); }
 
-    .btn {
+    .ctrl {
       appearance: none;
-      border: 1px solid var(--border);
-      background: var(--bg-subtle);
-      color: var(--fg);
-      font: 500 var(--text-xs)/1 var(--font-body);
-      padding: .55rem .8rem;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 9px 12px;
       border-radius: 999px;
-      transition: background var(--motion-quick) var(--ease-out), border-color var(--motion-quick) var(--ease-out), transform var(--motion-quick) var(--ease-out);
+      cursor: pointer;
+      transition: background .15s, border-color .15s, transform .15s;
     }
-    .btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
-    .btn:active { transform: scale(0.98); }
-    .btn-primary {
-      background: var(--accent);
-      color: var(--accent-fg);
+    .ctrl:hover { background: rgba(255,255,255,0.06); border-color: var(--line-strong); }
+    .ctrl:active { transform: scale(0.98); }
+    .ctrl.primary {
+      background: var(--ember);
       border-color: transparent;
+      color: #1a0b05;
     }
-    .btn-primary:hover { background: #fff; }
+    .ctrl.primary:hover { background: #ff8d60; }
+    .ctrl[aria-pressed="true"] {
+      background: var(--teal-soft);
+      border-color: color-mix(in oklab, var(--teal) 40%, transparent);
+      color: var(--teal);
+    }
 
-    .range-wrap {
+    .range {
       display: inline-flex;
       align-items: center;
-      gap: var(--space-2);
-      color: var(--fg-muted);
-      font-size: var(--text-xs);
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--fog);
       font-family: var(--font-mono);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0 4px;
     }
-    .range-wrap input[type="range"] {
-      width: 88px;
-      accent-color: var(--accent);
+    .range input[type="range"] {
+      width: 96px;
+      accent-color: var(--ember);
     }
 
-    .viewer-status {
+    .status-toast {
       position: absolute;
+      top: 50%;
       left: 50%;
-      top: 48%;
       transform: translate(-50%, -50%);
-      z-index: 3;
+      z-index: 4;
+      padding: 12px 18px;
+      border-radius: 999px;
+      background: rgba(10,14,22,0.88);
+      border: 1px solid var(--line);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--sand);
+      backdrop-filter: blur(10px);
       pointer-events: none;
-      text-align: center;
-      padding: var(--space-3) var(--space-5);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border);
-      background: color-mix(in oklab, var(--bg) 88%, transparent);
-      color: var(--fg-muted);
-      font-size: var(--text-sm);
-      backdrop-filter: blur(8px);
-      max-width: min(90%, 28rem);
+      transition: opacity .25s;
     }
-    .viewer-status.error { color: #fca5a5; border-color: color-mix(in oklab, #fca5a5 35%, transparent); }
-    .viewer-status.hidden { display: none; }
+    .status-toast.hidden { opacity: 0; }
+    .status-toast.error { color: #fecaca; border-color: rgba(248,113,113,0.35); }
 
-    .viewer-foot {
+    .stage-meta {
       display: flex;
-      flex-wrap: wrap;
       justify-content: space-between;
-      gap: var(--space-2) var(--space-4);
-      padding: .65rem max(var(--space-4), env(safe-area-inset-left));
-      border-top: 1px solid var(--border);
-      background: var(--bg-elevated);
-      color: var(--fg-subtle);
+      gap: 12px;
+      padding: 10px max(18px, env(safe-area-inset-right)) 12px max(18px, env(safe-area-inset-left));
       font-family: var(--font-mono);
       font-size: 11px;
+      color: var(--fog);
+      background: var(--ink-2);
+      border-top: 1px solid var(--line);
+    }
+    .stage-meta b { color: var(--sand-dim); font-weight: 500; }
+
+    /* —— layout helpers —— */
+    .wrap {
+      width: min(var(--max), calc(100% - 2rem));
+      margin: 0 auto;
+    }
+    section.block {
+      padding: 64px 0;
+    }
+    @media (min-width: 800px) {
+      section.block { padding: 88px 0; }
+    }
+    .kicker {
+      margin: 0 0 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ember);
+    }
+    .title {
+      margin: 0 0 12px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: clamp(1.7rem, 1.3rem + 1.6vw, 2.5rem);
+      letter-spacing: -0.03em;
+      line-height: 1.08;
+    }
+    .lede {
+      margin: 0 0 28px;
+      max-width: 56ch;
+      color: var(--mist);
+      font-size: 15px;
     }
 
-    /* —— Metrics —— */
-    .metrics {
+    /* —— score strip —— */
+    .scores {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: var(--space-3);
+      gap: 12px;
     }
     @media (min-width: 720px) {
-      .metrics { grid-template-columns: repeat(4, 1fr); }
+      .scores { grid-template-columns: repeat(4, 1fr); }
     }
-    .metric {
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: var(--space-4);
-      min-height: 104px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      transition: border-color var(--motion-fast) var(--ease-out);
+    .score {
+      position: relative;
+      overflow: hidden;
+      padding: 20px 18px 18px;
+      border-radius: var(--radius);
+      background: linear-gradient(160deg, var(--panel-2), var(--panel));
+      border: 1px solid var(--line);
+      min-height: 118px;
     }
-    .metric:hover { border-color: var(--border-strong); }
-    .metric .label {
-      color: var(--fg-subtle);
-      font-size: 11px;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      font-weight: 500;
+    .score::after {
+      content: "";
+      position: absolute;
+      inset: auto -20% -40% auto;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--ember-soft), transparent 70%);
+      pointer-events: none;
     }
-    .metric .value {
-      font-family: var(--font-display);
-      font-size: clamp(1.6rem, 1.2rem + 1.2vw, 2.1rem);
-      letter-spacing: var(--tracking-display);
-      line-height: 1;
-      margin: var(--space-2) 0;
-      font-variant-numeric: tabular-nums;
-    }
-    .metric .sub {
-      color: var(--fg-muted);
+    .score:nth-child(2)::after { background: radial-gradient(circle, var(--teal-soft), transparent 70%); }
+    .score:nth-child(3)::after { background: radial-gradient(circle, rgba(232,214,180,0.12), transparent 70%); }
+    .score label {
+      display: block;
       font-family: var(--font-mono);
       font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--fog);
+      margin-bottom: 10px;
+    }
+    .score .val {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(1.8rem, 1.4rem + 1.2vw, 2.4rem);
+      letter-spacing: -0.03em;
+      line-height: 1;
+      color: var(--text);
+    }
+    .score .sub {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--mist);
     }
 
-    /* —— Pipeline —— */
+    /* —— pipeline —— */
     .pipeline {
       display: grid;
-      gap: var(--space-3);
+      gap: 10px;
     }
     @media (min-width: 900px) {
       .pipeline {
         grid-template-columns: repeat(5, 1fr);
-        gap: var(--space-3);
+        gap: 12px;
       }
     }
-    .stage-card {
+    .step {
       position: relative;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: var(--space-4);
+      padding: 18px 16px 16px;
+      border-radius: var(--radius-sm);
+      background: var(--panel);
+      border: 1px solid var(--line);
       min-height: 160px;
       display: flex;
       flex-direction: column;
-      gap: var(--space-2);
+      gap: 8px;
+      transition: border-color .2s, transform .2s var(--ease);
     }
-    .stage-card .idx {
-      width: 28px;
-      height: 28px;
-      border-radius: 999px;
-      display: grid;
-      place-items: center;
+    .step:hover {
+      border-color: var(--line-strong);
+      transform: translateY(-2px);
+    }
+    .step .idx {
       font-family: var(--font-mono);
       font-size: 11px;
-      font-weight: 500;
-      color: var(--accent-fg);
-      background: var(--accent);
+      color: var(--ember);
+      letter-spacing: 0.08em;
     }
-    .stage-card h3 {
+    .step h3 {
       margin: 0;
-      font-size: var(--text-sm);
-      font-weight: 600;
-      letter-spacing: -.01em;
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
     }
-    .stage-card p {
+    .step p {
       margin: 0;
-      color: var(--fg-muted);
-      font-size: var(--text-xs);
-      line-height: 1.45;
+      font-size: 13px;
+      color: var(--mist);
       flex: 1;
     }
-    .stage-card .meta-row {
+    .step .foot {
       display: flex;
       justify-content: space-between;
-      gap: var(--space-2);
+      gap: 8px;
       font-family: var(--font-mono);
       font-size: 11px;
-      color: var(--fg-subtle);
-      padding-top: var(--space-2);
-      border-top: 1px solid var(--border);
+      color: var(--sand-dim);
+      padding-top: 8px;
+      border-top: 1px dashed var(--line);
     }
-    .stage-card .meta-row .ok { color: var(--ok); }
+    .rail {
+      display: none;
+    }
+    @media (min-width: 900px) {
+      .rail {
+        display: block;
+        height: 2px;
+        margin: 0 0 18px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--ember), var(--sand), var(--teal));
+        opacity: 0.55;
+      }
+    }
 
-    /* —— Compare / media —— */
-    .traj-tabs {
+    /* —— cinema —— */
+    .traj-bar {
       display: flex;
       flex-wrap: wrap;
-      gap: var(--space-2);
-      margin-bottom: var(--space-4);
+      gap: 8px;
+      margin-bottom: 16px;
     }
-    .traj-tabs button {
+    .traj-bar button {
       appearance: none;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--fg-muted);
-      font: 500 var(--text-sm)/1 var(--font-body);
-      padding: .65rem 1rem;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--mist);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 10px 14px;
       border-radius: 999px;
-      min-height: 44px;
-      transition: background var(--motion-quick) var(--ease-out), color var(--motion-quick) var(--ease-out), border-color var(--motion-quick) var(--ease-out);
+      cursor: pointer;
+      transition: all .15s;
     }
-    .traj-tabs button[aria-selected="true"] {
-      background: var(--accent);
-      color: var(--accent-fg);
+    .traj-bar button[aria-selected="true"] {
+      background: var(--sand);
+      color: var(--ink);
       border-color: transparent;
     }
-    .traj-tabs button:hover:not([aria-selected="true"]) {
-      color: var(--fg);
-      border-color: var(--border-strong);
+    .traj-bar button:hover:not([aria-selected="true"]) {
+      color: var(--text);
+      border-color: var(--line-strong);
     }
-
     .compare {
       display: grid;
-      gap: var(--space-3);
+      gap: 12px;
     }
     @media (min-width: 800px) {
       .compare { grid-template-columns: 1fr 1fr; }
     }
-    .media-card {
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-xl);
+    .vid-card {
+      border-radius: var(--radius);
       overflow: hidden;
+      background: var(--panel);
+      border: 1px solid var(--line);
     }
-    .media-card .head {
+    .vid-card header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: var(--space-3);
-      padding: var(--space-3) var(--space-4);
-      border-bottom: 1px solid var(--border);
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+      font-weight: 700;
     }
-    .media-card .head h3 {
-      margin: 0;
-      font-size: var(--text-sm);
-      font-weight: 600;
-    }
-    .media-card .head span {
+    .vid-card header span {
       font-family: var(--font-mono);
+      font-weight: 500;
+      color: var(--fog);
       font-size: 11px;
-      color: var(--fg-subtle);
     }
-    .media-card video, .media-card img {
+    .vid-card video {
       width: 100%;
-      aspect-ratio: 16 / 10;
-      object-fit: contain;
-      background: #050506;
-    }
-    .media-card .cap {
-      padding: var(--space-3) var(--space-4);
-      color: var(--fg-muted);
-      font-size: var(--text-xs);
-      border-top: 1px solid var(--border);
-    }
-
-    .still-grid {
-      display: grid;
-      gap: var(--space-3);
-    }
-    @media (min-width: 860px) {
-      .still-grid { grid-template-columns: 1.4fr 1fr; }
-    }
-    .still-grid .media-card img {
-      aspect-ratio: auto;
-      max-height: 340px;
+      aspect-ratio: 16/10;
+      background: #000;
       object-fit: cover;
-      width: 100%;
     }
-    .still-side {
-      display: grid;
-      gap: var(--space-3);
-    }
-    .still-side .media-card img {
-      max-height: 160px;
+    .vid-card footer {
+      padding: 10px 14px 12px;
+      font-size: 12px;
+      color: var(--mist);
     }
 
-    /* —— Downloads —— */
+    /* —— stills bento —— */
+    .bento {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 820px) {
+      .bento {
+        grid-template-columns: 1.4fr 1fr;
+        grid-template-rows: auto auto;
+      }
+      .bento .wide { grid-row: 1 / span 2; }
+    }
+    .shot {
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: flex;
+      flex-direction: column;
+    }
+    .shot .media {
+      position: relative;
+      overflow: hidden;
+      background: #000;
+      flex: 1;
+    }
+    .shot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      min-height: 180px;
+      transition: transform .5s var(--ease);
+    }
+    .shot:hover img { transform: scale(1.03); }
+    .shot .meta {
+      padding: 14px 16px 16px;
+    }
+    .shot .meta h3 {
+      margin: 0 0 4px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .shot .meta p {
+      margin: 0;
+      font-size: 12.5px;
+      color: var(--mist);
+    }
+    .shot.wide .media { min-height: 280px; }
+    @media (min-width: 820px) {
+      .shot.wide .media { min-height: 100%; }
+    }
+
+    /* —— downloads —— */
     .dl-grid {
       display: grid;
-      gap: var(--space-3);
+      gap: 10px;
     }
-    @media (min-width: 700px) {
+    @media (min-width: 720px) {
       .dl-grid { grid-template-columns: 1fr 1fr; }
     }
-    .dl-item {
+    .dl {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: var(--space-4);
-      padding: var(--space-4);
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
+      gap: 14px;
+      padding: 16px 18px;
+      border-radius: var(--radius-sm);
+      background: var(--panel);
+      border: 1px solid var(--line);
       text-decoration: none;
-      transition: border-color var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out);
+      transition: border-color .15s, background .15s, transform .15s var(--ease);
     }
-    .dl-item:hover {
-      border-color: var(--border-strong);
-      background: var(--bg-subtle);
+    .dl:hover {
+      border-color: color-mix(in oklab, var(--teal) 35%, transparent);
+      background: color-mix(in oklab, var(--panel) 80%, #0c1a1a);
+      transform: translateY(-1px);
     }
-    .dl-item .name {
+    .dl .left { min-width: 0; }
+    .dl .name {
+      font-family: var(--font-mono);
+      font-size: 13px;
       font-weight: 600;
-      font-size: var(--text-sm);
-      margin: 0 0 4px;
+      color: var(--sand);
+      margin-bottom: 4px;
+      word-break: break-all;
     }
-    .dl-item .desc {
-      margin: 0;
-      color: var(--fg-muted);
-      font-size: var(--text-xs);
-    }
-    .dl-item .size {
+    .dl .desc { font-size: 12.5px; color: var(--mist); }
+    .dl .right {
+      flex-shrink: 0;
+      text-align: right;
       font-family: var(--font-mono);
       font-size: 11px;
-      color: var(--fg-subtle);
-      white-space: nowrap;
-      padding: .4rem .65rem;
-      border: 1px solid var(--border);
+      color: var(--fog);
+    }
+    .dl .get {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 5px 10px;
       border-radius: 999px;
+      background: var(--teal-soft);
+      color: var(--teal);
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
 
-    /* —— Notes / footer —— */
+    /* —— notes —— */
     .notes {
       margin: 0;
       padding: 0;
       list-style: none;
       display: grid;
-      gap: var(--space-2);
+      gap: 10px;
     }
     .notes li {
-      color: var(--fg-muted);
-      font-size: var(--text-sm);
-      padding: var(--space-3) var(--space-4);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      background: var(--bg-elevated);
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      background: color-mix(in oklab, var(--panel) 70%, transparent);
+      border: 1px solid var(--line);
+      color: var(--mist);
+      font-size: 14px;
     }
     .notes li::before {
-      content: "—";
-      color: var(--fg-subtle);
-      margin-right: var(--space-2);
-      font-family: var(--font-mono);
+      content: "◆";
+      color: var(--ember);
+      font-size: 10px;
+      margin-top: 5px;
+      flex-shrink: 0;
     }
 
+    /* —— footer —— */
     footer.site {
-      border-top: 1px solid var(--border);
-      padding: var(--space-6) 0 calc(var(--space-7) + env(safe-area-inset-bottom));
-      color: var(--fg-subtle);
-      font-size: var(--text-xs);
+      border-top: 1px solid var(--line);
+      padding: 28px 0 40px;
+      color: var(--fog);
+      font-size: 13px;
     }
-    footer.site .shell {
+    footer.site .wrap {
       display: flex;
       flex-wrap: wrap;
-      gap: var(--space-3) var(--space-6);
       justify-content: space-between;
-      align-items: flex-start;
+      gap: 12px;
     }
     footer.site a {
-      color: var(--fg-muted);
+      color: var(--sand-dim);
       text-decoration: none;
       border-bottom: 1px solid transparent;
-      transition: color var(--motion-quick) var(--ease-out), border-color var(--motion-quick) var(--ease-out);
     }
-    footer.site a:hover {
-      color: var(--fg);
-      border-color: var(--border-strong);
-    }
+    footer.site a:hover { border-bottom-color: var(--sand-dim); }
 
-    .sr-only {
-      position: absolute;
-      width: 1px; height: 1px;
-      padding: 0; margin: -1px;
-      overflow: hidden; clip: rect(0,0,0,0);
-      white-space: nowrap; border: 0;
+    /* mobile floating home */
+    .fab-home {
+      display: none;
+    }
+    @media (max-width: 640px) {
+      .fab-home {
+        display: flex;
+        position: fixed;
+        z-index: 70;
+        left: 12px;
+        right: 12px;
+        bottom: max(12px, env(safe-area-inset-bottom));
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+        border-radius: 999px;
+        background: var(--sand);
+        color: var(--ink);
+        font-weight: 800;
+        font-size: 13px;
+        text-decoration: none;
+        box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+      }
     }
   </style>
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
-    }
-  }
-  </script>
 </head>
 <body>
-  <a class="sr-only" href="#world">Skip to 3D world</a>
-  <a class="lab-home" href="../" id="lab-home">← modal-lab 小宇宙</a>
-
-
-  <header class="nav">
-    <a class="nav-brand" href="#top" id="top">
-      <span class="mark">HY-World</span>
-      <span class="exp">009</span>
+  <header class="topbar">
+    <a class="brand" href="#top" id="top">
+      <div class="brand-mark" aria-hidden="true"><span></span></div>
+      <div class="brand-text">
+        <strong>HY-World Observatory</strong>
+        <em>009 · modal-lab</em>
+      </div>
     </a>
-    <nav class="nav-links" aria-label="Sections">
+    <nav class="top-nav" aria-label="Sections">
       <a href="#world">World</a>
-      <a href="#metrics">Metrics</a>
+      <a href="#quality">Quality</a>
       <a href="#pipeline">Pipeline</a>
-      <a href="#motion">Motion</a>
+      <a href="#cinema">Cinema</a>
       <a href="#stills">Stills</a>
-      <a href="#downloads">Downloads</a>
+      <a href="#downloads">Download</a>
     </nav>
-    <div class="nav-meta">
-      <span class="chip ok" id="nav-status">Pipeline OK</span>
-      <span class="chip" id="nav-cost"><strong>—</strong></span>
+    <div class="top-actions">
+      <span class="pill live" id="nav-status">Ready</span>
+      <span class="pill" id="nav-cost"><strong>—</strong></span>
+      <a class="lab-link" href="../" id="lab-home">← Lab home</a>
     </div>
   </header>
 
-  <!-- Immersive 3D hero -->
-  <section class="hero" id="world" aria-label="Interactive 3D world">
-    <div class="hero-frame">
-      <canvas id="world-canvas" aria-label="Point cloud of generated room"></canvas>
-      <div class="viewer-status" id="viewer-status">Loading world…</div>
-      <div class="hero-overlay">
-        <div class="hero-copy">
-          <h1>A room, grown from <em>one panorama</em></h1>
-          <p>Drag to orbit · scroll to zoom · right-drag to pan. This is the actual 3DGS reconstruction — not a mockup.</p>
+  <!-- Immersive 3D stage -->
+  <section class="stage" id="world" aria-label="Interactive 3D world">
+    <div class="stage-frame">
+      <canvas id="world-canvas" aria-label="Point cloud of the generated world"></canvas>
+      <div class="stage-vignette" aria-hidden="true"></div>
+      <div class="status-toast" id="viewer-status">Loading world…</div>
+      <div class="stage-copy">
+        <p class="eyebrow"><i></i> Generated world</p>
+        <h1>From one <span>panorama</span><br/>to a room you can orbit</h1>
+        <p>Drag to look around · scroll to zoom · right-drag to pan. Live 3DGS reconstruction — not a mockup.</p>
+      </div>
+      <div class="hud">
+        <div class="hud-panel" role="toolbar" aria-label="Model">
+          <div class="seg" id="model-seg" role="group" aria-label="Point cloud model"></div>
         </div>
-        <div class="viewer-dock" role="toolbar" aria-label="Viewer controls">
-          <div class="dock-group">
-            <div class="seg" id="model-seg" role="group" aria-label="Point cloud model"></div>
-          </div>
-          <div class="dock-group">
-            <label class="range-wrap" for="pt-size">
-              Size
-              <input id="pt-size" type="range" min="0.5" max="12" step="0.1" value="3.5" />
-            </label>
-            <button type="button" class="btn" id="btn-reset">Reset view</button>
-            <button type="button" class="btn" id="btn-auto">Auto-orbit</button>
-            <button type="button" class="btn btn-primary" id="btn-fs">Fullscreen</button>
-          </div>
+        <div class="hud-panel" role="toolbar" aria-label="Controls">
+          <label class="range" for="pt-size">
+            Size
+            <input id="pt-size" type="range" min="0.5" max="12" step="0.1" value="3.5" />
+          </label>
+          <button type="button" class="ctrl" id="btn-reset">Reset</button>
+          <button type="button" class="ctrl" id="btn-auto" aria-pressed="false">Orbit</button>
+          <button type="button" class="ctrl primary" id="btn-fs">Fullscreen</button>
         </div>
       </div>
     </div>
-    <div class="viewer-foot">
-      <span id="viewer-info">—</span>
-      <span id="viewer-fps">—</span>
+    <div class="stage-meta">
+      <span id="viewer-info"><b>model</b> —</span>
+      <span id="viewer-fps">— fps</span>
     </div>
   </section>
 
   <main>
-    <section class="block shell" id="metrics">
-      <p class="section-kicker">Reconstruction quality</p>
-      <h2 class="section-title">How good is the world?</h2>
-      <p class="section-lede">Single-card smoke on RTX-PRO-6000. Metrics from the final 3DGS eval at step 3999.</p>
-      <div class="metrics" id="metrics-grid"></div>
+    <section class="block wrap" id="quality">
+      <p class="kicker">Reconstruction quality</p>
+      <h2 class="title">How solid is this world?</h2>
+      <p class="lede">Single-card smoke on RTX-PRO-6000. Numbers from the final 3DGS eval at step 3999 — higher PSNR / SSIM is better; lower LPIPS is better.</p>
+      <div class="scores" id="scores"></div>
     </section>
 
-    <section class="block shell" id="pipeline">
-      <p class="section-kicker">End-to-end</p>
-      <h2 class="section-title">Five stages, one GPU</h2>
-      <p class="section-lede">From panorama understanding through stereo expansion to Gaussian training — timed and costed on Modal.</p>
-      <div class="pipeline" id="pipeline-grid"></div>
+    <section class="block wrap" id="pipeline">
+      <p class="kicker">End-to-end · one GPU</p>
+      <h2 class="title">Five stages, zero hand-holding</h2>
+      <p class="lede">Panorama understanding → stereo expansion → Gaussian training. Timed and costed on Modal.</p>
+      <div class="rail" aria-hidden="true"></div>
+      <div class="pipeline" id="pipeline"></div>
     </section>
 
-    <section class="block shell" id="motion">
-      <p class="section-kicker">Camera paths</p>
-      <h2 class="section-title">Trajectory · before & after</h2>
-      <p class="section-lede">Left: Stage&nbsp;2 geometric render. Right: Stage&nbsp;3 WorldStereo expansion with temporal consistency.</p>
-      <div class="traj-tabs" id="traj-tabs" role="tablist" aria-label="Trajectory"></div>
+    <section class="block wrap" id="cinema">
+      <p class="kicker">Camera paths</p>
+      <h2 class="title">Trajectory cinema</h2>
+      <p class="lede">Left: Stage 2 geometric render. Right: Stage 3 WorldStereo expansion with temporal consistency.</p>
+      <div class="traj-bar" id="traj-bar" role="tablist" aria-label="Trajectory"></div>
       <div class="compare" id="traj-compare"></div>
     </section>
 
-    <section class="block shell" id="stills">
-      <p class="section-kicker">Frames</p>
-      <h2 class="section-title">Source and render</h2>
-      <p class="section-lede">Input panorama from HY-Pano, the view-0 start frame, and a novel view from the trained 3DGS.</p>
-      <div class="still-grid">
-        <article class="media-card">
-          <div class="head">
-            <h3>Input panorama</h3>
-            <span>HY-Pano · 008</span>
+    <section class="block wrap" id="stills">
+      <p class="kicker">Source & render</p>
+      <h2 class="title">Still frames</h2>
+      <p class="lede">Input panorama from HY-Pano, the view-0 start frame, and a novel view from the trained 3DGS.</p>
+      <div class="bento">
+        <article class="shot wide">
+          <div class="media">
+            <img src="assets/panorama.png" alt="Source equirectangular panorama" loading="lazy" />
           </div>
-          <img src="assets/panorama.png" alt="Source equirectangular panorama of the room" loading="lazy" />
-          <div class="cap">360° source that seeds trajectory generation and stereo expansion.</div>
+          <div class="meta">
+            <h3>Input panorama</h3>
+            <p>360° seed from experiment 008 · HY-Pano</p>
+          </div>
         </article>
-        <div class="still-side">
-          <article class="media-card">
-            <div class="head">
-              <h3>Start frame</h3>
-              <span>view0</span>
-            </div>
+        <article class="shot">
+          <div class="media">
             <img src="assets/start_frame.png" alt="Start frame for view 0" loading="lazy" />
-            <div class="cap">First perspective cut used by the trajectory planner.</div>
-          </article>
-          <article class="media-card">
-            <div class="head">
-              <h3>3DGS val render</h3>
-              <span>step 3999</span>
-            </div>
-            <img src="assets/renders/val_step3999.png" alt="Validation render from trained 3D Gaussian Splatting model" loading="lazy" />
-            <div class="cap">Novel view from the trained Gaussian field.</div>
-          </article>
-        </div>
+          </div>
+          <div class="meta">
+            <h3>Start frame</h3>
+            <p>First perspective cut for trajectory planning</p>
+          </div>
+        </article>
+        <article class="shot">
+          <div class="media">
+            <img src="assets/renders/val_step3999.png" alt="3DGS validation render at step 3999" loading="lazy" />
+          </div>
+          <div class="meta">
+            <h3>3DGS val render</h3>
+            <p>Novel view · step 3999</p>
+          </div>
+        </article>
       </div>
     </section>
 
-    <section class="block shell" id="downloads">
-      <p class="section-kicker">Assets</p>
-      <h2 class="section-title">Take the world with you</h2>
-      <p class="section-lede">Preview cloud for the browser, denser WorldMirror clouds, and the full trained 3DGS PLY.</p>
-      <div class="dl-grid" id="downloads-grid"></div>
+    <section class="block wrap" id="downloads">
+      <p class="kicker">Assets</p>
+      <h2 class="title">Take the world with you</h2>
+      <p class="lede">Preview cloud for the browser, denser WorldMirror clouds, and the full trained 3DGS PLY.</p>
+      <div class="dl-grid" id="downloads"></div>
     </section>
 
-    <section class="block shell" id="notes">
-      <p class="section-kicker">Run notes</p>
-      <h2 class="section-title">What to know</h2>
+    <section class="block wrap" id="notes">
+      <p class="kicker">Run notes</p>
+      <h2 class="title">What to know</h2>
       <ul class="notes" id="notes-list"></ul>
     </section>
   </main>
 
   <footer class="site">
-    <div class="shell">
+    <div class="wrap">
       <div>
         Upstream <a href="https://github.com/Tencent-Hunyuan/HY-World-2.0" target="_blank" rel="noopener">HY-World 2.0</a>
         · experiment <span id="foot-exp">009</span>
@@ -831,6 +949,8 @@
       <div id="foot-scene">scene: —</div>
     </div>
   </footer>
+
+  <a class="fab-home" href="../">← modal-lab</a>
 
   <script type="module">
     import * as THREE from 'three';
@@ -852,29 +972,32 @@
       powerPreference: 'high-performance',
     });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setClearColor(0x050506, 1);
+    renderer.setClearColor(0x04060a, 1);
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x050506, 0.018);
+    scene.fog = new THREE.FogExp2(0x04060a, 0.016);
 
-    const camera = new THREE.PerspectiveCamera(55, 1, 0.01, 200);
-    camera.position.set(1.15, 0.65, 1.7);
+    const camera = new THREE.PerspectiveCamera(52, 1, 0.01, 200);
+    camera.position.set(1.2, 0.7, 1.75);
 
     const controls = new OrbitControls(camera, canvas);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.06;
-    controls.rotateSpeed = 0.85;
-    controls.zoomSpeed = 1.1;
-    controls.panSpeed = 0.75;
+    controls.dampingFactor = 0.055;
+    controls.rotateSpeed = 0.9;
+    controls.zoomSpeed = 1.15;
+    controls.panSpeed = 0.8;
     controls.target.set(0, 0, 0);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.75));
-    const key = new THREE.DirectionalLight(0xffffff, 0.55);
-    key.position.set(2.2, 4.5, 2.5);
+    scene.add(new THREE.AmbientLight(0xfff4e8, 0.7));
+    const key = new THREE.DirectionalLight(0xffe0c2, 0.55);
+    key.position.set(2.4, 4.2, 2.2);
     scene.add(key);
+    const fill = new THREE.DirectionalLight(0x9ad7ff, 0.22);
+    fill.position.set(-3, 1.5, -2);
+    scene.add(fill);
 
-    const grid = new THREE.GridHelper(8, 32, 0x2a2a32, 0x16161c);
-    grid.position.y = -0.5;
+    const grid = new THREE.GridHelper(10, 40, 0x2a3344, 0x141b28);
+    grid.position.y = -0.55;
     scene.add(grid);
 
     let pointsObj = null;
@@ -892,13 +1015,11 @@
       camera.updateProjectionMatrix();
     }
     window.addEventListener('resize', resize);
-    if (window.ResizeObserver) {
-      new ResizeObserver(resize).observe(canvas.parentElement);
-    }
+    if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas.parentElement);
     resize();
 
     function setStatus(msg, isError = false) {
-      statusEl.textContent = msg;
+      statusEl.textContent = msg || '';
       statusEl.classList.toggle('error', !!isError);
       statusEl.classList.toggle('hidden', !msg);
     }
@@ -917,9 +1038,9 @@
       box.getSize(size);
       geometry.translate(-center.x, -center.y, -center.z);
       modelMaxDim = Math.max(size.x, size.y, size.z, 0.2);
-      const dist = modelMaxDim * 1.12;
+      const dist = modelMaxDim * 1.15;
       baseCamDist = dist;
-      camera.position.set(dist * 0.18, dist * 0.24, dist * 0.88);
+      camera.position.set(dist * 0.2, dist * 0.28, dist * 0.9);
       controls.target.set(0, 0, 0);
       controls.minDistance = modelMaxDim * 0.05;
       controls.maxDistance = modelMaxDim * 12;
@@ -927,8 +1048,8 @@
       camera.far = modelMaxDim * 60;
       camera.updateProjectionMatrix();
       controls.update();
-      scene.fog.density = 0.04 / modelMaxDim;
-      grid.scale.setScalar(modelMaxDim * 0.5);
+      scene.fog.density = 0.038 / modelMaxDim;
+      grid.scale.setScalar(modelMaxDim * 0.55);
       grid.position.y = -size.y * 0.42;
     }
 
@@ -936,7 +1057,7 @@
       if (!url) return;
       currentUrl = url;
       setStatus('Loading ' + url.split('/').pop() + '…');
-      infoEl.textContent = 'loading…';
+      infoEl.innerHTML = '<b>model</b> loading…';
       if (pointsObj) {
         scene.remove(pointsObj);
         pointsObj.geometry.dispose();
@@ -951,8 +1072,7 @@
             resolve,
             (xhr) => {
               if (xhr.total) {
-                const pct = Math.round((xhr.loaded / xhr.total) * 100);
-                setStatus(`Loading ${pct}% · ${url.split('/').pop()}`);
+                setStatus(`Loading ${Math.round((xhr.loaded / xhr.total) * 100)}% · ${url.split('/').pop()}`);
               }
             },
             reject,
@@ -963,9 +1083,9 @@
           const n = geometry.getAttribute('position').count;
           const cols = new Float32Array(n * 3);
           for (let i = 0; i < n; i++) {
-            cols[i * 3] = 0.62;
-            cols[i * 3 + 1] = 0.66;
-            cols[i * 3 + 2] = 0.72;
+            cols[i * 3] = 0.72;
+            cols[i * 3 + 1] = 0.68;
+            cols[i * 3 + 2] = 0.58;
           }
           geometry.setAttribute('color', new THREE.BufferAttribute(cols, 3));
         }
@@ -975,7 +1095,7 @@
           vertexColors: true,
           sizeAttenuation: true,
           transparent: true,
-          opacity: 0.94,
+          opacity: 0.95,
           depthWrite: true,
         });
         pointsObj = new THREE.Points(geometry, material);
@@ -983,27 +1103,27 @@
         applyPointSize();
         const n = geometry.getAttribute('position').count;
         setStatus('');
-        infoEl.textContent = `${url.split('/').pop()} · ${n.toLocaleString()} points`;
+        infoEl.innerHTML = `<b>${url.split('/').pop()}</b> · ${n.toLocaleString()} points`;
       } catch (e) {
         console.error(e);
-        setStatus('Failed to load PLY. Serve this folder over HTTP (not file://).', true);
-        infoEl.textContent = 'error';
+        setStatus('Failed to load PLY — serve over HTTP (not file://).', true);
+        infoEl.innerHTML = '<b>error</b>';
       }
     }
 
     ptSize.addEventListener('input', applyPointSize);
     document.getElementById('btn-reset').addEventListener('click', () => {
-      camera.position.set(baseCamDist * 0.18, baseCamDist * 0.24, baseCamDist * 0.88);
+      camera.position.set(baseCamDist * 0.2, baseCamDist * 0.28, baseCamDist * 0.9);
       controls.target.set(0, 0, 0);
       controls.update();
     });
     document.getElementById('btn-auto').addEventListener('click', (e) => {
       autoOrbit = !autoOrbit;
       e.currentTarget.setAttribute('aria-pressed', String(autoOrbit));
-      e.currentTarget.textContent = autoOrbit ? 'Orbiting…' : 'Auto-orbit';
+      e.currentTarget.textContent = autoOrbit ? 'Orbiting' : 'Orbit';
     });
     document.getElementById('btn-fs').addEventListener('click', () => {
-      const el = document.querySelector('.hero');
+      const el = document.querySelector('.stage');
       if (!document.fullscreenElement) el.requestFullscreen?.();
       else document.exitFullscreen?.();
     });
@@ -1014,11 +1134,11 @@
     function tick(t) {
       requestAnimationFrame(tick);
       if (autoOrbit) {
-        const angle = (t * 0.00018) % (Math.PI * 2);
-        const r = baseCamDist * 0.9;
-        camera.position.x = Math.sin(angle) * r * 0.35 + r * 0.15;
-        camera.position.z = Math.cos(angle) * r * 0.75;
-        camera.position.y = baseCamDist * 0.22;
+        const angle = (t * 0.00017) % (Math.PI * 2);
+        const r = baseCamDist * 0.92;
+        camera.position.x = Math.sin(angle) * r * 0.38 + r * 0.12;
+        camera.position.z = Math.cos(angle) * r * 0.78;
+        camera.position.y = baseCamDist * 0.24;
         controls.target.set(0, 0, 0);
       }
       controls.update();
@@ -1035,9 +1155,6 @@
     /* ========== Meta / UI ========== */
     function money(x) {
       return x == null ? '—' : '$' + Number(x).toFixed(2);
-    }
-    function money4(x) {
-      return x == null ? '—' : '$' + Number(x).toFixed(4);
     }
     function num(x, d = 2) {
       return x == null ? '—' : Number(x).toFixed(d);
@@ -1056,15 +1173,13 @@
       return m + 'm ' + r + 's';
     }
 
-    const DEFAULT_MODELS = [
-      { path: 'assets/ply/world_preview.ply', label: '3DGS', note: '350k' },
-      { path: 'assets/ply/global_pcd.ply', label: 'Global', note: 'WM' },
-      { path: 'assets/ply/aligned_pcd.ply', label: 'Dense', note: '2M' },
-    ];
-
     function buildModelSeg(models, defaultPath) {
       modelSeg.innerHTML = '';
-      const list = models?.length ? models : DEFAULT_MODELS;
+      const list = models?.length ? models : [
+        { path: 'assets/ply/world_preview.ply', label: '3DGS' },
+        { path: 'assets/ply/global_pcd.ply', label: 'Global' },
+        { path: 'assets/ply/aligned_pcd.ply', label: 'Dense' },
+      ];
       list.forEach((m, i) => {
         const path = m.path || m;
         const btn = document.createElement('button');
@@ -1090,105 +1205,117 @@
     ];
 
     function renderTraj(id) {
-      const tabs = document.getElementById('traj-tabs');
-      [...tabs.querySelectorAll('button')].forEach((b) => {
+      const bar = document.getElementById('traj-bar');
+      [...bar.querySelectorAll('button')].forEach((b) => {
         b.setAttribute('aria-selected', String(b.dataset.id === id));
       });
-      const base = 'assets/videos/' + id;
       document.getElementById('traj-compare').innerHTML = `
-        <article class="media-card">
-          <div class="head"><h3>Stage 2 · Render</h3><span>${id}</span></div>
-          <video controls playsinline muted loop autoplay src="${base}_render.mp4"></video>
-          <div class="cap">Geometric trajectory render with MoGe depth cues.</div>
+        <article class="vid-card">
+          <header><div>Stage 2 · geometric render</div><span>${id}</span></header>
+          <video src="assets/videos/${id}_render.mp4" controls playsinline loop muted preload="metadata"></video>
+          <footer>Depth-aware splat along the planned camera path.</footer>
         </article>
-        <article class="media-card">
-          <div class="head"><h3>Stage 3 · WorldStereo</h3><span>memory-dmd</span></div>
-          <video controls playsinline muted loop autoplay src="${base}_worldstereo.mp4"></video>
-          <div class="cap">Stereo-expanded video with temporal memory.</div>
+        <article class="vid-card">
+          <header><div>Stage 3 · WorldStereo</div><span>memory-dmd</span></header>
+          <video src="assets/videos/${id}_worldstereo.mp4" controls playsinline loop muted preload="metadata"></video>
+          <footer>Diffusion expansion with temporal consistency.</footer>
         </article>`;
     }
 
-    function buildTrajTabs() {
-      const tabs = document.getElementById('traj-tabs');
-      tabs.innerHTML = '';
+    function buildTrajBar() {
+      const bar = document.getElementById('traj-bar');
+      bar.innerHTML = '';
       TRAJ.forEach((t, i) => {
         const b = document.createElement('button');
         b.type = 'button';
-        b.role = 'tab';
         b.dataset.id = t.id;
         b.textContent = t.label;
+        b.setAttribute('role', 'tab');
         b.setAttribute('aria-selected', String(i === 0));
         b.addEventListener('click', () => renderTraj(t.id));
-        tabs.appendChild(b);
+        bar.appendChild(b);
       });
-      renderTraj(TRAJ[0].id);
+      renderTraj('traj0');
     }
 
-    fetch('assets/meta.json')
-      .then((r) => r.json())
-      .then((m) => {
-        const g = m.gs || {};
-        document.getElementById('nav-cost').innerHTML = `<strong>${money(m.total_est_cost_usd)}</strong> · ${fmtSec(m.total_seconds_logged)}`;
-        document.getElementById('foot-scene').textContent =
-          `scene: ${m.scene || '—'} · from ${m.from_008 || '—'} · ${m.gpu || ''}`;
-        document.getElementById('foot-exp').textContent = m.experiment || '009';
+    async function boot() {
+      let meta = null;
+      try {
+        meta = await (await fetch('assets/meta.json', { cache: 'no-cache' })).json();
+      } catch (e) {
+        console.warn('meta.json missing', e);
+      }
 
-        document.getElementById('metrics-grid').innerHTML = [
-          { label: 'PSNR', value: num(g.psnr, 2), sub: 'higher is better' },
-          { label: 'SSIM', value: num(g.ssim, 3), sub: 'LPIPS ' + num(g.lpips, 3) },
-          { label: 'Gaussians', value: g.num_GS != null ? (g.num_GS / 1e6).toFixed(2) + 'M' : '—', sub: (m.max_steps || 4000) + ' steps' },
-          { label: 'GPU cost', value: money(m.total_est_cost_usd), sub: (m.gpu || '') + ' · ' + fmtSec(m.total_seconds_logged) },
-        ]
-          .map(
-            (x) =>
-              `<div class="metric"><div class="label">${x.label}</div><div class="value">${x.value}</div><div class="sub">${x.sub}</div></div>`,
-          )
-          .join('');
+      const gs = meta?.gs || {};
+      const cost = meta?.total_est_cost_usd;
+      const secs = meta?.total_seconds_logged;
 
-        const stages = m.stages || {};
-        document.getElementById('pipeline-grid').innerHTML = Object.keys(stages)
-          .sort((a, b) => a - b)
-          .map((k) => {
-            const s = stages[k];
-            return `<article class="stage-card">
-              <div class="idx">${k}</div>
-              <h3>${s.label || 'Stage ' + k}</h3>
-              <p>${s.detail || ''}</p>
-              <div class="meta-row">
-                <span class="ok">${s.ok === true ? 'OK' : s.ok === false ? 'FAIL' : '—'}</span>
-                <span>${fmtSec(s.seconds)} · ${money4(s.est_cost_usd)}</span>
-              </div>
-            </article>`;
-          })
-          .join('');
+      document.getElementById('nav-cost').innerHTML = `<strong>${money(cost)}</strong> · ${fmtSec(secs)}`;
+      document.getElementById('foot-exp').textContent = meta?.experiment || '009-hy-worldgen';
+      document.getElementById('foot-scene').textContent =
+        `scene: ${meta?.scene || '—'} · ${meta?.gpu || '—'} · nframe ${meta?.nframe ?? '—'}`;
 
-        document.getElementById('notes-list').innerHTML = (m.notes || [])
-          .map((n) => `<li>${n}</li>`)
-          .join('');
+      // scores
+      const scores = [
+        { label: 'PSNR', val: num(gs.psnr, 2), sub: 'dB · higher is better' },
+        { label: 'SSIM', val: num(gs.ssim, 3), sub: 'structural similarity' },
+        { label: 'LPIPS', val: num(gs.lpips, 3), sub: 'perceptual · lower better' },
+        { label: 'Gaussians', val: gs.num_GS ? (gs.num_GS / 1e6).toFixed(2) + 'M' : '—', sub: 'trained primitives' },
+      ];
+      document.getElementById('scores').innerHTML = scores.map((s) => `
+        <article class="score">
+          <label>${s.label}</label>
+          <div class="val">${s.val}</div>
+          <div class="sub">${s.sub}</div>
+        </article>`).join('');
 
-        const dls = m.downloads || [];
-        document.getElementById('downloads-grid').innerHTML = dls
-          .map(
-            (d) =>
-              `<a class="dl-item" href="${d.path}" download>
-                <div><p class="name">${d.name}</p><p class="desc">${d.desc || ''}</p></div>
-                <span class="size">${fmtBytes(d.bytes)}</span>
-              </a>`,
-          )
-          .join('');
+      // pipeline
+      const stages = meta?.stages || {};
+      const order = ['1', '2', '3', '4', '5'];
+      document.getElementById('pipeline').innerHTML = order.map((k) => {
+        const s = stages[k] || {};
+        return `
+          <article class="step">
+            <div class="idx">STAGE 0${k}</div>
+            <h3>${s.label || '—'}</h3>
+            <p>${s.detail || ''}</p>
+            <div class="foot">
+              <span>${fmtSec(s.seconds)}</span>
+              <span>${money(s.est_cost_usd)}</span>
+            </div>
+          </article>`;
+      }).join('');
 
-        const models = (m.viewer && m.viewer.models) || DEFAULT_MODELS;
-        const def = (m.viewer && m.viewer.default) || models[0].path || models[0];
-        buildModelSeg(models, def);
-      })
-      .catch((e) => {
-        console.error(e);
-        buildModelSeg(DEFAULT_MODELS, DEFAULT_MODELS[0].path);
-        setStatus('meta.json missing — viewer still works', false);
-        setTimeout(() => setStatus(''), 2000);
-      });
+      // downloads
+      const dls = meta?.downloads || [];
+      document.getElementById('downloads').innerHTML = dls.map((d) => `
+        <a class="dl" href="${d.path}" download>
+          <div class="left">
+            <div class="name">${d.name}</div>
+            <div class="desc">${d.desc || ''}</div>
+          </div>
+          <div class="right">
+            <div>${fmtBytes(d.bytes)}</div>
+            <div class="get">Get</div>
+          </div>
+        </a>`).join('');
 
-    buildTrajTabs();
+      // notes
+      const notes = meta?.notes || [];
+      document.getElementById('notes-list').innerHTML = notes.map((n) => `<li>${n}</li>`).join('');
+
+      buildModelSeg(meta?.viewer?.models, meta?.viewer?.default || 'assets/ply/world_preview.ply');
+      buildTrajBar();
+
+      // fix relative lab home when under pages /009-hy-worldgen/
+      const home = document.getElementById('lab-home');
+      if (location.pathname.includes('/009-hy-worldgen')) {
+        home.href = '../';
+        document.querySelector('.fab-home').href = '../';
+      }
+    }
+
+    boot();
   </script>
 </body>
 </html>

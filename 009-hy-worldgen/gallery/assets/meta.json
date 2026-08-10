@@ -1,7 +1,7 @@
 {
   "experiment": "009-hy-worldgen",
-  "title": "HY-World 2.0 · Generated World",
-  "subtitle": "Panorama → trajectory → WorldStereo → WorldMirror → 3DGS",
+  "title": "HY-World 2.0",
+  "subtitle": "One panorama → a navigable 3D world",
   "scene": "scene_from_008",
   "from_008": "smoke_qwen",
   "gpu": "RTX-PRO-6000",
@@ -10,57 +10,54 @@
   "wonder_topk": 1,
   "max_steps": 4000,
   "worldstereo": "worldstereo-memory-dmd",
-  "vlm": "Qwen3-VL-8B-Instruct (HF transformers)",
+  "vlm": "Qwen3-VL-8B-Instruct",
   "stages": {
     "1": {
       "ok": true,
-      "seconds": 60.11,
-      "est_cost_usd": 0.0506,
-      "label": "Trajectory generate",
-      "detail": "Qwen3-VL nav + captions",
-      "ts": "2026-08-10T15:14:24.201433+00:00"
+      "seconds": 33.34,
+      "est_cost_usd": 0.0281,
+      "label": "Trajectory",
+      "detail": "Plan camera paths from the panorama"
     },
     "2": {
       "ok": true,
-      "seconds": 395.33,
-      "est_cost_usd": 0.3329,
-      "label": "Trajectory render",
-      "detail": "MoGe depth + captioned flythroughs",
-      "ts": "2026-08-10T15:15:35.304615+00:00"
+      "seconds": 336.14,
+      "est_cost_usd": 0.283,
+      "label": "Render",
+      "detail": "MoGe depth + geometric flythroughs + captions"
     },
     "3": {
       "ok": true,
-      "seconds": 93.19,
-      "est_cost_usd": 0.0785,
-      "label": "WorldStereo + WorldMirror",
-      "detail": "Expand frames · align geometry",
-      "ts": "2026-08-10T18:20:53.308235+00:00"
+      "seconds": 127.02,
+      "est_cost_usd": 0.1069,
+      "label": "Expand",
+      "detail": "WorldStereo-dmd + WorldMirror alignment"
     },
     "4": {
       "ok": true,
-      "seconds": 61.6,
-      "est_cost_usd": 0.0519,
-      "label": "GS data",
-      "detail": "Cameras · depths · normals",
-      "ts": "2026-08-10T18:23:02.780259+00:00"
+      "seconds": 65.5,
+      "est_cost_usd": 0.0551,
+      "label": "Pack",
+      "detail": "Cameras · depths · normals for 3DGS"
     },
     "5": {
       "ok": true,
-      "seconds": 348.41,
-      "est_cost_usd": 0.2934,
-      "label": "3DGS train",
-      "detail": "4000 steps · disable_viewer",
-      "ts": "2026-08-10T18:30:45.910234+00:00"
+      "seconds": 255.48,
+      "est_cost_usd": 0.2151,
+      "label": "Train",
+      "detail": "3DGS · 4000 steps · single GPU"
     }
   },
-  "total_seconds_logged": 958.64,
-  "total_est_cost_usd": 0.8073,
+  "total_seconds_logged": 817.48,
+  "total_est_cost_usd": 0.6881999999999999,
   "gs": {
-    "psnr": 20.021,
-    "ssim": 0.7279,
-    "lpips": 0.185,
-    "num_GS": 1359785,
-    "eval_s_per_image": 0.094
+    "psnr": 31.33,
+    "ssim": 0.8631,
+    "lpips": 0.1581,
+    "num_GS": 1506020,
+    "eval_s_per_image": 0.0372,
+    "train_mem_gb": 2.24,
+    "train_seconds": 205.8
   },
   "artifacts": {
     "panorama": "assets/panorama.png",
@@ -91,23 +88,23 @@
       {
         "id": "preview",
         "path": "assets/ply/world_preview.ply",
-        "label": "3DGS preview",
+        "label": "3DGS",
         "points": 350000,
-        "note": "Recommended · SH-DC colors"
+        "note": "Web preview · SH colors"
       },
       {
         "id": "global",
         "path": "assets/ply/global_pcd.ply",
-        "label": "WorldMirror global",
+        "label": "Global",
         "points": 180000,
-        "note": "Aligned reconstruction"
+        "note": "WorldMirror cloud"
       },
       {
         "id": "aligned",
         "path": "assets/ply/aligned_pcd.ply",
-        "label": "Aligned dense",
+        "label": "Dense",
         "points": 2000000,
-        "note": "Heavier · more detail"
+        "note": "Aligned dense · heavier"
       }
     ]
   },
@@ -115,33 +112,34 @@
     {
       "path": "assets/ply/world_preview.ply",
       "name": "world_preview.ply",
-      "desc": "Web preview · 350k pts",
-      "bytes": 5250222
+      "desc": "Browser preview · 350k pts",
+      "bytes": 5250180
     },
     {
       "path": "assets/ply/global_pcd.ply",
       "name": "global_pcd.ply",
-      "desc": "WM global cloud",
-      "bytes": 2915907
+      "desc": "WorldMirror global",
+      "bytes": 2923011
     },
     {
       "path": "assets/ply/aligned_pcd.ply",
       "name": "aligned_pcd.ply",
-      "desc": "WM aligned dense",
+      "desc": "Aligned dense cloud",
       "bytes": 32000244
     },
     {
       "path": "assets/ply/point_cloud_3999.ply",
       "name": "point_cloud_3999.ply",
       "desc": "Full 3DGS · step 3999",
-      "bytes": 76039459
+      "bytes": 84337483
     }
   ],
   "notes": [
-    "Single RTX-PRO-6000 smoke: 1 view × 3 traj, nframe=21",
-    "Stage3 WorldMirror uses SDPA (no flash_attn on Modal)",
-    "Stage5 --disable_viewer so jobs exit cleanly",
-    "VLM default: HF transformers server (vLLM engine core was unstable)"
+    "Single RTX-PRO-6000 smoke · 1 view · 3 trajectories · nframe=21",
+    "VLM: official Qwen3-VL-8B via HF transformers server (vLLM skipped for stability)",
+    "Stage3 WorldMirror SDPA path · pure-torch point splat (no pytorch3d)",
+    "Stage5 max_steps=4000 · val PSNR 31.3 / SSIM 0.86 / LPIPS 0.16"
   ],
-  "built_at": "2026-08-10T18:39:13Z"
+  "built_at": "2026-08-10T19:20:00Z",
+  "run_id": "ap-ex0fuL8OzEAaqwAjcDqZkL"
 }
