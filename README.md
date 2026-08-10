@@ -2,6 +2,17 @@
 
 Modal 实验台：按 `NNN-topic` 编号做可复现实验。
 
+## Gallery (GitHub Pages)
+
+可爱实验橱窗（Actions 自动部署）：
+
+**https://xiaoqianran.github.io/modal-lab/**
+
+- 首页：筛选 / 收藏 / 随便逛逛
+- 009 主角馆：https://xiaoqianran.github.io/modal-lab/009-hy-worldgen/
+
+推送到 `main` 且改动 `pages/**` 或 `**/gallery/**` 时，`.github/workflows/pages.yml` 会重新 build → Pages。
+
 ## 结构
 
 ```text
