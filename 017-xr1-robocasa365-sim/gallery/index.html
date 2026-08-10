@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>017 · RoboCasa365 Sim Smoke</title>
+  <title>017 · RoboCasa365 Sim · h100 closed-loop</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -23,7 +23,7 @@
     .wrap { width:min(1000px, calc(100% - 2rem)); margin:0 auto; padding:1.5rem 0 3rem }
     .eyebrow { color:var(--ok); font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; font-weight:600 }
     h1 { margin:.3rem 0 .5rem; font-size:clamp(1.5rem,3vw,2.1rem); letter-spacing:-.03em }
-    .lede { color:var(--muted); max-width:60ch }
+    .lede { color:var(--muted); max-width:62ch }
     .pills { display:flex; flex-wrap:wrap; gap:.4rem; margin:1rem 0 1.25rem }
     .pill { font-family:var(--mono); font-size:.74rem; padding:.28rem .6rem; border-radius:999px; border:1px solid var(--line); color:var(--muted) }
     .pill strong { color:var(--fg); font-weight:500 }
@@ -47,67 +47,60 @@
 </head>
 <body>
   <div class="wrap">
-    <div class="eyebrow">modal-lab · 017 · sim smoke</div>
+    <div class="eyebrow">modal-lab · 017 · XR-1 closed-loop</div>
     <h1>RoboCasa365 仿真回放</h1>
     <p class="lede">
-      Modal 上 MuJoCo + RoboCasa 跑出来的 <strong>真实仿真视频</strong>（不是 015 的合成色块）。
-      当前这一条是<strong>随机策略</strong> 1 局；XR-1 策略闭环会另存为 policy 视频。
+      Modal · MuJoCo + RoboCasa + XR-1。默认 <strong>L40S</strong> · <strong>horizon=100</strong>。
+      下面先看<strong>像样闭环</strong>，再对照随机。
     </p>
-    <div class="pills">
-      <span class="pill ok">status: <strong>success</strong></span>
-      <span class="pill">mode: <strong>random</strong></span>
-      <span class="pill">task: <strong>CloseBlenderLid</strong></span>
-      <span class="pill">steps: <strong>60</strong></span>
-      <span class="pill">gpu: <strong>A100-40GB</strong></span>
-      <span class="pill">wall: <strong>1029.04s</strong></span>
-      <span class="pill">cost: <strong>$0.5999</strong></span>
-      <span class="pill">video: <strong>214507 B</strong></span>
-    </div>
 
-    <div class="card">
-      <h2>随机策略 episode · CloseBlenderLid</h2>
-      <video controls autoplay loop muted playsinline src="episode.mp4"></video>
+    <div class="card" id="policy">
+      <h2>XR-1 闭环 · CloseBlenderLid · horizon=100</h2>
+      <div class="pills">
+        <span class="pill ok">pipeline: <strong>OK</strong></span>
+        <span class="pill">gpu: <strong>L40S</strong></span>
+        <span class="pill">wall: <strong>88s</strong></span>
+        <span class="pill">cost: <strong>$0.048</strong></span>
+        <span class="pill">frames: <strong>101</strong></span>
+        <span class="pill">infer: <strong>7× · 3.0s</strong></span>
+        <span class="pill">task: <strong>fail</strong></span>
+      </div>
+      <video controls autoplay loop muted playsinline src="data/policy_episode_h100.mp4"></video>
       <p class="note">
-        随机乱动，任务大概率失败（本局 success rollouts = 0）。
-        形式就是这样：<code>.mp4</code> 回放 + JSON 指标。接 XR-1 后动作会「像在干活」，而不是乱抖。
+        三路相机 → 模型 → 12D 动作 → 仿真 100 步。任务未完成（单 seed）；链路 error=null。
+        meta：<code>data/meta_policy_h100.json</code>
       </p>
     </div>
 
     <div class="card">
-      <h2>时间 / 费用说明</h2>
+      <h2>对照 · 随机策略 60 步</h2>
+      <div class="pills">
+        <span class="pill">mode: <strong>random</strong></span>
+        <span class="pill">gpu: <strong>A100-40GB</strong>（早期）</span>
+        <span class="pill">wall: <strong>1029s</strong>（含首次资产）</span>
+        <span class="pill">cost: <strong>$0.60</strong></span>
+      </div>
+      <video controls loop muted playsinline src="data/CloseBlenderLid_random.mp4"></video>
+      <p class="note">随机乱动证明仿真能出 mp4，不是策略质量参考。</p>
+    </div>
+
+    <div class="card">
+      <h2>时间 / 费用（资产就绪后）</h2>
       <div class="grid">
-        <div class="stat"><div class="k">本次 wall（含首次下资产）</div><div class="v">1029.04 s ≈ 17.2 min</div></div>
-        <div class="stat"><div class="k">估费（GPU 秒）</div><div class="v">$0.5999</div></div>
-        <div class="stat"><div class="k">资产体积</div><div class="v">~24 GB on volume</div></div>
-        <div class="stat"><div class="k">后续再跑</div><div class="v">资产复用 → 通常几分钟 / <$0.3</div></div>
+        <div class="stat"><div class="k">h=100 闭环</div><div class="v">~88 s · $0.05</div></div>
+        <div class="stat"><div class="k">h=20 早期 smoke</div><div class="v">~6 min · $0.20</div></div>
+        <div class="stat"><div class="k">VRAM</div><div class="v">~10.5 GB / L40S</div></div>
+        <div class="stat"><div class="k">资产</div><div class="v">Volume models_assets</div></div>
       </div>
       <p class="note" style="margin-top:.8rem">
-        完整 2500 局官方评测：数小时～数天，常 $50–500+，本实验不做。
-        官方 smoke：1 任务 × horizon 20。
+        完整 2500 局不做。详情见 <code>RESULTS.md</code>。
       </p>
-    </div>
-
-    <div class="card" id="policy-slot">
-      <h2>XR-1 像样闭环 · horizon=100 · L40S</h2>
-      <video controls autoplay loop muted playsinline src="data/policy_episode_h100.mp4"></video>
-      <p class="note">101 帧 · 88s · ~$0.05 · 资产 volume 复用 · 任务未完成（单 seed）。</p>
     </div>
 
     <footer>
-      017-xr1-robocasa365-sim · 016 是 MusicGen，仿真是 017 ·
+      017-xr1-robocasa365-sim · default L40S · horizon=100 ·
       <a href="https://github.com/xiaoqianran/modal-lab/tree/main/017-xr1-robocasa365-sim">repo</a>
     </footer>
   </div>
-  <script>
-    // if policy video exists, show it
-    fetch('data/policy_episode.mp4', { method:'HEAD' }).then(r => {
-      if (r.ok) {
-        document.getElementById('policy-slot').innerHTML = `
-          <h2>XR-1 策略闭环 episode</h2>
-          <video controls autoplay loop muted playsinline src="data/policy_episode.mp4"></video>
-          <p class="note">模型看仿真相机 → 吐动作 → 仿真执行 → 录成视频。</p>`;
-      }
-    }).catch(()=>{});
-  </script>
 </body>
 </html>
