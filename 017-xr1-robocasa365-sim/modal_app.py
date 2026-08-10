@@ -30,6 +30,17 @@ DEFAULT_GPU = "L40S"
 DEFAULT_TASK = "CloseBlenderLid"
 # Longer than official smoke (20) so the arm has a real chance to finish.
 DEFAULT_POLICY_HORIZON = 100
+# Official target50 often uses task horizons 450–900+; CBL successes need ~236+ steps.
+DEFAULT_EVAL_HORIZON = 200
+DEFAULT_EVAL_LONG_HORIZON = 500
+# 5 tasks × 5 seeds mini-eval (mix of easy + CBL)
+MINI_EVAL_TASKS = (
+    "OpenStandMixerHead",      # validated 5/5 @ h=200
+    "TurnOnElectricKettle",    # validated 3/5
+    "OpenDrawer",              # high official SR
+    "TurnOnMicrowave",         # mid official SR
+    "CloseBlenderLid",         # hard; long track
+)
 ROBOT_TYPE = "robocasa365"
 STATE_DIM = 60
 ACTION_DIM = 12
@@ -58,7 +69,7 @@ VOLUME_OUTPUTS = "modal-lab-xr1-robocasa365-sim-outputs"
 CACHE_FULL_ASSETS = os.environ.get("CACHE_FULL_ASSETS", "0") == "1"
 
 DOWNLOAD_TIMEOUT = 3 * 60 * 60
-SIM_TIMEOUT = 3 * 60 * 60
+SIM_TIMEOUT = 5 * 60 * 60
 
 GPU_PRICE_PER_SEC = {
     "T4": 0.000164,
@@ -1000,6 +1011,337 @@ def smoke_policy_fn(
     return meta
 
 
+
+def _run_policy_episode(
+    *,
+    env,
+    processor,
+    model,
+    task: str,
+    instruction: str | None,
+    horizon: int,
+    episode_seed: int,
+    crop_ratio: float,
+    num_denoise_steps: int,
+    save_video_path: Path | None,
+    replan_steps: int = REPLAN_STEPS,
+) -> dict[str, Any]:
+    """One closed-loop episode. Caller owns env create/close and model load."""
+    import collections
+    import numpy as np
+    import imageio.v2 as imageio
+
+    observation, _ = env.reset(seed=episode_seed)
+    if instruction is None:
+        instruction = observation.get(
+            "annotation.human.task_description",
+            f"perform the task {task}",
+        )
+    if not isinstance(instruction, str):
+        instruction = str(instruction)
+
+    queue_length = (OBS_HISTORY - 1) * OBS_INTERVAL + 1
+    image_queues = {key: collections.deque(maxlen=queue_length) for key in CAMERA_KEYS}
+    state_queue: collections.deque = collections.deque(maxlen=queue_length)
+
+    def _push_obs(obs):
+        for key in CAMERA_KEYS:
+            if key in obs:
+                image_queues[key].append(np.ascontiguousarray(obs[key], dtype=np.uint8))
+        state_queue.append(_observation_to_state(obs))
+
+    _push_obs(observation)
+    video_frames = [_make_video_frame(observation)] if save_video_path is not None else []
+    action_plan: collections.deque = collections.deque()
+    success = False
+    steps = 0
+    infer_times: list[float] = []
+    err = None
+    success_step = None
+
+    try:
+        while steps < horizon:
+            if not action_plan:
+                for key in CAMERA_KEYS:
+                    while len(image_queues[key]) < queue_length:
+                        image_queues[key].appendleft(image_queues[key][0])
+                while len(state_queue) < queue_length:
+                    state_queue.appendleft(state_queue[0])
+                states = _sample_history(state_queue, OBS_HISTORY, OBS_INTERVAL)
+                images = {
+                    key: _sample_history(image_queues[key], OBS_HISTORY, OBS_INTERVAL)
+                    for key in CAMERA_KEYS
+                }
+                it0 = time.time()
+                chunk = _infer_actions(
+                    processor,
+                    model,
+                    states,
+                    images,
+                    instruction,
+                    crop_ratio,
+                    num_steps=num_denoise_steps,
+                )
+                infer_times.append(round(time.time() - it0, 3))
+                for a in chunk[:replan_steps]:
+                    action_plan.append(a)
+
+            policy_action = np.asarray(action_plan.popleft(), dtype=np.float32)
+            if policy_action.shape[0] < 12:
+                pad = np.zeros(12, dtype=np.float32)
+                pad[: policy_action.shape[0]] = policy_action
+                policy_action = pad
+
+            from robocasa.utils.env_utils import convert_action
+
+            observation, _, done, truncated, info = env.step(
+                convert_action(policy_action[:12])
+            )
+            steps += 1
+            _push_obs(observation)
+            if bool(info.get("success", False)):
+                success = True
+                success_step = steps
+            if save_video_path is not None:
+                video_frames.append(_make_video_frame(observation))
+            if success or done or truncated:
+                break
+    except Exception as e:  # noqa: BLE001
+        err = repr(e)
+
+    video_bytes = 0
+    if save_video_path is not None and video_frames:
+        save_video_path.parent.mkdir(parents=True, exist_ok=True)
+        imageio.mimsave(str(save_video_path), video_frames, fps=20)
+        video_bytes = save_video_path.stat().st_size if save_video_path.is_file() else 0
+
+    return {
+        "task": task,
+        "seed": episode_seed,
+        "instruction": instruction,
+        "horizon": horizon,
+        "steps": steps,
+        "success": success,
+        "success_step": success_step,
+        "error": err,
+        "infer_times_s": infer_times,
+        "infer_total_s": round(sum(infer_times), 3) if infer_times else 0.0,
+        "infer_count": len(infer_times),
+        "video_frames": len(video_frames),
+        "video_bytes": video_bytes,
+        "video": str(save_video_path.relative_to(OUTPUTS_MOUNT))
+        if save_video_path is not None and save_video_path.is_file()
+        else None,
+        "pipeline_ok": err is None,
+    }
+
+
+
+@app.function(
+    image=sim_image,
+    gpu=DEFAULT_GPU,
+    volumes={
+        WEIGHTS_MOUNT: weights_vol,
+        ASSETS_MOUNT: assets_vol,
+        OUTPUTS_MOUNT: outputs_vol,
+    },
+    timeout=SIM_TIMEOUT,
+    memory=49152,
+    cpu=4,
+)
+def eval_mini_fn(
+    tasks_csv: str = "",
+    num_seeds: int = 5,
+    base_seed: int = 7,
+    horizon: int = DEFAULT_EVAL_HORIZON,
+    long_horizon: int = DEFAULT_EVAL_LONG_HORIZON,
+    long_task: str = "CloseBlenderLid",
+    run_long_track: bool = True,
+    split: str = "pretrain",
+    crop_ratio: float = 0.95,
+    gpu_label: str = DEFAULT_GPU,
+    run_name: str = "",
+    attn: str = "sdpa",
+    num_denoise_steps: int = 5,
+    save_every_video: bool = True,
+) -> dict[str, Any]:
+    """5×N mini-eval + optional long-horizon track for task success.
+
+    1) grid: tasks × seeds @ horizon (default 200)
+    2) long: long_task × seeds @ long_horizon (default CBL×5 @ 500)
+       Official CBL successes need ~236–870 steps; 200 is often too short.
+    """
+    import gymnasium as gym
+    import robocasa  # noqa: F401
+
+    t0 = time.time()
+    tasks = [t.strip() for t in (tasks_csv or ",".join(MINI_EVAL_TASKS)).split(",") if t.strip()]
+    seeds = [base_seed + i for i in range(num_seeds)]
+
+    print(f"==> eval_mini tasks={tasks} seeds={seeds} h={horizon} long_h={long_horizon}", flush=True)
+    assets_info = _download_assets_impl(force=False)
+    if not _model_ready(MODEL_DIR):
+        return {"success": False, "error": "weights missing"}
+
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    name = run_name or f"eval_mini_h{horizon}_{stamp}"
+    out_dir = Path(OUTPUTS_MOUNT) / "runs" / name
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    os.environ.setdefault("MUJOCO_GL", "egl")
+    smi_before = _nvidia_smi()
+    processor, model, attn_used = _load_policy(MODEL_DIR, attn=attn)
+    load_s = round(time.time() - t0, 2)  # includes assets; refined below
+    # re-time load only approximately
+    load_s = round(time.time() - t0, 2)
+
+    episodes: list[dict[str, Any]] = []
+    task_stats: dict[str, Any] = {}
+
+    def _run_grid(task_list: list[str], h: int, track: str):
+        nonlocal episodes
+        for task in task_list:
+            task_dir = out_dir / track / task
+            task_dir.mkdir(parents=True, exist_ok=True)
+            successes = 0
+            task_eps = []
+            for ep_i, seed in enumerate(seeds):
+                print(f"==> [{track}] {task} seed={seed} h={h}", flush=True)
+                env = None
+                try:
+                    env = gym.make(f"robocasa/{task}", split=split, seed=seed)
+                    vid = None
+                    if save_every_video or ep_i == 0:
+                        vid = task_dir / f"episode_{ep_i:03d}_seed_{seed}.mp4"
+                    ep = _run_policy_episode(
+                        env=env,
+                        processor=processor,
+                        model=model,
+                        task=task,
+                        instruction=None,
+                        horizon=h,
+                        episode_seed=seed,
+                        crop_ratio=crop_ratio,
+                        num_denoise_steps=num_denoise_steps,
+                        save_video_path=vid,
+                    )
+                    ep["track"] = track
+                    ep["episode_index"] = ep_i
+                    if ep.get("success"):
+                        successes += 1
+                        print(f"   SUCCESS step={ep.get('success_step')}", flush=True)
+                    else:
+                        print(
+                            f"   fail steps={ep.get('steps')} err={ep.get('error')}",
+                            flush=True,
+                        )
+                    task_eps.append(ep)
+                    episodes.append(ep)
+                    # intermediate commit so partial results survive
+                    if (len(episodes) % 3) == 0:
+                        outputs_vol.commit()
+                except Exception as e:  # noqa: BLE001
+                    ep = {
+                        "task": task,
+                        "seed": seed,
+                        "track": track,
+                        "horizon": h,
+                        "success": False,
+                        "pipeline_ok": False,
+                        "error": repr(e),
+                        "steps": 0,
+                    }
+                    task_eps.append(ep)
+                    episodes.append(ep)
+                    print(f"   EXCEPTION {e!r}", flush=True)
+                finally:
+                    if env is not None:
+                        try:
+                            env.close()
+                        except Exception:
+                            pass
+            n = len(task_eps)
+            task_stats[f"{track}/{task}"] = {
+                "task": task,
+                "track": track,
+                "horizon": h,
+                "num_episodes": n,
+                "successes": successes,
+                "success_rate": round(successes / n, 4) if n else 0.0,
+                "episodes": task_eps,
+            }
+
+    _run_grid(tasks, horizon, "grid_h" + str(horizon))
+    if run_long_track and long_task:
+        _run_grid([long_task], long_horizon, "long_h" + str(long_horizon))
+
+    # aggregate
+    grid_eps = [e for e in episodes if str(e.get("track", "")).startswith("grid_")]
+    long_eps = [e for e in episodes if str(e.get("track", "")).startswith("long_")]
+    def _sr(eps):
+        ok = sum(1 for e in eps if e.get("success"))
+        n = len(eps)
+        return ok, n, round(ok / n, 4) if n else 0.0
+
+    g_ok, g_n, g_sr = _sr(grid_eps)
+    l_ok, l_n, l_sr = _sr(long_eps)
+    a_ok, a_n, a_sr = _sr(episodes)
+
+    wall = round(time.time() - t0, 2)
+    summary = {
+        "success": True,
+        "mode": "eval_mini",
+        "run_name": name,
+        "gpu": gpu_label,
+        "attn": attn_used,
+        "split": split,
+        "tasks": tasks,
+        "seeds": seeds,
+        "horizon_grid": horizon,
+        "horizon_long": long_horizon if run_long_track else None,
+        "long_task": long_task if run_long_track else None,
+        "assets_source": assets_info.get("source") or assets_info.get("reason"),
+        "grid": {"successes": g_ok, "episodes": g_n, "success_rate": g_sr},
+        "long": {"successes": l_ok, "episodes": l_n, "success_rate": l_sr},
+        "overall": {"successes": a_ok, "episodes": a_n, "success_rate": a_sr},
+        "per_task": task_stats,
+        "episodes": episodes,
+        "vram_before": smi_before,
+        "vram_after": _nvidia_smi(),
+        "wall_s": wall,
+        "cost_est_usd": _estimate_cost(gpu_label, wall),
+        "utc": stamp,
+        "note": (
+            f"Mini-eval {len(tasks)}×{num_seeds} @ h={horizon}; "
+            f"long track {long_task}×{num_seeds} @ h={long_horizon}. "
+            "Official CBL horizon=900; successes typically ≥236 steps."
+        ),
+    }
+    (out_dir / "summary.json").write_text(
+        json.dumps(summary, indent=2, default=str), encoding="utf-8"
+    )
+    # compact table for README
+    lines = [
+        f"# eval_mini {name}",
+        f"GPU={gpu_label} wall={wall}s cost≈${summary['cost_est_usd']}",
+        f"GRID h={horizon}: {g_ok}/{g_n} = {g_sr:.1%}",
+        f"LONG h={long_horizon}: {l_ok}/{l_n} = {l_sr:.1%}",
+        "",
+        "| track/task | h | succ | n | SR |",
+        "|---|---:|---:|---:|---:|",
+    ]
+    for k, v in task_stats.items():
+        lines.append(
+            f"| {k} | {v['horizon']} | {v['successes']} | {v['num_episodes']} | {v['success_rate']:.1%} |"
+        )
+    (out_dir / "SUMMARY.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    outputs_vol.commit()
+    print(json.dumps({k: summary[k] for k in summary if k not in ('episodes','per_task')}, indent=2), flush=True)
+    print((out_dir / "SUMMARY.md").read_text(), flush=True)
+    return summary
+
+
+
 @app.local_entrypoint()
 def main(
     action: str = "status",
@@ -1012,6 +1354,11 @@ def main(
     split: str = "pretrain",
     run_name: str = "",
     attn: str = "sdpa",
+    tasks_csv: str = "",
+    num_seeds: int = 5,
+    long_horizon: int = DEFAULT_EVAL_LONG_HORIZON,
+    long_task: str = "CloseBlenderLid",
+    run_long_track: bool = True,
 ) -> None:
     action = action.strip().lower()
     if action == "status":
@@ -1056,6 +1403,27 @@ def main(
         if not r.get("success"):
             raise SystemExit(1)
         return
+    if action in {"eval-mini", "eval_mini", "mini"}:
+        fn = eval_mini_fn
+        if gpu != DEFAULT_GPU:
+            fn = eval_mini_fn.with_options(gpu=gpu)
+        r = fn.remote(
+            tasks_csv=tasks_csv,
+            num_seeds=num_seeds,
+            base_seed=seed,
+            horizon=horizon,
+            long_horizon=long_horizon,
+            long_task=long_task,
+            run_long_track=run_long_track,
+            split=split,
+            gpu_label=gpu,
+            run_name=run_name,
+            attn=attn,
+        )
+        print(json.dumps({k: r.get(k) for k in ("success","grid","long","overall","wall_s","cost_est_usd","run_name") if isinstance(r, dict)}, indent=2, default=str))
+        if not (isinstance(r, dict) and r.get("success")):
+            raise SystemExit(1)
+        return
     raise SystemExit(
-        "unknown action; use status|download-weights|download-assets|smoke-random|smoke-policy"
+        "unknown action; use status|download-weights|download-assets|smoke-random|smoke-policy|eval-mini"
     )

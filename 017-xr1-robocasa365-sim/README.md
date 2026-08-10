@@ -66,6 +66,7 @@ python main.py 017 download-weights   # 可与 015 共用 weights Volume
 python main.py 017 download-assets    # ~10GB 厨房资产
 python main.py 017 smoke-random       # 随机乱动 → mp4
 python main.py 017 smoke-policy       # XR-1 闭环 → mp4（默认 L40S）
+python main.py 017 eval-mini          # 5×5 @ h=200 + CBL long @ h=500
 python main.py 017 pull --remote runs/<name>
 ```
 

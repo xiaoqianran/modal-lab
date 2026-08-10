@@ -77,3 +77,19 @@ Modal：`ap-NV2oCu4r1R6zwlrO11n4lF`
 ## 不做
 
 完整 2500 局官方榜。
+
+
+## eval_mini 5×5 + long（2026-08-10）
+
+详见 [EVAL_MINI.md](./EVAL_MINI.md)。
+
+| 集合 | SR |
+|------|-----|
+| grid 5×5 @ h=200 | **32%** (8/25) |
+| 可运行任务 only (Mixer+Kettle) | **80%** (8/10) |
+| OpenStandMixerHead | **100%** (5/5) |
+| TurnOnElectricKettle | **60%** (3/5) |
+| CBL h=200 / h=500 | 0% / 0% |
+| 费用 | **$0.94** · 29 min · L40S |
+
+**首次任务成功视频**：`gallery/data/success_OpenStandMixerHead_seed7.mp4`（step 95）。

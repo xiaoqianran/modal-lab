@@ -15,6 +15,15 @@ VOL_OUT = "modal-lab-xr1-robocasa365-sim-outputs"
 DEFAULT_GPU = "L40S"
 DEFAULT_TASK = "CloseBlenderLid"
 DEFAULT_POLICY_HORIZON = 100
+DEFAULT_EVAL_HORIZON = 200
+DEFAULT_EVAL_LONG_HORIZON = 500
+MINI_TASKS = (
+    "OpenStandMixerHead,"
+    "TurnOnElectricKettle,"
+    "CloseFridge,"
+    "TurnOnSinkFaucet,"
+    "CloseBlenderLid"
+)
 
 
 def _modal() -> str:
@@ -30,16 +39,16 @@ def _run(cmd: list[str]) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description="XR-1 RoboCasa365 sim smoke on Modal")
+    p = argparse.ArgumentParser(description="XR-1 RoboCasa365 sim on Modal")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("status")
-    d = sub.add_parser("download-weights", help="拉 XR-1 RoboCasa365 权重（可与 015 共用 Volume）")
+    d = sub.add_parser("download-weights")
     d.add_argument("--force", action="store_true")
-    a = sub.add_parser("download-assets", help="拉 RoboCasa 厨房资产并写入 Volume 缓存")
+    a = sub.add_parser("download-assets")
     a.add_argument("--force", action="store_true")
 
-    r = sub.add_parser("smoke-random", help="随机策略 1 局 → mp4")
+    r = sub.add_parser("smoke-random")
     r.add_argument("--gpu", default=DEFAULT_GPU)
     r.add_argument("--task", default=DEFAULT_TASK)
     r.add_argument("--steps", type=int, default=80)
@@ -47,7 +56,7 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--split", default="pretrain")
     r.add_argument("--run-name", default="")
 
-    pol = sub.add_parser("smoke-policy", help="XR-1 闭环（默认 horizon=100）→ mp4")
+    pol = sub.add_parser("smoke-policy")
     pol.add_argument("--gpu", default=DEFAULT_GPU)
     pol.add_argument("--task", default=DEFAULT_TASK)
     pol.add_argument("--horizon", type=int, default=DEFAULT_POLICY_HORIZON)
@@ -56,7 +65,7 @@ def main(argv: list[str] | None = None) -> int:
     pol.add_argument("--run-name", default="")
     pol.add_argument("--attn", default="sdpa")
 
-    sm = sub.add_parser("smoke", help="= smoke-policy")
+    sm = sub.add_parser("smoke")
     sm.add_argument("--gpu", default=DEFAULT_GPU)
     sm.add_argument("--task", default=DEFAULT_TASK)
     sm.add_argument("--horizon", type=int, default=DEFAULT_POLICY_HORIZON)
@@ -64,6 +73,18 @@ def main(argv: list[str] | None = None) -> int:
     sm.add_argument("--split", default="pretrain")
     sm.add_argument("--run-name", default="")
     sm.add_argument("--attn", default="sdpa")
+
+    ev = sub.add_parser("eval-mini", help="5×5 mini-eval @ h=200 + CBL long @ h=500")
+    ev.add_argument("--gpu", default=DEFAULT_GPU)
+    ev.add_argument("--tasks", default=MINI_TASKS)
+    ev.add_argument("--num-seeds", type=int, default=5)
+    ev.add_argument("--seed", type=int, default=7)
+    ev.add_argument("--horizon", type=int, default=DEFAULT_EVAL_HORIZON)
+    ev.add_argument("--long-horizon", type=int, default=DEFAULT_EVAL_LONG_HORIZON)
+    ev.add_argument("--long-task", default="CloseBlenderLid")
+    ev.add_argument("--split", default="pretrain")
+    ev.add_argument("--run-name", default="")
+    ev.add_argument("--attn", default="sdpa")
 
     ls = sub.add_parser("ls")
     ls.add_argument("--path", default="runs")
@@ -76,7 +97,6 @@ def main(argv: list[str] | None = None) -> int:
 
     if ns.cmd == "status":
         print("experiment: 017-xr1-robocasa365-sim")
-        print(f"default: task={DEFAULT_TASK} gpu={DEFAULT_GPU} horizon={DEFAULT_POLICY_HORIZON}")
         return _run([m, "run", "--timestamps", str(MODAL_APP), "--action", "status"])
 
     if ns.cmd == "download-weights":
@@ -93,11 +113,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if ns.cmd == "smoke-random":
         cmd = [
-            m, "run", "--timestamps", str(MODAL_APP),
-            "--action", "smoke-random",
-            "--gpu", ns.gpu, "--task", ns.task,
-            "--steps", str(ns.steps), "--seed", str(ns.seed),
-            "--split", ns.split,
+            m, "run", "--timestamps", str(MODAL_APP), "--action", "smoke-random",
+            "--gpu", ns.gpu, "--task", ns.task, "--steps", str(ns.steps),
+            "--seed", str(ns.seed), "--split", ns.split,
         ]
         if ns.run_name:
             cmd += ["--run-name", ns.run_name]
@@ -105,11 +123,27 @@ def main(argv: list[str] | None = None) -> int:
 
     if ns.cmd in {"smoke-policy", "smoke"}:
         cmd = [
-            m, "run", "--timestamps", str(MODAL_APP),
-            "--action", "smoke-policy",
-            "--gpu", ns.gpu, "--task", ns.task,
-            "--horizon", str(ns.horizon), "--seed", str(ns.seed),
-            "--split", ns.split, "--attn", ns.attn,
+            m, "run", "--timestamps", str(MODAL_APP), "--action", "smoke-policy",
+            "--gpu", ns.gpu, "--task", ns.task, "--horizon", str(ns.horizon),
+            "--seed", str(ns.seed), "--split", ns.split, "--attn", ns.attn,
+        ]
+        if ns.run_name:
+            cmd += ["--run-name", ns.run_name]
+        return _run(cmd)
+
+    if ns.cmd == "eval-mini":
+        cmd = [
+            m, "run", "--timestamps", str(MODAL_APP), "--action", "eval-mini",
+            "--gpu", ns.gpu,
+            "--tasks-csv", ns.tasks,
+            "--num-seeds", str(ns.num_seeds),
+            "--seed", str(ns.seed),
+            "--horizon", str(ns.horizon),
+            "--long-horizon", str(ns.long_horizon),
+            "--long-task", ns.long_task,
+            "--split", ns.split,
+            "--attn", ns.attn,
+            "--run-long-track",
         ]
         if ns.run_name:
             cmd += ["--run-name", ns.run_name]
