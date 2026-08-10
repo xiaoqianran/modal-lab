@@ -15,6 +15,7 @@ main.py                 # 入口，调度到 001 / 002 / …
 007-worldmirror-2.0/    # WorldMirror 2.0 recon（HY-World 2.0 · 默认 T4）
 008-hy-pano/            # HY-Pano 2.0 全景 · 默认 Qwen@A100-80（轻量）
 010-ace-step-1.5/       # ACE-Step 1.5 音乐生成（默认 L4 · turbo DiT）
+015-xiaomi-robotics-1-robocasa365/  # Xiaomi-Robotics-1 VLA · RoboCasa365 冒烟（默认 A100-40GB）
 ```
 
 命名约定：`NNN-topic`（序号 + 主题）。`python main.py 001 …` 等短号在唯一时可解析到对应目录。
@@ -38,6 +39,7 @@ python main.py 006 smoke          # HunyuanWorld-Mirror 最低成本冒烟
 python main.py 007 smoke          # WorldMirror 2.0 recon（T4）
 python main.py 008 smoke          # HY-Pano 轻量 Qwen（A100-80GB）
 python main.py 010 smoke          # ACE-Step 1.5 音乐（L4 · 20s 器乐）
+python main.py 015 smoke          # Xiaomi-Robotics-1 RoboCasa365 动作冒烟（A100-40GB）
 
 # 也可直接进目录
 cd 001-longcat-video && python run.py status
@@ -58,6 +60,7 @@ cd 008-hy-pano && python run.py status
 | `007-worldmirror-2.0` | [HY-World 2.0](https://github.com/Tencent-Hunyuan/HY-World-2.0) **WorldMirror 2.0** recon；**默认 T4** |
 | `008-hy-pano` | 同上 **HY-Pano 2.0 全景**；默认 **Qwen+LoRA @ A100-80GB**（不跑 80B full） |
 | `010-ace-step-1.5` | [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5) 开源音乐生成；**默认 L4**；主包 turbo + 可选 1.7B LM |
+| `015-xiaomi-robotics-1-robocasa365` | [Xiaomi-Robotics-1](https://github.com/XiaomiRobotics/Xiaomi-Robotics-1) RoboCasa365 VLA 冒烟；**默认 A100-40GB** |
 
 H100 / PRO 6000 / A100 对照（OCR 等）见 [GPU_COMPARISON.md](GPU_COMPARISON.md)。  
 Pixal3D 专项实测见 [005-pixal3d/GPU_BENCHMARK.md](005-pixal3d/GPU_BENCHMARK.md)。  
@@ -66,7 +69,7 @@ HY-Pano 设备与成本规划见 [008-hy-pano/PLAN.md](008-hy-pano/PLAN.md)。
 ## 约定
 
 - 每个实验：`run.py` + `README.md`；权重 / 输出走 Modal Volume，不入库
-- GPU：`001` / `004` 默认 **RTX-PRO-6000**；`005` 默认 **H100**；`006` 默认 **L4**；`007` 默认 **T4**；`008` 默认 **A100-80GB**（Qwen）；`010` 默认 **L4**
+- GPU：`001` / `004` 默认 **RTX-PRO-6000**；`005` 默认 **H100**；`006` 默认 **L4**；`007` 默认 **T4**；`008` 默认 **A100-80GB**（Qwen）；`010` 默认 **L4**；`015` 默认 **A100-40GB**
 - 上游代码可 vendoring，或镜像 build 时 clone（005 / 008 采用后者）
 
 远程：https://github.com/xiaoqianran/modal-lab
