@@ -496,6 +496,184 @@ def _resolve_vlm_cuda(gpu_label: str, vlm_mode: str) -> str | None:
     return None
 
 
+
+def _patch_pointcloud_pure_torch() -> None:
+    """Replace pytorch3d point renderer with pure-torch projection splat (smoke quality)."""
+    path = WORLDGEN / "src" / "pointcloud.py"
+    if not path.is_file():
+        print("[patch] pointcloud.py missing")
+        return
+    text = path.read_text()
+    if "MODAL_LAB_PURE_TORCH_PCD" in text:
+        print("[patch] pointcloud already pure-torch")
+        return
+    # Full rewrite of module with compatible API
+    path.write_text('''# MODAL_LAB_PURE_TORCH_PCD — pure torch point splat (no pytorch3d)
+import contextlib
+import os
+import sys
+
+import einops
+import numpy as np
+import torch
+import torch.distributed as dist
+import torchvision.transforms as transforms
+
+from .general_utils import split_n_into_d_parts
+
+
+def points_padding(points):
+    padding = torch.ones_like(points)[..., 0:1]
+    points = torch.cat([points, padding], dim=-1)
+    return points
+
+
+@contextlib.contextmanager
+def suppress_stdout_stderr():
+    yield
+
+
+def point_rendering(K, w2cs, points, colors, device, h, w, background_color=[0, 0, 0],
+                    render_radius=0.008, points_per_pixel=8, return_depth=False):
+    """Pure-torch approximate point splat. API-compatible smoke fallback."""
+    nframe = w2cs.shape[0]
+    K = K.to(device=device, dtype=torch.float32)
+    w2cs = w2cs.to(device=device, dtype=torch.float32)
+    if not torch.is_tensor(points):
+        points = torch.tensor(points, dtype=torch.float32, device=device)
+    else:
+        points = points.to(device=device, dtype=torch.float32)
+    if not torch.is_tensor(colors):
+        colors = torch.tensor(colors, dtype=torch.float32, device=device)
+    else:
+        colors = colors.to(device=device, dtype=torch.float32)
+
+    N = points.shape[0]
+    ones = torch.ones((N, 1), device=device, dtype=torch.float32)
+    pts_h = torch.cat([points, ones], dim=-1)  # [N,4]
+
+    bg = torch.tensor(background_color, device=device, dtype=torch.float32).view(1, 3, 1, 1)
+    rgbs = bg.expand(nframe, 3, h, w).clone()
+    depths = torch.full((nframe, 1, h, w), -1.0, device=device)
+    masks = torch.ones((nframe, 1, h, w), device=device)
+
+    # chunk frames for memory
+    for fi in range(nframe):
+        w2c = w2cs[fi]
+        Ki = K[fi] if K.ndim == 3 else K
+        cam = (w2c @ pts_h.T).T  # [N,4]
+        z = cam[:, 2]
+        valid = z > 1e-4
+        if valid.sum() == 0:
+            continue
+        cam_v = cam[valid]
+        col_v = colors[valid]
+        z_v = cam_v[:, 2]
+        # project
+        u = Ki[0, 0] * (cam_v[:, 0] / z_v) + Ki[0, 2]
+        v = Ki[1, 1] * (cam_v[:, 1] / z_v) + Ki[1, 2]
+        ui = u.round().long()
+        vi = v.round().long()
+        inb = (ui >= 0) & (ui < w) & (vi >= 0) & (vi < h)
+        if inb.sum() == 0:
+            continue
+        ui, vi, z_v, col_v = ui[inb], vi[inb], z_v[inb], col_v[inb]
+        # depth sort far→near so near overwrites
+        order = torch.argsort(z_v, descending=True)
+        ui, vi, z_v, col_v = ui[order], vi[order], z_v[order], col_v[order]
+        # splat 1px (+ optional neighbor for radius)
+        rgbs[fi, :, vi, ui] = col_v.T
+        depths[fi, 0, vi, ui] = z_v
+        masks[fi, 0, vi, ui] = 0.0
+        # small cross splat
+        for du, dv in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            u2, v2 = ui + du, vi + dv
+            ok = (u2 >= 0) & (u2 < w) & (v2 >= 0) & (v2 < h)
+            if ok.any():
+                rgbs[fi, :, v2[ok], u2[ok]] = col_v[ok].T
+                depths[fi, 0, v2[ok], u2[ok]] = z_v[ok]
+                masks[fi, 0, v2[ok], u2[ok]] = 0.0
+
+    if not return_depth:
+        return rgbs, masks
+    return rgbs, depths
+
+
+def multi_gpu_point_rendering(image, Ks, w2cs, render_points, render_colors, image_h, image_w, device, device_num,
+                              render_radius=0.008, points_per_pixel=20, slice_size=4, local_rank=0, replace_first_frame=True):
+    image_tensor = (transforms.ToTensor()(image) * 2 - 1)[None]
+
+    if type(Ks) != torch.Tensor:
+        Ks_tensor = torch.tensor(Ks).float()
+    else:
+        Ks_tensor = Ks
+
+    if type(w2cs) != torch.Tensor:
+        w2cs_tensor = torch.tensor(w2cs).float()
+    else:
+        w2cs_tensor = w2cs
+
+    pcd_renders, pcd_mask = [], []
+    n_per_gpu_list = split_n_into_d_parts(Ks_tensor.shape[0], device_num)
+    cumsum_gpu_list = np.cumsum(n_per_gpu_list)
+
+    if local_rank == 0:
+        Ks_tensor = Ks_tensor[:cumsum_gpu_list[0]]
+        w2cs_tensor = w2cs_tensor[:cumsum_gpu_list[0]]
+    else:
+        Ks_tensor = Ks_tensor[cumsum_gpu_list[local_rank - 1]:cumsum_gpu_list[local_rank]]
+        w2cs_tensor = w2cs_tensor[cumsum_gpu_list[local_rank - 1]:cumsum_gpu_list[local_rank]]
+
+    gather_pcd_renders_r = [torch.zeros((n_per_gpu_list[j], 1, image_h, image_w), dtype=torch.float32, device=device) for j in range(device_num)]
+    gather_pcd_renders_g = [torch.zeros((n_per_gpu_list[j], 1, image_h, image_w), dtype=torch.float32, device=device) for j in range(device_num)]
+    gather_pcd_renders_b = [torch.zeros((n_per_gpu_list[j], 1, image_h, image_w), dtype=torch.float32, device=device) for j in range(device_num)]
+    gather_pcd_mask = [torch.zeros((n_per_gpu_list[j], 1, image_h, image_w), dtype=torch.float32, device=device) for j in range(device_num)]
+
+    slice_times = w2cs_tensor.shape[0] // slice_size
+    if w2cs_tensor.shape[0] % slice_size != 0:
+        slice_times += 1
+
+    for si in range(slice_times):
+        pcd_renders_, pcd_mask_ = point_rendering(K=Ks_tensor[si * slice_size:(si + 1) * slice_size],
+                                                  w2cs=w2cs_tensor[si * slice_size:(si + 1) * slice_size],
+                                                  points=render_points, colors=render_colors,
+                                                  h=image_h, w=image_w, render_radius=render_radius, points_per_pixel=points_per_pixel,
+                                                  device=device, background_color=[0, 0, 0])
+        pcd_renders.append(pcd_renders_)
+        pcd_mask.append(pcd_mask_)
+
+    pcd_renders = torch.cat(pcd_renders, dim=0).to(torch.float32)
+    pcd_mask = torch.cat(pcd_mask, dim=0).to(torch.float32)
+
+    dist.barrier()
+    dist.all_gather(gather_pcd_renders_r, pcd_renders[:, 0:1].contiguous())
+    dist.all_gather(gather_pcd_renders_g, pcd_renders[:, 1:2].contiguous())
+    dist.all_gather(gather_pcd_renders_b, pcd_renders[:, 2:3].contiguous())
+    dist.all_gather(gather_pcd_mask, pcd_mask)
+    dist.barrier()
+
+    gather_pcd_renders_r = torch.cat(gather_pcd_renders_r, dim=0)
+    gather_pcd_renders_g = torch.cat(gather_pcd_renders_g, dim=0)
+    gather_pcd_renders_b = torch.cat(gather_pcd_renders_b, dim=0)
+    gather_pcd_renders = torch.cat([gather_pcd_renders_r, gather_pcd_renders_g, gather_pcd_renders_b], dim=1)
+    gather_pcd_mask = torch.cat(gather_pcd_mask, dim=0)
+
+    if replace_first_frame:
+        gather_pcd_renders[0:1] = image_tensor
+        gather_pcd_mask[0:1] = 0
+    return gather_pcd_renders, gather_pcd_mask
+
+
+def depth2pcd(w2c, K, points2d, depth, colors, mask):
+    points3d = w2c.inverse() @ points_padding((K.inverse() @ points2d.T).T * depth.reshape(-1, 1)).T
+    points3d = points3d.T[:, :3]
+    points3d = points3d[mask.reshape(-1)]
+    colors = colors[mask.reshape(-1)]
+    return points3d, colors
+''')
+    print("[patch] pointcloud -> pure-torch splat")
+
+
 def _patch_traj_generate_lazy() -> None:
     path = WORLDGEN / "traj_generate.py"
     text = path.read_text()
@@ -1037,6 +1215,7 @@ def run_stage(
 
     scene_path = _seed_minimal_scene(scene, from_008)
     os.chdir(WORLDGEN)
+    _patch_pointcloud_pure_torch()
     _patch_traj_generate_lazy()
     _patch_traj_render_captions()
     _patch_pytorch3d_stub()
@@ -1218,6 +1397,7 @@ def run_stage12(
 
     scene_path = _seed_minimal_scene(scene, from_008)
     os.chdir(WORLDGEN)
+    _patch_pointcloud_pure_torch()
     _patch_traj_generate_lazy()
     _patch_traj_render_captions()
     _patch_pytorch3d_stub()
