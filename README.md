@@ -10,6 +10,8 @@ Modal 实验台：按 `NNN-topic` 编号做可复现实验。
 |------|-----|
 | Lab 首页（筛选 / 收藏 / 随便逛逛） | https://xiaoqianran.github.io/modal-lab/ |
 | 009 HY-World 世界馆 | https://xiaoqianran.github.io/modal-lab/009-hy-worldgen/ |
+| Image→3D Lab（L40S×PRO） | https://xiaoqianran.github.io/modal-lab/gpu-gallery/ |
+| 022 Hunyuan3D-2.1 | https://xiaoqianran.github.io/modal-lab/gpu-gallery/#hunyuan3d21 |
 | 各实验 gallery | `https://xiaoqianran.github.io/modal-lab/<NNN-topic>/` |
 
 ### 每位作者请记住：出了 HTML 结果 → 部署到 Pages
@@ -72,6 +74,7 @@ I2V_GPU_ROADMAP.md      # image→3D 卡池约定与结论
 017-xr1-robocasa365-sim/ # XR1 RoboCasa 仿真
 020-triposr/            # TripoSR image→mesh 速度基线（L40S+PRO6000 · 已出 GLB）
 021-trellis2/           # TRELLIS.2-4B 质量主线 MIT（L40S+PRO6000 · 已出 GLB）
+022-hunyuan3d-2.1/      # Hunyuan3D-2.1 PBR（L40S+PRO6000 · smoke full 完成 · Pages）
 ```
 
 命名约定：`NNN-topic`（序号 + 主题）。`python main.py 001 …` 等短号在唯一时可解析到对应目录。
@@ -115,6 +118,7 @@ cd 005-v3-pixal3d-pro6000 && python run.py status
 cd 008-hy-pano && python run.py status
 cd 020-triposr && python run.py status
 cd 021-trellis2 && python run.py status
+cd 022-hunyuan3d-2.1 && python run.py probe --gpu L40S
 ```
 
 ## 实验一览
@@ -142,6 +146,7 @@ cd 021-trellis2 && python run.py status
 | `017-xr1-robocasa365-sim` | XR1 RoboCasa 仿真；**L40S 闭环 horizon=100** |
 | `020-triposr` | [TripoSR](https://github.com/VAST-AI-Research/TripoSR) **速度基线**；**L40S ~14s / PRO6000 ~10s · ~$0.01** |
 | `021-trellis2` | [TRELLIS.2](https://github.com/microsoft/TRELLIS.2) **质量主线 MIT**；**L40S ~215s / PRO6000 ~122s · 已出 GLB** |
+| `022-hunyuan3d-2.1` | [Hunyuan3D-2.1](https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1) **PBR 纹理**；L40S+PRO6000 · Community License |
 | `gpu-gallery` | **L40S × PRO 6000 对照预览**（020 / 021 / 005） |
 | — | 音乐队列总览见 [MUSIC_ROADMAP.md](MUSIC_ROADMAP.md) · image→3D 卡池见 [I2V_GPU_ROADMAP.md](I2V_GPU_ROADMAP.md) |
 
@@ -153,5 +158,6 @@ Pixal3D / 开源 I2V：
 - [005-v3 PRO 6000](005-v3-pixal3d-pro6000/GPU_BENCHMARK.md)  
 - [020 TripoSR](020-triposr/GPU_BENCHMARK.md)  
 - [021 TRELLIS.2](021-trellis2/GPU_BENCHMARK.md)
+- [022 Hunyuan3D-2.1](022-hunyuan3d-2.1/README.md)
 
 远程：https://github.com/xiaoqianran/modal-lab

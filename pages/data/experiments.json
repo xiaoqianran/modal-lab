@@ -1,6 +1,6 @@
 {
   "lab": "modal-lab",
-  "tagline": "Modal 实验小宇宙 · 点卡片进 gallery",
+  "tagline": "Modal 实验橱窗 · Image→3D 双卡对照已上线",
   "experiments": [
     {
       "id": "009-hy-worldgen",
@@ -45,6 +45,53 @@
         "succ": "10/25"
       },
       "accent": "#c9854a",
+      "available": true,
+      "badge": "NEW"
+    },
+    {
+      "id": "gpu-gallery",
+      "num": "GPU",
+      "title": "Image→3D Lab",
+      "subtitle": "L40S × PRO 6000 双卡对照",
+      "blurb": "TripoSR · TRELLIS.2 · Hunyuan3D-2.1 · Pixal3D。并排转一转 mesh，看墙钟、费用、显存。",
+      "href": "gpu-gallery/",
+      "tags": [
+        "3D",
+        "mesh",
+        "bench",
+        "featured"
+      ],
+      "mood": "mesh",
+      "featured": true,
+      "stats": {
+        "models": "4",
+        "GPUs": "2",
+        "NEW": "022"
+      },
+      "accent": "#c8ccd4",
+      "available": true,
+      "badge": "NEW"
+    },
+    {
+      "id": "022-hunyuan3d-2.1",
+      "num": "022",
+      "title": "Hunyuan3D-2.1",
+      "subtitle": "PBR 纹理 · Community License",
+      "blurb": "腾讯 image→3D 官方 PBR 线。双卡 smoke 已出 GLB，完整对照请进 Image→3D Lab。",
+      "href": "gpu-gallery/#hunyuan3d21",
+      "tags": [
+        "3D",
+        "mesh",
+        "pbr"
+      ],
+      "mood": "mesh",
+      "featured": true,
+      "stats": {
+        "L40S": "242s",
+        "PRO": "188s",
+        "VRAM": "16GB"
+      },
+      "accent": "#a8b0bc",
       "available": true,
       "badge": "NEW"
     },
@@ -107,26 +154,6 @@
       "accent": "#a0c4ff",
       "available": true,
       "thumb": "006-hunyuanworld-mirror/assets/depth/depth_0001.png"
-    },
-    {
-      "id": "gpu-gallery",
-      "num": "GPU",
-      "title": "Image→3D Lab",
-      "subtitle": "L40S × PRO 6000 对照",
-      "blurb": "TripoSR / TRELLIS / Pixal3D 同台亮相。",
-      "href": "gpu-gallery/",
-      "tags": [
-        "3D",
-        "mesh",
-        "bench"
-      ],
-      "mood": "mesh",
-      "featured": false,
-      "stats": {
-        "cards": "multi"
-      },
-      "accent": "#ffd6a5",
-      "available": true
     },
     {
       "id": "010-ace-step-1.5",

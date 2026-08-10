@@ -17,6 +17,7 @@ def copytree(src: Path, dst: Path) -> None:
     shutil.copytree(
         src,
         dst,
+        symlinks=False,
         ignore=shutil.ignore_patterns(
             "serve.py",
             ".DS_Store",

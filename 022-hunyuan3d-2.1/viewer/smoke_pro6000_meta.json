@@ -1,0 +1,45 @@
+{
+  "model": "tencent/Hunyuan3D-2.1",
+  "upstream": "Tencent-Hunyuan/Hunyuan3D-2.1",
+  "license": "Tencent Hunyuan 3D 2.1 Community License",
+  "gpu_request": "RTX-PRO-6000",
+  "gpu_actual": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "capability": [
+    12,
+    0
+  ],
+  "output_name": "smoke_pro6000",
+  "mode": "full",
+  "textured": true,
+  "seed": 42,
+  "max_num_view": 6,
+  "paint_resolution": 512,
+  "format": "glb",
+  "seconds_load": 15.85,
+  "seconds_shape": 18.06,
+  "seconds_paint": 66.71,
+  "seconds_total": 187.93,
+  "peak_vram_gb": 16.33,
+  "est_cost_usd": 0.1582,
+  "price_per_sec_usd": 0.000842,
+  "image_url": "https://raw.githubusercontent.com/VAST-AI-Research/TripoSR/main/examples/chair.png",
+  "torch": "2.11.0+cu128",
+  "smi_end": {
+    "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "mem_used_mib": 16717.0,
+    "mem_total_mib": 97887.0,
+    "util_gpu_pct": 0.0
+  },
+  "stack": "022 Hunyuan3D-2.1 RTX-PRO-6000",
+  "hy3dgen_models": "/weights/hy3dgen",
+  "input_volume_path": "inputs/smoke_pro6000.png",
+  "volume_name": "modal-lab-hunyuan3d21-outputs",
+  "volume_paths": {
+    "mesh": "meshes/smoke_pro6000.glb",
+    "latest": "meshes/latest.glb",
+    "meta": "meshes/smoke_pro6000_meta.json",
+    "benchmark": "benchmarks/smoke_pro6000.json"
+  },
+  "bytes": 1225004,
+  "cli_get": "modal volume get modal-lab-hunyuan3d21-outputs meshes/smoke_pro6000.glb ./smoke_pro6000.glb"
+}

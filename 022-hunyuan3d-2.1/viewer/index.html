@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hunyuan3D-2.1 · 022</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0a0a0b; --panel: rgba(18,18,20,.9); --line: rgba(255,255,255,.08);
+        --text: #f4f4f5; --muted: #a1a1aa; --accent: #c8ccd4;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; color: var(--text); font-family: system-ui, sans-serif; background: var(--bg); }
+      .app { min-height: 100%; display: grid; grid-template-rows: auto 1fr auto; }
+      header, footer {
+        padding: 14px 18px; border-bottom: 1px solid var(--line);
+        background: var(--panel); backdrop-filter: blur(12px);
+      }
+      footer { border-bottom: 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+      header { display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+      h1 { margin: 0; font-size: 16px; font-weight: 650; }
+      h1 span { color: var(--muted); font-weight: 500; }
+      .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+      .tabs button {
+        appearance: none; border: 1px solid var(--line); background: rgba(255,255,255,.04);
+        color: var(--muted); border-radius: 10px; padding: 7px 12px; font-size: 13px; cursor: pointer;
+      }
+      .tabs button.active { color: #0a0a0b; background: var(--accent); border-color: transparent; font-weight: 650; }
+      .stage { position: relative; min-height: 0; }
+      model-viewer { width: 100%; height: 100%; min-height: min(72vh, 720px); background: transparent; }
+      .hint {
+        position: absolute; left: 14px; bottom: 14px; z-index: 2; padding: 8px 12px;
+        border-radius: 10px; background: var(--panel); border: 1px solid var(--line);
+        color: var(--muted); font-size: 12px; pointer-events: none;
+      }
+      .meta { color: var(--muted); font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <div>
+          <h1>Hunyuan3D-2.1 <span>022 · PBR</span></h1>
+          <div class="meta" id="meta">等待 GLB…</div>
+        </div>
+        <div class="tabs" id="tabs"></div>
+      </header>
+      <div class="stage">
+        <model-viewer id="mv" camera-controls touch-action="pan-y" shadow-intensity="0.6"
+          exposure="1.05" environment-image="neutral" auto-rotate interaction-prompt="none"></model-viewer>
+        <div class="hint">拖动旋转 · 滚轮缩放</div>
+      </div>
+      <footer>022 · L40S / RTX PRO 6000 · Community License · modal-lab</footer>
+    </div>
+    <script>
+      const CANDIDATES = [
+        { id: "l40s", label: "L40S", src: "smoke_l40s.glb" },
+        { id: "pro6000", label: "PRO 6000", src: "smoke_pro6000.glb" },
+        { id: "shape_l40s", label: "shape L40S", src: "smoke_shape_l40s.glb" },
+        { id: "shape_pro", label: "shape PRO", src: "smoke_shape_pro6000.glb" },
+      ];
+      const tabs = document.getElementById("tabs");
+      const mv = document.getElementById("mv");
+      const meta = document.getElementById("meta");
+      async function exists(url) {
+        try { const r = await fetch(url, { method: "HEAD" }); return r.ok; } catch { return false; }
+      }
+      async function init() {
+        const available = [];
+        for (const c of CANDIDATES) if (await exists(c.src)) available.push(c);
+        if (!available.length) { meta.textContent = "尚无 GLB — 先跑 smoke"; return; }
+        for (const c of available) {
+          const b = document.createElement("button");
+          b.textContent = c.label;
+          b.onclick = () => select(c, b);
+          tabs.appendChild(b);
+        }
+        select(available[0], tabs.firstChild);
+      }
+      function select(c, btn) {
+        [...tabs.children].forEach(x => x.classList.remove("active"));
+        btn.classList.add("active");
+        mv.src = c.src;
+        meta.textContent = c.src;
+      }
+      init();
+    </script>
+  </body>
+</html>

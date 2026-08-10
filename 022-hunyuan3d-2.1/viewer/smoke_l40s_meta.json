@@ -1,0 +1,45 @@
+{
+  "model": "tencent/Hunyuan3D-2.1",
+  "upstream": "Tencent-Hunyuan/Hunyuan3D-2.1",
+  "license": "Tencent Hunyuan 3D 2.1 Community License",
+  "gpu_request": "L40S",
+  "gpu_actual": "NVIDIA L40S",
+  "capability": [
+    8,
+    9
+  ],
+  "output_name": "smoke_l40s",
+  "mode": "full",
+  "textured": true,
+  "seed": 42,
+  "max_num_view": 6,
+  "paint_resolution": 512,
+  "format": "glb",
+  "seconds_load": 31.66,
+  "seconds_shape": 30.3,
+  "seconds_paint": 65.05,
+  "seconds_total": 242.17,
+  "peak_vram_gb": 16.52,
+  "est_cost_usd": 0.1313,
+  "price_per_sec_usd": 0.000542,
+  "image_url": "https://raw.githubusercontent.com/VAST-AI-Research/TripoSR/main/examples/chair.png",
+  "torch": "2.5.1+cu124",
+  "smi_end": {
+    "name": "NVIDIA L40S",
+    "mem_used_mib": 16921.0,
+    "mem_total_mib": 46068.0,
+    "util_gpu_pct": 0.0
+  },
+  "stack": "022 Hunyuan3D-2.1 L40S",
+  "hy3dgen_models": "/weights/hy3dgen",
+  "input_volume_path": "inputs/smoke_l40s.png",
+  "volume_name": "modal-lab-hunyuan3d21-outputs",
+  "volume_paths": {
+    "mesh": "meshes/smoke_l40s.glb",
+    "latest": "meshes/latest.glb",
+    "meta": "meshes/smoke_l40s_meta.json",
+    "benchmark": "benchmarks/smoke_l40s.json"
+  },
+  "bytes": 1249780,
+  "cli_get": "modal volume get modal-lab-hunyuan3d21-outputs meshes/smoke_l40s.glb ./smoke_l40s.glb"
+}

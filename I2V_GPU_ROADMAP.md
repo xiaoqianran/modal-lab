@@ -1,6 +1,6 @@
 # Image→3D · GPU 路线（L40S × PRO 6000）
 
-> 更新：2026-08-11 — 用户确认默认卡池：**L40S** + **RTX PRO 6000**。
+> 更新：2026-08-11 — **022 Hunyuan3D-2.1** 双卡 shape+full 完成。
 
 ## 默认卡池
 
@@ -22,17 +22,19 @@
 | **020** | TripoSR | **13.7 s · $0.007** | **9.7 s · $0.008** | 速度 |
 | **021** | TRELLIS.2-4B @512 | **215 s · $0.12** | **122 s · $0.10** | 质量 MIT |
 | **005-v2/v3** | Pixal3D @1024 | **311 s · $0.17** | **230 s · $0.19** | 慢·对齐 |
+| **022** | Hunyuan3D-2.1 full | **shape 30 + paint 65 · $0.13** | **shape 18 + paint 67 · $0.16** | PBR · Community |
 
-本地统一预览：[`gpu-gallery/index.html`](gpu-gallery/index.html)
+本地统一预览：[`gpu-gallery/index.html`](gpu-gallery/)
 
 ## 结论（当前样本）
 
 - **要快**：TripoSR · 两卡都够用；PRO 约快 29%。
 - **要质量 / MIT**：TRELLIS.2 · PRO 约快 43% 且略更省（$0.10 vs $0.12）。
 - **要对齐/重栈**：Pixal3D · PRO 更快但更贵；L40S 性价比更好。
+- **要官方 PBR 线**：Hunyuan3D-2.1 · shape PRO 约 **1.6×** 快；paint 两卡接近；**注意 Community License**。
 
-## 下一步（可选）
+## 下一步
 
+- [x] 022 probe + shape/full smoke 双卡
 - [ ] TRELLIS.2 `pipeline_type=1024` 双卡对照
-- [ ] 022 候选：InstantMesh / SF3D / SPAR3D（同样 L40S+PRO 模板）
-- [ ] 推送 020/021 到远程（默认未推）
+- [ ] 023 候选：InstantMesh / SF3D / SPAR3D
