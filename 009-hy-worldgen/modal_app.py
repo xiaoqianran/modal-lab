@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-009-hy-worldgen — single-GPU (RTX-PRO-6000) World Generation pipeline. v8.2.1
+009-hy-worldgen — single-GPU (RTX-PRO-6000) World Generation pipeline. v8.2.2
 
 Stage 1–2 use official Qwen3-VL-8B via in-container vLLM (share-GPU or split).
 Stage 3–5 unchanged (WorldStereo-dmd → GS).
@@ -507,11 +507,11 @@ def _patch_pointcloud_pure_torch() -> None:
         print("[patch] pointcloud.py missing")
         return
     text = path.read_text()
-    if "MODAL_LAB_PURE_TORCH_PCD" in text:
+    if "MODAL_LAB_PURE_TORCH_PCD_v2" in text:
         print("[patch] pointcloud already pure-torch")
         return
     # Full rewrite of module with compatible API
-    path.write_text('''# MODAL_LAB_PURE_TORCH_PCD — pure torch point splat (no pytorch3d)
+    path.write_text('''# MODAL_LAB_PURE_TORCH_PCD_v2 — pure torch point splat (no pytorch3d)
 import contextlib
 import os
 import sys
@@ -599,7 +599,9 @@ def point_rendering(K, w2cs, points, colors, device, h, w, background_color=[0, 
 
     if not return_depth:
         return rgbs, masks
-    return rgbs, depths
+    # Match pytorch3d return_depth=True: colors [F,H,W,3], depth [F,1,H,W]
+    # (non-depth path returns CHW for multi_gpu_point_rendering)
+    return rgbs.permute(0, 2, 3, 1).contiguous(), depths
 
 
 def multi_gpu_point_rendering(image, Ks, w2cs, render_points, render_colors, image_h, image_w, device, device_num,
@@ -856,30 +858,51 @@ def _patch_worldmirror_attention() -> None:
 
 
 def _patch_worldmirror_local_weights() -> None:
-    """Point apply_worldmirror at /weights/HY-WorldMirror-2.0 when present."""
+    """Point apply_worldmirror at a valid local path or HF repo id.
+
+    Never inject a bare absolute path that does not contain model files —
+    HuggingFace treats unknown paths as repo ids and raises HFValidationError.
+    """
     path = WORLDGEN / "src" / "retrieval_wm.py"
     if not path.is_file():
         return
     text = path.read_text()
+    # Always re-resolve so a later download is picked up after re-patch
     if "MODAL_LAB_WM_LOCAL" in text:
-        print("[patch] worldmirror local weights already")
-        return
+        # strip previous injection so we can re-evaluate
+        import re as _re
+        text = _re.sub(
+            r',\n\s*"--pretrained_model_name_or_path", "[^"]*",  # MODAL_LAB_WM_LOCAL',
+            "",
+            text,
+            count=1,
+        )
     needle = (
         '"--disable_heads", "normal", "points", "gs"\n'
         "                ]"
     )
-    wm_local = Path(WEIGHTS_MOUNT) / "HY-WorldMirror-2.0"
-    # Always inject path; pipeline falls back to HF if files missing
+    wm_flat = Path(WEIGHTS_MOUNT) / "HY-WorldMirror-2.0"
+    wm_nested = Path(WEIGHTS_MOUNT) / "hf_hy_world_2"
+    if (wm_flat / "model.safetensors").is_file() and (
+        (wm_flat / "config.yaml").is_file() or (wm_flat / "config.json").is_file()
+    ):
+        pretrained = str(wm_flat)
+    elif (wm_nested / "HY-WorldMirror-2.0" / "model.safetensors").is_file():
+        # repo-root layout; pipeline default subfolder=HY-WorldMirror-2.0
+        pretrained = str(wm_nested)
+    else:
+        # Valid HF id — will download into HF_HOME on first use
+        pretrained = "tencent/HY-World-2.0"
     repl = (
         '"--disable_heads", "normal", "points", "gs",\n'
-        f'                    "--pretrained_model_name_or_path", "{wm_local}",  # MODAL_LAB_WM_LOCAL\n'
+        f'                    "--pretrained_model_name_or_path", "{pretrained}",  # MODAL_LAB_WM_LOCAL\n'
         "                ]"
     )
     if needle not in text:
         print("[patch] worldmirror wm_cmd pattern missing")
         return
     path.write_text(text.replace(needle, repl, 1))
-    print(f"[patch] worldmirror local weights → {wm_local}")
+    print(f"[patch] worldmirror local weights → {pretrained}")
 
 
 def _patch_gs_distloss() -> None:
