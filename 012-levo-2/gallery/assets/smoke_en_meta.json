@@ -1,0 +1,44 @@
+{
+  "run_name": "smoke_en",
+  "gpu_requested": "L40S",
+  "wall_s": 159.3,
+  "est_gpu_usd": 0.0863,
+  "payload": {
+    "model": "v2-medium",
+    "use_flash_attn": true,
+    "low_mem": false,
+    "generate_type": "mixed",
+    "item": {
+      "idx": "smoke_en",
+      "descriptions": "female, indie pop, warm, acoustic guitar and soft drums, hopeful, bpm 100",
+      "gt_lyric": "[intro-short] ; [verse] City lights are humming low. We walk where quiet rivers flow. Every promise soft and slow. Finding home in afterglow. ; [chorus] Hold the night a little longer. Let the melody grow stronger. We are writing every line. In this borrowed summer time. ; [outro-short]"
+    }
+  },
+  "result": {
+    "success": true,
+    "error": null,
+    "wall_s": 159.3,
+    "est_gpu_usd": 0.0863,
+    "gpu": "L40S",
+    "model": "v2-medium",
+    "hf_repo": "lglg666/SongGeneration-v2-medium",
+    "use_flash_attn": true,
+    "low_mem": false,
+    "generate_type": "mixed",
+    "vram_peak_gb": 0.0,
+    "audio": {
+      "path": "/outputs/runs/smoke_en/audio.flac",
+      "size_bytes": 6084390,
+      "name": "audio.flac"
+    },
+    "item": {
+      "idx": "smoke_en",
+      "descriptions": "female, indie pop, warm, acoustic guitar and soft drums, hopeful, bpm 100",
+      "gt_lyric": "[intro-short] ; [verse] City lights are humming low. We walk where quiet rivers flow. Every promise soft and slow. Finding home in afterglow. ; [chorus] Hold the night a little longer. Let the melody grow stronger. We are writing every line. In this borrowed summer time. ; [outro-short]"
+    },
+    "log": "/outputs/runs/smoke_en/generate.log"
+  },
+  "created_utc": "2026-08-10T14:45:49.114468+00:00",
+  "upstream_commit": "b1b03ec93a38ae4a566ad8a22010f51dd49cb803",
+  "license_note": "research/academic only — Tencent SongGeneration terms"
+}

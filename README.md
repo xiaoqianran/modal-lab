@@ -20,11 +20,10 @@ main.py                 # 入口，调度到 001 / 002 / …
 010-ace-step-1.5/       # ACE-Step 1.5 音乐生成（默认 L4 · turbo DiT）
 011-stable-audio-3/     # Stable Audio 3 Medium（默认 L4 · FlashAttn）
 015-xiaomi-robotics-1-robocasa365/  # Xiaomi-Robotics-1 VLA · RoboCasa365 冒烟（默认 A100-40GB）
-012-levo-2/             # [PLAN] LeVo 2 全曲（听感 S · 先核 license）
-013-yue/                # [PLAN] YuE 全曲（结构 · A100）
-014-diffrhythm-2/       # [PLAN] DiffRhythm 2 全曲 diffusion（默认 L4）
-016-musicgen/           # [PLAN] MusicGen 器乐基线（T4/L4）· 跳过 015
-017-xr1-robocasa365-sim/ # Xiaomi XR-1 · RoboCasa365 仿真 smoke + mp4（默认 A100）
+012-levo-2/             # LeVo 2 / SongGeneration v2（默认 L40S · v2-medium）
+013-yue/                # [PLAN] YuE 全曲
+014-musicgen/           # [PLAN] MusicGen 基线（MusicGen=014）
+
 ```
 
 命名约定：`NNN-topic`（序号 + 主题）。`python main.py 001 …` 等短号在唯一时可解析到对应目录。
@@ -51,9 +50,8 @@ python main.py 008 smoke          # HY-Pano 轻量 Qwen（PRO 6000）
 python main.py 009 status         # worldgen 全景→3D 世界（分 stage）
 python main.py 010 smoke          # ACE-Step 1.5 音乐（L4 · 20s 器乐）
 python main.py 011 smoke          # Stable Audio 3 Medium（L4 · 20s）
+python main.py 012 smoke          # LeVo 2（L40S · v2-medium）
 python main.py 015 smoke          # Xiaomi-Robotics-1 RoboCasa365 动作冒烟（A100-40GB）
-python main.py 017 smoke-random   # RoboCasa365 仿真随机 1 局 → mp4
-python main.py 017 smoke-policy   # XR-1 闭环短 horizon → mp4
 
 # 也可直接进目录
 cd 001-longcat-video && python run.py status
@@ -80,11 +78,9 @@ cd 008-hy-pano && python run.py status
 | `010-ace-step-1.5` | [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5) 开源音乐生成；**默认 L4**；主包 turbo + 可选 1.7B LM |
 | `011-stable-audio-3` | [Stable Audio 3 Medium](https://huggingface.co/stabilityai/stable-audio-3-medium)；**默认 L4**（T4 无 FlashAttn） |
 | `015-xiaomi-robotics-1-robocasa365` | [Xiaomi-Robotics-1](https://github.com/XiaomiRobotics/Xiaomi-Robotics-1) RoboCasa365 VLA 冒烟；**默认 A100-40GB** |
-| `017-xr1-robocasa365-sim` | 同上 + **RoboCasa365 仿真 1 局** → **mp4**；默认 A100-40GB |
-| `012-levo-2` | **[PLAN](012-levo-2/PLAN.md)** LeVo 2 全曲音乐（待实现） |
+| `012-levo-2` | [LeVo 2](https://github.com/levo-demo/LeVo) SongGeneration v2；**默认 L40S · v2-medium**（研究许可） |
 | `013-yue` | **[PLAN](013-yue/PLAN.md)** YuE 全曲（待实现） |
-| `014-diffrhythm-2` | **[PLAN](014-diffrhythm-2/PLAN.md)** DiffRhythm 2（待实现） |
-| `016-musicgen` | **[PLAN](016-musicgen/PLAN.md)** MusicGen 基线（待实现 · **跳过 015**） |
+| `014-musicgen` | **[PLAN](014-musicgen/PLAN.md)** MusicGen 基线（待实现） |
 | — | 音乐队列总览见 [MUSIC_ROADMAP.md](MUSIC_ROADMAP.md) |
 
 H100 / PRO 6000 / A100 对照（OCR 等）见 [GPU_COMPARISON.md](GPU_COMPARISON.md)。  

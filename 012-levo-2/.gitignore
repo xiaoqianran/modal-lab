@@ -1,0 +1,10 @@
+outputs/
+.cache/
+__pycache__/
+*.pyc
+*.flac
+*.wav
+*.mp3
+.venv/
+!gallery/assets/*.flac
+!gallery/assets/*.wav
