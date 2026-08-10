@@ -1,8 +1,10 @@
 # 009 · World Generation 规划（**单卡 PRO 6000 优先**）
 
-> 上游：`hyworld2/worldgen`  
-> 前置：008 全景（已有 `scene_from_008`）  
-> **结论先行：不必须多卡；单卡 PRO 6000 官方脚本支持，但要砍规模 + 串行 VLM。**
+> **实现状态（v8）**  
+> - ✅ Stage1 + Stage2：**官方 Qwen3-VL-8B（vLLM）** + `stage12` 一键  
+> - ✅ Stage3–5：WorldStereo-dmd / GS（既有）  
+> - 默认串行同卡 `vlm_mode=share`；多卡可 `split`  
+> - Stage3 前仍需预算确认（见下）
 
 ---
 
@@ -109,10 +111,11 @@ HF `hanshanxue/WorldStereo` 约 **68GB 盘**：
 
 ```text
 [已完成] 008 panorama → prepare scene_from_008
+[已完成] Phase A/B/C 代码：download --which vlm + stage12（官方 Qwen3-VL-8B）
 
-Phase A  下载权重（CPU）
-Phase B  Stage1  单卡 · 串行 VLM · 极少轨迹       预算点 ~$2
-Phase C  Stage2  单进程渲染                      预算点 ~$1.5
+Phase A  下载权重（CPU）· `download --which vlm`
+Phase B  Stage1  单卡 · vLLM 同卡 · 极少轨迹      预算点 ~$1–3（含 VLM）
+Phase C  Stage2  单进程渲染 + VLM caption         预算点 ~$0.5–2
 Phase D  Stage3  单进程 DMD · 无 FSDP             预算点 ~$6  ⚠️ 最贵确认点
 Phase E  Stage4  单进程                           预算点 ~$2
 Phase F  Stage5  max_steps=4000 先试              预算点 ~$3
@@ -134,12 +137,13 @@ Phase G  拉 ply/spz + HTML 预览
 
 ---
 
-## 6. 你怎么拍板
+## 6. 当前可执行命令
 
-回一句即可：
+```bash
+python main.py 009 download --which vlm
+python main.py 009 stage12 --gpu RTX-PRO-6000 --nframe 16
+# Stage3 前确认预算：
+# python main.py 009 stage 3 --gpu RTX-PRO-6000
+```
 
-1. **「按单卡最小 smoke 做，总预算封顶 $X」**（建议 X=20 或 30）  
-2. **「先只做 Stage1+2，Stage3 再说」**（更省，先验证轨迹）  
-3. **「先别跑，只保持规划」**
-
-我不会在没预算数字前自动开 Stage3。
+**不会在没预算确认前默认开 Stage3。** Stage1+2（`stage12`）已实现官方 Qwen3-VL-8B。

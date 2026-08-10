@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-009-hy-worldgen — single-GPU (RTX-PRO-6000) World Generation pipeline. v7
+009-hy-worldgen — single-GPU (RTX-PRO-6000) World Generation pipeline. v8
+
+Stage 1–2 use official Qwen3-VL-8B via in-container vLLM (share-GPU or split).
+Stage 3–5 unchanged (WorldStereo-dmd → GS).
 """
 
 from __future__ import annotations
@@ -19,6 +22,11 @@ import modal
 APP_NAME = "modal-lab-hy-worldgen"
 UPSTREAM = "https://github.com/Tencent-Hunyuan/HY-World-2.0"
 WORLDSTEREO_HF = "hanshanxue/WorldStereo"
+VLM_MODEL = "Qwen/Qwen3-VL-8B-Instruct"
+VLM_PORT = 8000
+VLM_HOST = "127.0.0.1"
+VLM_DEFAULT_MEM_UTIL = 0.38  # leave room for MoGe/SAM on same 96GB card
+VLM_MAX_MODEL_LEN = 8192
 
 VOLUME_WEIGHTS = "modal-lab-hy-worldgen-weights"
 VOLUME_OUTPUTS = "modal-lab-hy-worldgen-outputs"
@@ -113,6 +121,9 @@ worldgen_image = (
         f"(pip install -e . --no-build-isolation || pip install gsplat || true)",
         "pip install zim_anything || true",
         "pip install 'transformers==5.2.0' 'huggingface_hub[hf_transfer]>=0.34.0' --upgrade",
+        # vLLM for official Qwen3-VL-8B (Stage1/2). Heavy; cached in image layer.
+        "pip install 'vllm>=0.8.0' || pip install vllm || true",
+        "pip install openai",
     )
     .env(
         {
@@ -167,6 +178,160 @@ def _seed_minimal_scene(scene: str, from_008: str = "smoke_qwen") -> Path:
     if not meta.is_file():
         meta.write_text(json.dumps({"scene_type": "indoor", "scene": scene}, indent=2))
     return scene_path
+
+
+def _ensure_vllm() -> None:
+    """Install vLLM at runtime if the image layer missed it."""
+    import sys
+    try:
+        import vllm  # noqa: F401
+        print(f"[vlm] vllm ok")
+        return
+    except Exception as e:
+        print(f"[vlm] importing vllm failed ({e}); pip install…")
+    env = os.environ.copy()
+    env["CXX"] = "g++"
+    env["CC"] = "gcc"
+    subprocess.check_call(
+        [sys.executable, "-m", "pip", "install", "-q", "vllm", "openai"],
+        env=env,
+    )
+    print("[vlm] vllm installed")
+
+
+def _vlm_model_path() -> str:
+    """Prefer volume snapshot; fall back to HF id."""
+    local = Path(WEIGHTS_MOUNT) / "Qwen3-VL-8B-Instruct"
+    if local.is_dir() and any(local.iterdir()):
+        # accept either flat or nested hub layout
+        if (local / "config.json").is_file():
+            return str(local)
+        for p in local.rglob("config.json"):
+            return str(p.parent)
+    return VLM_MODEL
+
+
+def _vlm_ready(timeout_s: float = 5.0) -> bool:
+    import urllib.request
+    url = f"http://{VLM_HOST}:{VLM_PORT}/v1/models"
+    try:
+        with urllib.request.urlopen(url, timeout=timeout_s) as r:
+            return r.status == 200
+    except Exception:
+        return False
+
+
+def _wait_vlm(timeout_s: float = 900.0, log_path: Path | None = None) -> None:
+    t0 = time.time()
+    while time.time() - t0 < timeout_s:
+        if _vlm_ready(timeout_s=3.0):
+            print(f"[vlm] ready in {time.time() - t0:.1f}s → http://{VLM_HOST}:{VLM_PORT}")
+            return
+        if log_path and log_path.is_file():
+            try:
+                tail = log_path.read_text(errors="replace")[-800:]
+                if "error" in tail.lower() and "Traceback" in tail:
+                    print(f"[vlm] log tail:\n{tail}")
+            except Exception:
+                pass
+        time.sleep(4)
+    raise TimeoutError(
+        f"vLLM not ready after {timeout_s}s — see /tmp/vllm_vlm.log"
+    )
+
+
+def _start_vlm(
+    *,
+    gpu_mem_util: float = VLM_DEFAULT_MEM_UTIL,
+    max_model_len: int = VLM_MAX_MODEL_LEN,
+    cuda_devices: str | None = None,
+) -> subprocess.Popen:
+    """Launch official Qwen3-VL-8B with vLLM. Returns the process handle."""
+    _ensure_vllm()
+    if _vlm_ready():
+        print("[vlm] already serving — reuse")
+        return None  # type: ignore
+
+    model = _vlm_model_path()
+    env = os.environ.copy()
+    if cuda_devices is not None:
+        env["CUDA_VISIBLE_DEVICES"] = cuda_devices
+    env.setdefault("HF_HOME", str(HF_HOME))
+    env.setdefault("HUGGINGFACE_HUB_CACHE", str(HF_HOME))
+    env["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
+
+    log_path = Path("/tmp/vllm_vlm.log")
+    cmd = [
+        "vllm", "serve", model,
+        "--served-model-name", VLM_MODEL,
+        "--host", "0.0.0.0",
+        "--port", str(VLM_PORT),
+        "--trust-remote-code",
+        "--dtype", "bfloat16",
+        "--gpu-memory-utilization", str(gpu_mem_util),
+        "--max-model-len", str(max_model_len),
+        "--enforce-eager",
+        "--disable-log-requests",
+    ]
+    print("[vlm] starting:", " ".join(cmd), flush=True)
+    print(f"[vlm] model={model} mem_util={gpu_mem_util} max_len={max_model_len}", flush=True)
+    log_f = open(log_path, "w")
+    proc = subprocess.Popen(cmd, env=env, stdout=log_f, stderr=subprocess.STDOUT)
+    try:
+        _wait_vlm(timeout_s=900.0, log_path=log_path)
+    except Exception:
+        _stop_vlm(proc)
+        raise
+    return proc
+
+
+def _stop_vlm(proc: subprocess.Popen | None) -> None:
+    if proc is None:
+        # best-effort kill any leftover vllm on our port
+        try:
+            out = subprocess.check_output(["pgrep", "-f", f"vllm serve.*{VLM_PORT}"], text=True)
+            for pid in out.split():
+                try:
+                    os.kill(int(pid), 15)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        return
+    if proc.poll() is not None:
+        return
+    print(f"[vlm] stopping pid={proc.pid}", flush=True)
+    proc.terminate()
+    try:
+        proc.wait(timeout=45)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait(timeout=15)
+    # free CUDA
+    try:
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except Exception:
+        pass
+
+
+def _resolve_vlm_cuda(gpu_label: str, vlm_mode: str) -> str | None:
+    """share → same GPU (None); split → last device if multi-GPU string."""
+    if vlm_mode == "share":
+        return None
+    # e.g. "H100:2" or "RTX-PRO-6000:2"
+    if ":" in gpu_label:
+        try:
+            n = int(gpu_label.split(":")[-1])
+            if n >= 2:
+                return str(n - 1)  # VLM on last card
+        except ValueError:
+            pass
+    # single GPU forced split → still share
+    print("[vlm] split requested but single GPU — falling back to share")
+    return None
+
 
 def _patch_traj_generate_lazy() -> None:
     path = WORLDGEN / "traj_generate.py"
@@ -622,6 +787,19 @@ def prepare_scene(
 def download_weights(which: str = "worldstereo-dmd") -> dict[str, Any]:
     from huggingface_hub import snapshot_download
 
+    if which in ("vlm", "qwen3-vl", "qwen", "all"):
+        dest = Path(WEIGHTS_MOUNT) / "Qwen3-VL-8B-Instruct"
+        dest.mkdir(parents=True, exist_ok=True)
+        print(f"[dl] {VLM_MODEL} → {dest}")
+        snapshot_download(
+            VLM_MODEL,
+            local_dir=str(dest),
+            local_dir_use_symlinks=False,
+        )
+        weights_vol.commit()
+        if which != "all":
+            return {"ok": True, "which": which, "path": str(dest), "model": VLM_MODEL}
+
     if which in ("worldmirror", "wm", "all"):
         dest = Path(WEIGHTS_MOUNT) / "HY-WorldMirror-2.0"
         dest.mkdir(parents=True, exist_ok=True)
@@ -659,6 +837,7 @@ def download_weights(which: str = "worldstereo-dmd") -> dict[str, Any]:
     return {"ok": True, "which": which, "path": str(dest)}
 
 
+
 @app.function(
     image=worldgen_image,
     volumes={WEIGHTS_MOUNT: weights_vol, OUTPUTS_MOUNT: outputs_vol, PANO_MOUNT: pano_vol},
@@ -677,7 +856,17 @@ def run_stage(
     wonder_topk: int = 1,
     recon_topk: int = 0,
     max_steps: int = 4000,
+    # Stage1/2 VLM (official Qwen3-VL-8B)
+    force_vlm: bool = True,
+    apply_nav_traj: bool = True,
+    apply_up_route: bool = True,
+    apply_recon_iteration: bool = False,
+    vlm_mode: str = "share",  # share | split
+    vlm_mem_util: float = VLM_DEFAULT_MEM_UTIL,
+    vlm_max_model_len: int = VLM_MAX_MODEL_LEN,
+    keep_vlm: bool = False,
 ) -> dict[str, Any]:
+    """Run one pipeline stage. Stages 1–2 start official Qwen3-VL-8B via vLLM."""
     import sys
 
     sys.path.insert(0, str(WORLDGEN))
@@ -702,26 +891,60 @@ def run_stage(
         "stage": stage,
         "scene": scene,
         "gpu": gpu_label,
+        "vlm_model": VLM_MODEL if stage in (1, 2) else None,
+        "force_vlm": force_vlm if stage == 1 else None,
+        "apply_nav_traj": apply_nav_traj if stage == 1 else None,
+        "vlm_mode": vlm_mode if stage in (1, 2) else None,
         "ts": datetime.now(timezone.utc).isoformat(),
     }
 
+    vlm_proc = None
+    need_vlm = stage in (1, 2)
     try:
+        if need_vlm:
+            cuda_dev = _resolve_vlm_cuda(gpu_label, vlm_mode)
+            # On share mode with nav models, keep mem util moderate
+            mem = vlm_mem_util
+            if apply_nav_traj and stage == 1 and vlm_mode == "share":
+                mem = min(mem, 0.35)
+            vlm_proc = _start_vlm(
+                gpu_mem_util=mem,
+                max_model_len=vlm_max_model_len,
+                cuda_devices=cuda_dev,
+            )
+            log["vlm_mem_util"] = mem
+            log["vlm_cuda"] = cuda_dev
+
         if stage == 1:
             cmd = [
                 "python", "traj_generate.py",
                 "--target_path", str(scene_path),
+                "--llm_addr", VLM_HOST,
+                "--llm_port", str(VLM_PORT),
+                "--llm_name", VLM_MODEL,
                 "--split_view_num", str(split_view_num),
                 "--nframe", str(nframe),
                 "--splitted_resolution", "480",
                 "--wonder_topk", str(wonder_topk),
                 "--recon_topk", str(max(recon_topk, 0)),
             ]
+            if force_vlm:
+                cmd.append("--force_vlm")
+            if apply_nav_traj:
+                cmd.append("--apply_nav_traj")
+            if apply_up_route:
+                cmd.append("--apply_up_route")
+            if apply_recon_iteration:
+                cmd.append("--apply_recon_iteration")
             print("+", " ".join(cmd), flush=True)
             subprocess.check_call(cmd, cwd=str(WORLDGEN))
         elif stage == 2:
             cmd = [
                 "torchrun", "--nproc_per_node=1", "traj_render.py",
                 "--target_path", str(scene_path),
+                "--llm_addr", VLM_HOST,
+                "--llm_port", str(VLM_PORT),
+                "--llm_name", VLM_MODEL,
             ]
             print("+", " ".join(cmd), flush=True)
             subprocess.check_call(cmd, cwd=str(WORLDGEN))
@@ -782,14 +1005,16 @@ def run_stage(
         log["cmd"] = list(e.cmd) if e.cmd else None
         raise
     finally:
+        if need_vlm and not keep_vlm:
+            _stop_vlm(vlm_proc)
         total = time.time() - t0
         log["seconds"] = round(total, 2)
         log["est_cost_usd"] = _price(gpu_label, total)
         arts = []
         for p in sorted(scene_path.rglob("*")):
-            if p.is_file() and p.suffix.lower() in {".mp4", ".ply", ".json", ".png", ".spz"}:
+            if p.is_file() and p.suffix.lower() in {".mp4", ".ply", ".json", ".png", ".spz", ".glb"}:
                 arts.append(str(p.relative_to(scene_path)))
-            if len(arts) >= 16:
+            if len(arts) >= 24:
                 break
         log["artifacts_sample"] = arts
         _write_meta(scene, log)
@@ -798,14 +1023,186 @@ def run_stage(
     return log
 
 
+@app.function(
+    image=worldgen_image,
+    volumes={WEIGHTS_MOUNT: weights_vol, OUTPUTS_MOUNT: outputs_vol, PANO_MOUNT: pano_vol},
+    timeout=4 * 60 * 60,
+    gpu=DEFAULT_GPU,
+    memory=131072,
+    cpu=8,
+)
+def run_stage12(
+    scene: str = "scene_from_008",
+    from_008: str = "smoke_qwen",
+    gpu_label: str = DEFAULT_GPU,
+    split_view_num: int = 1,
+    nframe: int = 16,
+    wonder_topk: int = 1,
+    recon_topk: int = 0,
+    force_vlm: bool = True,
+    apply_nav_traj: bool = True,
+    apply_up_route: bool = True,
+    apply_recon_iteration: bool = False,
+    vlm_mode: str = "share",
+    vlm_mem_util: float = VLM_DEFAULT_MEM_UTIL,
+    vlm_max_model_len: int = VLM_MAX_MODEL_LEN,
+) -> dict[str, Any]:
+    """Stage1 + Stage2 with one VLM lifecycle (official Qwen3-VL-8B)."""
+    import sys
+
+    sys.path.insert(0, str(WORLDGEN))
+    sys.path.insert(0, str(REPO_DIR))
+
+    scene_path = _seed_minimal_scene(scene, from_008)
+    os.chdir(WORLDGEN)
+    _patch_traj_generate_lazy()
+    _patch_traj_render_captions()
+    _patch_pytorch3d_stub()
+
+    t0 = time.time()
+    results: list[dict[str, Any]] = []
+    vlm_proc = None
+    cuda_dev = _resolve_vlm_cuda(gpu_label, vlm_mode)
+    mem = min(vlm_mem_util, 0.35) if apply_nav_traj and vlm_mode == "share" else vlm_mem_util
+
+    try:
+        vlm_proc = _start_vlm(
+            gpu_mem_util=mem,
+            max_model_len=vlm_max_model_len,
+            cuda_devices=cuda_dev,
+        )
+
+        # ----- Stage 1 -----
+        s1_t0 = time.time()
+        cmd1 = [
+            "python", "traj_generate.py",
+            "--target_path", str(scene_path),
+            "--llm_addr", VLM_HOST,
+            "--llm_port", str(VLM_PORT),
+            "--llm_name", VLM_MODEL,
+            "--split_view_num", str(split_view_num),
+            "--nframe", str(nframe),
+            "--splitted_resolution", "480",
+            "--wonder_topk", str(wonder_topk),
+            "--recon_topk", str(max(recon_topk, 0)),
+        ]
+        if force_vlm:
+            cmd1.append("--force_vlm")
+        if apply_nav_traj:
+            cmd1.append("--apply_nav_traj")
+        if apply_up_route:
+            cmd1.append("--apply_up_route")
+        if apply_recon_iteration:
+            cmd1.append("--apply_recon_iteration")
+        print("======== STAGE 1 ========", flush=True)
+        print("+", " ".join(cmd1), flush=True)
+        subprocess.check_call(cmd1, cwd=str(WORLDGEN))
+        s1 = {
+            "stage": 1, "ok": True,
+            "seconds": round(time.time() - s1_t0, 2),
+            "est_cost_usd": _price(gpu_label, time.time() - s1_t0),
+            "cmd": cmd1,
+        }
+        _write_meta(scene, {**s1, "ts": datetime.now(timezone.utc).isoformat(), "gpu": gpu_label})
+        results.append(s1)
+
+        # ----- Stage 2 -----
+        s2_t0 = time.time()
+        cmd2 = [
+            "torchrun", "--nproc_per_node=1", "traj_render.py",
+            "--target_path", str(scene_path),
+            "--llm_addr", VLM_HOST,
+            "--llm_port", str(VLM_PORT),
+            "--llm_name", VLM_MODEL,
+        ]
+        print("======== STAGE 2 ========", flush=True)
+        print("+", " ".join(cmd2), flush=True)
+        subprocess.check_call(cmd2, cwd=str(WORLDGEN))
+        s2 = {
+            "stage": 2, "ok": True,
+            "seconds": round(time.time() - s2_t0, 2),
+            "est_cost_usd": _price(gpu_label, time.time() - s2_t0),
+            "cmd": cmd2,
+        }
+        _write_meta(scene, {**s2, "ts": datetime.now(timezone.utc).isoformat(), "gpu": gpu_label})
+        results.append(s2)
+    except subprocess.CalledProcessError as e:
+        fail = {
+            "ok": False,
+            "error": f"exit {e.returncode}",
+            "cmd": list(e.cmd) if e.cmd else None,
+            "partial": results,
+        }
+        _write_meta(scene, {**fail, "ts": datetime.now(timezone.utc).isoformat()})
+        raise
+    finally:
+        _stop_vlm(vlm_proc)
+        outputs_vol.commit()
+        weights_vol.commit()
+
+    total = time.time() - t0
+    summary = {
+        "ok": True,
+        "scene": scene,
+        "gpu": gpu_label,
+        "vlm_model": VLM_MODEL,
+        "vlm_mode": vlm_mode,
+        "vlm_mem_util": mem,
+        "force_vlm": force_vlm,
+        "apply_nav_traj": apply_nav_traj,
+        "nframe": nframe,
+        "split_view_num": split_view_num,
+        "stages": results,
+        "seconds": round(total, 2),
+        "est_cost_usd": _price(gpu_label, total),
+    }
+    arts = []
+    for p in sorted(scene_path.rglob("*")):
+        if p.is_file() and p.suffix.lower() in {".mp4", ".ply", ".json", ".png", ".glb"}:
+            arts.append(str(p.relative_to(scene_path)))
+        if len(arts) >= 32:
+            break
+    summary["artifacts_sample"] = arts
+    _write_meta(scene, {"stage": "1+2", **summary, "ts": datetime.now(timezone.utc).isoformat()})
+    outputs_vol.commit()
+    return summary
+
+
 @app.function(image=download_image, timeout=60)
 def status() -> dict[str, Any]:
     return {
         "app": APP_NAME,
+        "version": "v8",
         "default_gpu": DEFAULT_GPU,
-        "pipeline": ["prepare", "1 traj", "2 render", "3 worldstereo", "4 gs_data", "5 3dgs"],
-        "smoke": "split_view_num=1 nframe=16 no-nav dmd",
+        "vlm": {
+            "model": VLM_MODEL,
+            "port": VLM_PORT,
+            "default_mem_util": VLM_DEFAULT_MEM_UTIL,
+            "max_model_len": VLM_MAX_MODEL_LEN,
+            "modes": ["share", "split"],
+        },
+        "pipeline": [
+            "prepare (008 pano)",
+            "download vlm | worldstereo-dmd | worldmirror",
+            "1 traj_generate + Qwen3-VL-8B (vLLM)",
+            "2 traj_render + VLM captions",
+            "3 worldstereo-memory-dmd",
+            "4 gen_gs_data",
+            "5 world_gs_trainer → ply",
+        ],
+        "stage12": "one VLM lifecycle for stage1+2 (recommended)",
+        "smoke_flags": {
+            "split_view_num": 1,
+            "nframe": 16,
+            "wonder_topk": 1,
+            "recon_topk": 0,
+            "force_vlm": True,
+            "apply_nav_traj": True,
+            "apply_up_route": True,
+            "apply_recon_iteration": False,
+        },
     }
+
 
 
 @app.local_entrypoint()
@@ -819,6 +1216,16 @@ def main(
     max_steps: int = 4000,
     split_view_num: int = 1,
     nframe: int = 16,
+    wonder_topk: int = 1,
+    recon_topk: int = 0,
+    force_vlm: bool = True,
+    apply_nav_traj: bool = True,
+    apply_up_route: bool = True,
+    apply_recon_iteration: bool = False,
+    vlm_mode: str = "share",
+    vlm_mem_util: float = VLM_DEFAULT_MEM_UTIL,
+    vlm_max_model_len: int = VLM_MAX_MODEL_LEN,
+    keep_vlm: bool = False,
 ):
     action = action.lower().strip()
     if action == "status":
@@ -830,27 +1237,90 @@ def main(
     if action == "download":
         print(json.dumps(download_weights.remote(which=which), indent=2))
         return
+    if action in ("stage12", "stage1+2", "s12"):
+        fn = run_stage12.with_options(gpu=gpu)
+        print(json.dumps(fn.remote(
+            scene=scene,
+            from_008=from_008,
+            gpu_label=gpu,
+            split_view_num=split_view_num,
+            nframe=nframe,
+            wonder_topk=wonder_topk,
+            recon_topk=recon_topk,
+            force_vlm=force_vlm,
+            apply_nav_traj=apply_nav_traj,
+            apply_up_route=apply_up_route,
+            apply_recon_iteration=apply_recon_iteration,
+            vlm_mode=vlm_mode,
+            vlm_mem_util=vlm_mem_util,
+            vlm_max_model_len=vlm_max_model_len,
+        ), indent=2))
+        return
     if action == "stage":
         fn = run_stage.with_options(gpu=gpu)
         print(json.dumps(fn.remote(
-            stage=stage, scene=scene, from_008=from_008, gpu_label=gpu,
-            split_view_num=split_view_num, nframe=nframe, max_steps=max_steps,
+            stage=stage,
+            scene=scene,
+            from_008=from_008,
+            gpu_label=gpu,
+            split_view_num=split_view_num,
+            nframe=nframe,
+            wonder_topk=wonder_topk,
+            recon_topk=recon_topk,
+            max_steps=max_steps,
+            force_vlm=force_vlm,
+            apply_nav_traj=apply_nav_traj,
+            apply_up_route=apply_up_route,
+            apply_recon_iteration=apply_recon_iteration,
+            vlm_mode=vlm_mode,
+            vlm_mem_util=vlm_mem_util,
+            vlm_max_model_len=vlm_max_model_len,
+            keep_vlm=keep_vlm,
         ), indent=2))
         return
     if action == "smoke":
         prepare_scene.remote(from_008_run=from_008, scene_name=scene)
+        download_weights.remote(which="vlm")
         download_weights.remote(which="worldstereo-dmd")
+        # Stage 1+2 with single VLM lifecycle
+        s12 = run_stage12.with_options(gpu=gpu).remote(
+            scene=scene,
+            from_008=from_008,
+            gpu_label=gpu,
+            split_view_num=split_view_num,
+            nframe=nframe,
+            wonder_topk=wonder_topk,
+            recon_topk=recon_topk,
+            force_vlm=force_vlm,
+            apply_nav_traj=apply_nav_traj,
+            apply_up_route=apply_up_route,
+            apply_recon_iteration=apply_recon_iteration,
+            vlm_mode=vlm_mode,
+            vlm_mem_util=vlm_mem_util,
+            vlm_max_model_len=vlm_max_model_len,
+        )
+        results = [s12]
+        if not s12.get("ok"):
+            print(json.dumps({"pipeline": results}, indent=2))
+            return
         fn = run_stage.with_options(gpu=gpu)
-        results = []
-        for s in (1, 2, 3, 4, 5):
+        for s in (3, 4, 5):
             print(f"\n======== STAGE {s} ========", flush=True)
             meta = fn.remote(
-                stage=s, scene=scene, from_008=from_008, gpu_label=gpu,
-                split_view_num=split_view_num, nframe=nframe, max_steps=max_steps,
+                stage=s,
+                scene=scene,
+                from_008=from_008,
+                gpu_label=gpu,
+                split_view_num=split_view_num,
+                nframe=nframe,
+                max_steps=max_steps,
             )
             results.append(meta)
             if not meta.get("ok"):
                 break
         print(json.dumps({"pipeline": results}, indent=2))
         return
-    raise SystemExit(f"unknown action {action}")
+    raise SystemExit(
+        f"unknown action {action}. Use status|prepare|download|stage|stage12|smoke"
+    )
+
