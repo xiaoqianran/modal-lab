@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>017 · RoboCasa365 Sim · h100 closed-loop</title>
+  <title>017 · eval-mini · 任务成功回放</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg:#0b0d12; --elev:#131821; --line:rgba(255,255,255,.08);
-      --fg:#eef1f6; --muted:#8b93a7; --ok:#3dd68c; --accent:#5b8cff; --warm:#f0a46e;
+      --fg:#eef1f6; --muted:#8b93a7; --ok:#3dd68c; --accent:#5b8cff; --warm:#f0a46e; --bad:#ff6b7a;
       --font:"DM Sans",system-ui,sans-serif; --mono:"JetBrains Mono",monospace;
     }
     * { box-sizing:border-box }
@@ -23,11 +23,12 @@
     .wrap { width:min(1000px, calc(100% - 2rem)); margin:0 auto; padding:1.5rem 0 3rem }
     .eyebrow { color:var(--ok); font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; font-weight:600 }
     h1 { margin:.3rem 0 .5rem; font-size:clamp(1.5rem,3vw,2.1rem); letter-spacing:-.03em }
-    .lede { color:var(--muted); max-width:62ch }
+    .lede { color:var(--muted); max-width:68ch }
     .pills { display:flex; flex-wrap:wrap; gap:.4rem; margin:1rem 0 1.25rem }
     .pill { font-family:var(--mono); font-size:.74rem; padding:.28rem .6rem; border-radius:999px; border:1px solid var(--line); color:var(--muted) }
     .pill strong { color:var(--fg); font-weight:500 }
     .pill.ok { border-color:rgba(61,214,140,.35); color:var(--ok) }
+    .pill.bad { border-color:rgba(255,107,122,.35); color:var(--bad) }
     .card {
       background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 40%), var(--elev);
       border:1px solid var(--line); border-radius:14px; padding:1rem; margin-bottom:1rem;
@@ -37,9 +38,17 @@
     video { width:100%; border-radius:10px; background:#000; border:1px solid var(--line) }
     .note { margin-top:.75rem; padding:.7rem .8rem; border-radius:10px; background:rgba(240,164,110,.08); border:1px solid rgba(240,164,110,.22); color:#f3d2b0; font-size:.84rem }
     .grid { display:grid; gap:.55rem; grid-template-columns:1fr 1fr }
+    @media (min-width:720px) { .grid.four { grid-template-columns:repeat(4,1fr) } }
     .stat { background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:10px; padding:.65rem .75rem }
     .stat .k { font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.06em }
     .stat .v { font-family:var(--mono); margin-top:.15rem }
+    .stat .v.ok { color:var(--ok) }
+    table { width:100%; border-collapse:collapse; font-size:.88rem }
+    th, td { text-align:left; padding:.45rem .4rem; border-bottom:1px solid var(--line) }
+    th { color:var(--muted); font-weight:500; font-size:.72rem; text-transform:uppercase; letter-spacing:.05em }
+    td.mono { font-family:var(--mono); font-size:.82rem }
+    td.ok { color:var(--ok); font-weight:600 }
+    td.zero { color:var(--muted) }
     a { color:#3dd6c6 }
     footer { margin-top:1.5rem; color:var(--muted); font-size:.8rem; border-top:1px solid var(--line); padding-top:1rem }
     code { font-family:var(--mono); font-size:.85em; color:#c9d4ff }
@@ -47,72 +56,122 @@
 </head>
 <body>
   <div class="wrap">
-    <div class="eyebrow">modal-lab · 017 · XR-1 closed-loop</div>
-    <h1>RoboCasa365 仿真回放</h1>
+    <div class="eyebrow">modal-lab · 017 · 1+2 完成</div>
+    <h1>eval-mini：多 seed + 长 horizon</h1>
     <p class="lede">
-      Modal · MuJoCo + RoboCasa + XR-1。默认 <strong>L40S</strong> · <strong>horizon=100</strong>。
-      下面先看<strong>像样闭环</strong>，再对照随机。
+      <strong>① 5×5 多 seed 成功率表</strong>（h=200）+
+      <strong>② CBL 长轨道</strong>（h=500×5）。
+      L40S · 29 min · <strong>~$0.94</strong> · 首次任务成功。
     </p>
 
+    <div class="pills">
+      <span class="pill ok">grid SR: <strong>32%</strong> (8/25)</span>
+      <span class="pill ok">可运行任务: <strong>80%</strong> (8/10)</span>
+      <span class="pill">Mixer: <strong>5/5</strong></span>
+      <span class="pill">Kettle: <strong>3/5</strong></span>
+      <span class="pill bad">CBL long: <strong>0/5</strong></span>
+    </div>
 
     <div class="card" id="success">
       <h2>任务成功回放 · OpenStandMixerHead · seed7</h2>
       <div class="pills">
         <span class="pill ok">episode_success: <strong>true</strong></span>
-        <span class="pill">step: <strong>95</strong></span>
-        <span class="pill">h: <strong>200</strong></span>
-        <span class="pill">eval: <strong>5×5 mini</strong></span>
+        <span class="pill">success_step: <strong>95</strong></span>
+        <span class="pill">horizon: <strong>200</strong></span>
+        <span class="pill">run: <strong>eval_mini_5x5_h200_long500_v1</strong></span>
       </div>
       <video controls autoplay loop muted playsinline src="data/success_OpenStandMixerHead_seed7.mp4"></video>
-      <p class="note">5×5 小评测里该任务 5/5=100%。详见 EVAL_MINI.md · grid SR 32%（含资产失败任务）/ 可运行任务 80%。</p>
+      <p class="note">该任务 5 个 seed 全胜（72–103 步）。TurnOnElectricKettle 3/5。闭环策略真的能完成简单厨房任务。</p>
+    </div>
+
+    <div class="card">
+      <h2>成功率表 · ① grid h=200 + ② long h=500</h2>
+      <table>
+        <thead>
+          <tr><th>track / task</th><th>h</th><th>succ</th><th>n</th><th>SR</th><th>备注</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>OpenStandMixerHead</td>
+            <td class="mono">200</td>
+            <td class="mono ok">5</td>
+            <td class="mono">5</td>
+            <td class="mono ok">100%</td>
+            <td>任务成功 ✓</td>
+          </tr>
+          <tr>
+            <td>TurnOnElectricKettle</td>
+            <td class="mono">200</td>
+            <td class="mono ok">3</td>
+            <td class="mono">5</td>
+            <td class="mono ok">60%</td>
+            <td>任务成功 ✓</td>
+          </tr>
+          <tr>
+            <td>CloseFridge</td>
+            <td class="mono">200</td>
+            <td class="mono zero">0</td>
+            <td class="mono">5</td>
+            <td class="mono zero">0%</td>
+            <td>env 创建 NaN（资产）</td>
+          </tr>
+          <tr>
+            <td>TurnOnSinkFaucet</td>
+            <td class="mono">200</td>
+            <td class="mono zero">0</td>
+            <td class="mono">5</td>
+            <td class="mono zero">0%</td>
+            <td>同上</td>
+          </tr>
+          <tr>
+            <td>CloseBlenderLid</td>
+            <td class="mono">200</td>
+            <td class="mono zero">0</td>
+            <td class="mono">5</td>
+            <td class="mono zero">0%</td>
+            <td>跑满仍失败</td>
+          </tr>
+          <tr>
+            <td>CloseBlenderLid <strong>long</strong></td>
+            <td class="mono">500</td>
+            <td class="mono zero">0</td>
+            <td class="mono">5</td>
+            <td class="mono zero">0%</td>
+            <td>官方 h=900；仍短</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="grid four" style="margin-top:1rem">
+        <div class="stat"><div class="k">grid 全体</div><div class="v">8/25 · 32%</div></div>
+        <div class="stat"><div class="k">可运行 only</div><div class="v ok">8/10 · 80%</div></div>
+        <div class="stat"><div class="k">wall</div><div class="v">~29 min</div></div>
+        <div class="stat"><div class="k">cost</div><div class="v">~$0.94</div></div>
+      </div>
     </div>
 
     <div class="card" id="policy">
-      <h2>XR-1 闭环 · CloseBlenderLid · horizon=100</h2>
+      <h2>对照 · 像样闭环 smoke · CBL · h=100</h2>
       <div class="pills">
         <span class="pill ok">pipeline: <strong>OK</strong></span>
         <span class="pill">gpu: <strong>L40S</strong></span>
         <span class="pill">wall: <strong>88s</strong></span>
         <span class="pill">cost: <strong>$0.048</strong></span>
-        <span class="pill">frames: <strong>101</strong></span>
-        <span class="pill">infer: <strong>7× · 3.0s</strong></span>
         <span class="pill">task: <strong>fail</strong></span>
       </div>
-      <video controls autoplay loop muted playsinline src="data/policy_episode_h100.mp4"></video>
-      <p class="note">
-        三路相机 → 模型 → 12D 动作 → 仿真 100 步。任务未完成（单 seed）；链路 error=null。
-        meta：<code>data/meta_policy_h100.json</code>
-      </p>
+      <video controls loop muted playsinline src="data/policy_episode_h100.mp4"></video>
+      <p class="note">单 seed 闭环链路验证；任务未成功。多 seed 后简单任务才出 SR。</p>
     </div>
 
     <div class="card">
       <h2>对照 · 随机策略 60 步</h2>
-      <div class="pills">
-        <span class="pill">mode: <strong>random</strong></span>
-        <span class="pill">gpu: <strong>A100-40GB</strong>（早期）</span>
-        <span class="pill">wall: <strong>1029s</strong>（含首次资产）</span>
-        <span class="pill">cost: <strong>$0.60</strong></span>
-      </div>
       <video controls loop muted playsinline src="data/CloseBlenderLid_random.mp4"></video>
-      <p class="note">随机乱动证明仿真能出 mp4，不是策略质量参考。</p>
-    </div>
-
-    <div class="card">
-      <h2>时间 / 费用（资产就绪后）</h2>
-      <div class="grid">
-        <div class="stat"><div class="k">h=100 闭环</div><div class="v">~88 s · $0.05</div></div>
-        <div class="stat"><div class="k">h=20 早期 smoke</div><div class="v">~6 min · $0.20</div></div>
-        <div class="stat"><div class="k">VRAM</div><div class="v">~10.5 GB / L40S</div></div>
-        <div class="stat"><div class="k">资产</div><div class="v">Volume models_assets</div></div>
-      </div>
-      <p class="note" style="margin-top:.8rem">
-        完整 2500 局不做。详情见 <code>RESULTS.md</code>。
-      </p>
+      <p class="note">随机乱动只证明仿真能出 mp4，不是策略质量参考。</p>
     </div>
 
     <footer>
-      017-xr1-robocasa365-sim · default L40S · horizon=100 ·
+      run <code>eval_mini_5x5_h200_long500_v1</code> · commit <code>fe0f50e</code> ·
       <a href="https://github.com/xiaoqianran/modal-lab/tree/main/017-xr1-robocasa365-sim">repo</a>
+      · 下一步可选：CBL×N @ h=900 · 换掉 NaN 任务 · 018 VLABench
     </footer>
   </div>
 </body>
