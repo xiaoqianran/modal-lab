@@ -20,6 +20,11 @@ def modal_run(args: list[str], *, detach: bool = False) -> int:
     return subprocess.call(cmd)
 
 
+def _flag(name: str, value: bool) -> str:
+    """Modal bool CLI: --foo / --no-foo."""
+    return f"--{name}" if value else f"--no-{name}"
+
+
 def _common_stage_flags(p: argparse.ArgumentParser) -> None:
     p.add_argument("--gpu", default="RTX-PRO-6000")
     p.add_argument("--scene", default="scene_from_008")
@@ -72,14 +77,10 @@ def _stage_args(ns: argparse.Namespace) -> list[str]:
         str(ns.wonder_topk),
         "--recon-topk",
         str(ns.recon_topk),
-        "--force-vlm",
-        str(ns.force_vlm).lower(),
-        "--apply-nav-traj",
-        str(ns.apply_nav_traj).lower(),
-        "--apply-up-route",
-        str(ns.apply_up_route).lower(),
-        "--apply-recon-iteration",
-        str(ns.apply_recon_iteration).lower(),
+        _flag("force-vlm", ns.force_vlm),
+        _flag("apply-nav-traj", ns.apply_nav_traj),
+        _flag("apply-up-route", ns.apply_up_route),
+        _flag("apply-recon-iteration", ns.apply_recon_iteration),
         "--vlm-mode",
         ns.vlm_mode,
         "--vlm-mem-util",
@@ -124,7 +125,8 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--max-steps", type=int, default=4000)
     st.add_argument(
         "--keep-vlm",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
+        default=False,
         help="do not kill vLLM after stage 1/2 (chain stages manually)",
     )
 
@@ -157,8 +159,7 @@ def main(argv: list[str] | None = None) -> int:
             str(args.n),
             "--max-steps",
             str(args.max_steps),
-            "--keep-vlm",
-            str(bool(args.keep_vlm)).lower(),
+            _flag("keep-vlm", bool(args.keep_vlm)),
         ]
         return modal_run(["--action", "stage", *flags], detach=bool(args.detach))
     if args.cmd == "stage12":
