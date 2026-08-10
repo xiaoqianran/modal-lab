@@ -62,6 +62,8 @@ modal volume get modal-lab-ace-step-1.5-outputs runs/smoke_lofi ./outputs/
 
 同条件 8 卡实测见 [GPU_BENCHMARK.md](GPU_BENCHMARK.md)（`bench/summary.json`）。
 
+交互页（表 + 试听）：打开 [`gallery/index.html`](gallery/index.html)。
+
 ## 许可
 
 上游 **MIT**。生成内容请遵循 ACE-Step 项目声明（商用友好数据集，但仍须自行合规）。

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>010 · ACE-Step 1.5 · GPU Bench Gallery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b0d11;
+      --bg-elev: #131722;
+      --bg-soft: #1a2030;
+      --line: rgba(255, 255, 255, 0.08);
+      --line-strong: rgba(255, 255, 255, 0.14);
+      --fg: #eef1f6;
+      --muted: #8b93a7;
+      --accent: #7c6cff;
+      --accent-2: #3dd6c6;
+      --warm: #f0a46e;
+      --ok: #3dd68c;
+      --danger: #ff7b72;
+      --radius: 14px;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+      --font: "DM Sans", system-ui, sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(1100px 560px at 8% -12%, rgba(124, 108, 255, 0.16), transparent 55%),
+        radial-gradient(900px 480px at 100% 0%, rgba(61, 214, 198, 0.1), transparent 50%),
+        var(--bg);
+      color: var(--fg);
+      font-family: var(--font);
+      line-height: 1.5;
+    }
+    a { color: var(--accent-2); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap {
+      width: min(1180px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 1.5rem 0 3.5rem;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-2);
+      font-weight: 600;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--ok);
+      box-shadow: 0 0 0 4px rgba(61, 214, 140, 0.18);
+    }
+    h1 {
+      margin: 0.35rem 0 0.45rem;
+      font-size: clamp(1.55rem, 3.4vw, 2.3rem);
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+    .lede {
+      margin: 0;
+      color: var(--muted);
+      max-width: 62ch;
+      font-size: 0.98rem;
+    }
+    header.hero {
+      display: grid;
+      gap: 1rem;
+      margin-bottom: 1.35rem;
+    }
+    @media (min-width: 900px) {
+      header.hero {
+        grid-template-columns: 1.4fr 1fr;
+        align-items: end;
+      }
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .chip {
+      border: 1px solid var(--line-strong);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 999px;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .chip strong { color: var(--fg); font-weight: 600; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.65rem;
+    }
+    @media (min-width: 560px) {
+      .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    .stat {
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent), var(--bg-elev);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 0.9rem 1rem;
+      box-shadow: var(--shadow);
+    }
+    .stat .k {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .stat .v {
+      margin-top: 0.25rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat .s { margin-top: 0.15rem; font-size: 0.78rem; color: var(--muted); }
+    .panel {
+      background: var(--bg-elev);
+      border: 1px solid var(--line);
+      border-radius: calc(var(--radius) + 2px);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+    .panel-h {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.95rem 1.1rem;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .panel-h h2 {
+      margin: 0;
+      font-size: 1.02rem;
+      letter-spacing: -0.01em;
+    }
+    .panel-h p {
+      margin: 0.15rem 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .btn {
+      appearance: none;
+      border: 1px solid var(--line-strong);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--fg);
+      border-radius: 999px;
+      padding: 0.38rem 0.8rem;
+      font: inherit;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: border-color .15s, background .15s, color .15s;
+    }
+    .btn:hover { border-color: rgba(124, 108, 255, 0.55); }
+    .btn.active {
+      background: rgba(124, 108, 255, 0.18);
+      border-color: rgba(124, 108, 255, 0.55);
+      color: #dcd7ff;
+    }
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 920px;
+      font-variant-numeric: tabular-nums;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.72rem 0.85rem;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(0,0,0,0.18);
+      position: sticky;
+      top: 0;
+      cursor: pointer;
+      user-select: none;
+    }
+    th:hover { color: var(--fg); }
+    th .sort { opacity: 0.45; margin-left: 0.25rem; font-family: var(--mono); font-size: 0.72rem; }
+    th.sorted .sort { opacity: 1; color: var(--accent-2); }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+    tr.best-wall td { box-shadow: inset 3px 0 0 var(--accent-2); }
+    tr.best-cost td { box-shadow: inset 3px 0 0 var(--ok); }
+    tr.best-diff td { box-shadow: inset 3px 0 0 var(--warm); }
+    .gpu {
+      font-weight: 650;
+      letter-spacing: -0.01em;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      border-radius: 999px;
+      padding: 0.12rem 0.5rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+    .badge.ok {
+      color: #b8f5d3;
+      background: rgba(61, 214, 140, 0.12);
+      border-color: rgba(61, 214, 140, 0.28);
+    }
+    .badge.def {
+      color: #dcd7ff;
+      background: rgba(124, 108, 255, 0.14);
+      border-color: rgba(124, 108, 255, 0.3);
+    }
+    .mono { font-family: var(--mono); font-size: 0.84rem; }
+    .bar-cell { min-width: 140px; }
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+      margin-top: 0.35rem;
+    }
+    .bar > i {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    }
+    .bar.cost > i { background: linear-gradient(90deg, var(--ok), #8dffc2); }
+    .bar.diff > i { background: linear-gradient(90deg, var(--warm), #ffd09a); }
+    .cards {
+      display: grid;
+      gap: 0.85rem;
+      padding: 1rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 720px) {
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (min-width: 1080px) {
+      .cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    .card {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.02);
+      border-radius: var(--radius);
+      padding: 0.9rem;
+      display: grid;
+      gap: 0.55rem;
+    }
+    .card.selected {
+      border-color: rgba(124, 108, 255, 0.5);
+      box-shadow: 0 0 0 1px rgba(124, 108, 255, 0.2);
+    }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 0.5rem;
+    }
+    .card h3 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem 0.6rem;
+      font-size: 0.82rem;
+    }
+    .metrics span { color: var(--muted); display: block; font-size: 0.72rem; }
+    .metrics b { font-weight: 650; font-variant-numeric: tabular-nums; }
+    audio {
+      width: 100%;
+      height: 36px;
+      filter: saturate(0.9);
+    }
+    .notes {
+      padding: 1rem 1.1rem 1.2rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .notes ul { margin: 0.4rem 0 0; padding-left: 1.15rem; }
+    .notes li { margin: 0.25rem 0; }
+    footer {
+      margin-top: 1.5rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+      justify-content: space-between;
+    }
+    code {
+      font-family: var(--mono);
+      font-size: 0.84em;
+      background: rgba(255,255,255,0.05);
+      padding: 0.1rem 0.35rem;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <div>
+        <div class="eyebrow">010 · ACE-Step 1.5 · Modal</div>
+        <h1>GPU 对照 Gallery</h1>
+        <p class="lede">
+          同一 smoke：<strong>acestep-v15-turbo</strong> · 20s 器乐 lo-fi · seed 42 · 8 steps · 不加载 LM。
+          对比墙钟、扩散耗时与估算 GPU 费用，并可直接试听各卡产物。
+        </p>
+        <div class="chips" style="margin-top: 0.9rem;">
+          <span class="chip">日期 <strong>2026-08-10</strong></span>
+          <span class="chip">模型 <strong>turbo DiT</strong></span>
+          <span class="chip">thinking <strong>off</strong></span>
+          <span class="chip">格式 <strong>FLAC 48kHz</strong></span>
+        </div>
+      </div>
+      <div class="stats" id="stats"></div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-h">
+        <div>
+          <h2>总表</h2>
+          <p>点击表头排序 · 费用 = Modal 公开 $/s × 墙钟（含冷启动，偏保守）</p>
+        </div>
+        <div class="toolbar" id="sort-btns">
+          <button class="btn active" data-sort="wall_s">按墙钟</button>
+          <button class="btn" data-sort="est_gpu_usd_wall">按费用</button>
+          <button class="btn" data-sort="diffusion_s">按扩散</button>
+          <button class="btn" data-sort="generate_s">按生成</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-sort="gpu">GPU <span class="sort"></span></th>
+              <th data-sort="wall_s" class="sorted">墙钟 s <span class="sort">↑</span></th>
+              <th data-sort="dit_init_s">加载 s <span class="sort"></span></th>
+              <th data-sort="generate_s">生成 s <span class="sort"></span></th>
+              <th data-sort="diffusion_s">扩散 s <span class="sort"></span></th>
+              <th data-sort="vae_decode_s">VAE s <span class="sort"></span></th>
+              <th data-sort="est_gpu_usd_wall">估费 USD <span class="sort"></span></th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h">
+        <div>
+          <h2>试听对照</h2>
+          <p>同 prompt / seed · 跨架构 bf16 非 bit 级可复现，听感同档 lo-fi 器乐</p>
+        </div>
+      </div>
+      <div class="cards" id="cards"></div>
+      <div class="notes">
+        <strong style="color: var(--fg);">结论速览</strong>
+        <ul>
+          <li><strong>默认 / 省钱：</strong>L4 或 T4（估费约 $0.006–0.007）</li>
+          <li><strong>速度与费用折中：</strong>A10（墙钟 ~23s，费用接近 L4）</li>
+          <li><strong>纯推理最快（本轮）：</strong>A100-80GB（扩散 ~1.16s）</li>
+          <li><strong>短 20s turbo 任务不建议默认 H100：</strong>费用约 L4 的 6×，收益不明显</li>
+          <li>音质差距主要来自模型档位（turbo / sft / XL、是否 thinking），不是这 8 张卡之间的数量级差异</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer>
+      <div>
+        数据：<code>bench/summary.json</code> ·
+        文档：<a href="../GPU_BENCHMARK.md">GPU_BENCHMARK.md</a> ·
+        上游：<a href="https://github.com/ace-step/ACE-Step-1.5" target="_blank" rel="noreferrer">ACE-Step 1.5</a>
+      </div>
+      <div>modal-lab · 010-ace-step-1.5 · Gallery</div>
+    </footer>
+  </div>
+
+  <script>
+    const DATA = {
+      "experiment": "010-ace-step-1.5",
+      "task": "smoke text2music instrumental 20s · seed 42 · turbo 8 steps · thinking=false",
+      "dit_model": "acestep-v15-turbo",
+      "conditions": {
+        "caption": "lo-fi hip hop instrumental (smoke_lofi.json)",
+        "duration_s": 20,
+        "seed": 42,
+        "inference_steps": 8,
+        "thinking": false,
+        "init_lm": false,
+        "audio_format": "flac",
+        "sample_rate": 48000
+      },
+      "price_per_sec": {
+        "T4": 0.000164,
+        "L4": 0.000222,
+        "A10": 0.000306,
+        "L40S": 0.000542,
+        "A100-40GB": 0.000583,
+        "A100-80GB": 0.000694,
+        "H100": 0.001097,
+        "RTX-PRO-6000": 0.000842
+      },
+      "rows": [
+        {"gpu":"A100-80GB","success":true,"wall_s":22.43,"dit_init_s":6.44,"generate_s":3.78,"diffusion_s":1.155,"vae_decode_s":0.306,"init_plus_gen_s":10.22,"est_gpu_usd_wall":0.0156,"audio":3215640,"run_name":"bench_A100_80GB"},
+        {"gpu":"A10","success":true,"wall_s":23.01,"dit_init_s":6.71,"generate_s":4.02,"diffusion_s":1.361,"vae_decode_s":0.588,"init_plus_gen_s":10.73,"est_gpu_usd_wall":0.007,"audio":3197142,"run_name":"bench_A10"},
+        {"gpu":"L40S","success":true,"wall_s":25.17,"dit_init_s":6.88,"generate_s":4.9,"diffusion_s":1.773,"vae_decode_s":0.321,"init_plus_gen_s":11.78,"est_gpu_usd_wall":0.0136,"audio":3222293,"run_name":"bench_L40S"},
+        {"gpu":"RTX-PRO-6000","success":true,"wall_s":26.37,"dit_init_s":7.17,"generate_s":3.98,"diffusion_s":1.479,"vae_decode_s":0.286,"init_plus_gen_s":11.15,"est_gpu_usd_wall":0.0222,"audio":3206348,"run_name":"bench_RTX_PRO_6000"},
+        {"gpu":"L4","success":true,"wall_s":31.04,"dit_init_s":9.35,"generate_s":5.93,"diffusion_s":2.023,"vae_decode_s":0.804,"init_plus_gen_s":15.28,"est_gpu_usd_wall":0.0069,"audio":3221111,"run_name":"bench_L4"},
+        {"gpu":"T4","success":true,"wall_s":34.43,"dit_init_s":11.66,"generate_s":5.59,"diffusion_s":1.793,"vae_decode_s":1.203,"init_plus_gen_s":17.25,"est_gpu_usd_wall":0.0056,"audio":2966395,"run_name":"bench_T4"},
+        {"gpu":"A100-40GB","success":true,"wall_s":35.61,"dit_init_s":9.74,"generate_s":7.04,"diffusion_s":2.461,"vae_decode_s":0.485,"init_plus_gen_s":16.78,"est_gpu_usd_wall":0.0208,"audio":3215640,"run_name":"bench_A100_40GB"},
+        {"gpu":"H100","success":true,"wall_s":37.82,"dit_init_s":9.6,"generate_s":5.87,"diffusion_s":1.786,"vae_decode_s":0.323,"init_plus_gen_s":15.47,"est_gpu_usd_wall":0.0415,"audio":3189182,"run_name":"bench_H100"}
+      ]
+    };
+
+    const DEFAULT_GPU = "L4";
+    let sortKey = "wall_s";
+    let sortDir = 1; // asc
+
+    const maxWall = Math.max(...DATA.rows.map(r => r.wall_s));
+    const maxCost = Math.max(...DATA.rows.map(r => r.est_gpu_usd_wall));
+    const maxDiff = Math.max(...DATA.rows.map(r => r.diffusion_s));
+
+    const bestWall = DATA.rows.reduce((a, b) => a.wall_s < b.wall_s ? a : b);
+    const bestCost = DATA.rows.reduce((a, b) => a.est_gpu_usd_wall < b.est_gpu_usd_wall ? a : b);
+    const bestDiff = DATA.rows.reduce((a, b) => a.diffusion_s < b.diffusion_s ? a : b);
+
+    function fmtUsd(n) {
+      return "$" + Number(n).toFixed(4);
+    }
+    function fmtS(n) {
+      return Number(n).toFixed(2);
+    }
+
+    function renderStats() {
+      const el = document.getElementById("stats");
+      el.innerHTML = `
+        <div class="stat"><div class="k">最快墙钟</div><div class="v">${bestWall.gpu}</div><div class="s">${fmtS(bestWall.wall_s)} s</div></div>
+        <div class="stat"><div class="k">最低估费</div><div class="v">${bestCost.gpu}</div><div class="s">${fmtUsd(bestCost.est_gpu_usd_wall)}</div></div>
+        <div class="stat"><div class="k">最快扩散</div><div class="v">${bestDiff.gpu}</div><div class="s">${fmtS(bestDiff.diffusion_s)} s</div></div>
+        <div class="stat"><div class="k">全部成功</div><div class="v">${DATA.rows.length}/8</div><div class="s">同一 smoke 条件</div></div>
+      `;
+    }
+
+    function sortedRows() {
+      const rows = [...DATA.rows];
+      rows.sort((a, b) => {
+        const av = a[sortKey], bv = b[sortKey];
+        if (typeof av === "string") return av.localeCompare(bv) * sortDir;
+        return (av - bv) * sortDir;
+      });
+      return rows;
+    }
+
+    function rowClass(r) {
+      const cls = [];
+      if (r.gpu === bestWall.gpu) cls.push("best-wall");
+      else if (r.gpu === bestCost.gpu) cls.push("best-cost");
+      else if (r.gpu === bestDiff.gpu) cls.push("best-diff");
+      return cls.join(" ");
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("tbody");
+      const rows = sortedRows();
+      tbody.innerHTML = rows.map(r => {
+        const wallPct = (r.wall_s / maxWall) * 100;
+        const costPct = (r.est_gpu_usd_wall / maxCost) * 100;
+        const badges = [
+          r.success ? `<span class="badge ok">OK</span>` : `<span class="badge">FAIL</span>`,
+          r.gpu === DEFAULT_GPU ? `<span class="badge def">默认</span>` : ""
+        ].join(" ");
+        return `<tr class="${rowClass(r)}">
+          <td><span class="gpu">${r.gpu}</span> ${badges}</td>
+          <td class="bar-cell mono">${fmtS(r.wall_s)}<div class="bar"><i style="width:${wallPct}%"></i></div></td>
+          <td class="mono">${fmtS(r.dit_init_s)}</td>
+          <td class="mono">${fmtS(r.generate_s)}</td>
+          <td class="bar-cell mono">${fmtS(r.diffusion_s)}<div class="bar diff"><i style="width:${(r.diffusion_s/maxDiff)*100}%"></i></div></td>
+          <td class="mono">${fmtS(r.vae_decode_s)}</td>
+          <td class="bar-cell mono">${fmtUsd(r.est_gpu_usd_wall)}<div class="bar cost"><i style="width:${costPct}%"></i></div></td>
+          <td class="mono" style="color:var(--muted)">${r.run_name}</td>
+        </tr>`;
+      }).join("");
+
+      document.querySelectorAll("th[data-sort]").forEach(th => {
+        const key = th.dataset.sort;
+        th.classList.toggle("sorted", key === sortKey);
+        const span = th.querySelector(".sort");
+        if (span) span.textContent = key === sortKey ? (sortDir === 1 ? "↑" : "↓") : "";
+      });
+      document.querySelectorAll("#sort-btns .btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.sort === sortKey);
+      });
+    }
+
+    function renderCards() {
+      const el = document.getElementById("cards");
+      // display cards in wall order for browsing
+      const rows = [...DATA.rows].sort((a,b) => a.wall_s - b.wall_s);
+      el.innerHTML = rows.map(r => {
+        const tags = [];
+        if (r.gpu === bestWall.gpu) tags.push("最快墙钟");
+        if (r.gpu === bestCost.gpu) tags.push("最省钱");
+        if (r.gpu === bestDiff.gpu) tags.push("最快扩散");
+        if (r.gpu === DEFAULT_GPU) tags.push("默认");
+        const tagHtml = tags.map(t => `<span class="badge def">${t}</span>`).join(" ");
+        const src = `assets/${r.run_name}.flac`;
+        return `<article class="card ${r.gpu === DEFAULT_GPU ? "selected" : ""}">
+          <div class="card-top">
+            <div>
+              <h3>${r.gpu}</h3>
+              <div style="margin-top:0.25rem">${tagHtml}</div>
+            </div>
+            <div class="mono" style="color:var(--muted);font-size:0.78rem">${fmtUsd(r.est_gpu_usd_wall)}</div>
+          </div>
+          <div class="metrics">
+            <div><span>墙钟</span><b>${fmtS(r.wall_s)} s</b></div>
+            <div><span>生成</span><b>${fmtS(r.generate_s)} s</b></div>
+            <div><span>扩散</span><b>${fmtS(r.diffusion_s)} s</b></div>
+            <div><span>加载</span><b>${fmtS(r.dit_init_s)} s</b></div>
+          </div>
+          <audio controls preload="none" src="${src}"></audio>
+        </article>`;
+      }).join("");
+    }
+
+    function setSort(key, toggle = true) {
+      if (sortKey === key && toggle) sortDir *= -1;
+      else {
+        sortKey = key;
+        // default asc for metrics
+        sortDir = 1;
+      }
+      renderTable();
+    }
+
+    document.querySelectorAll("th[data-sort]").forEach(th => {
+      th.addEventListener("click", () => setSort(th.dataset.sort, true));
+    });
+    document.querySelectorAll("#sort-btns .btn").forEach(b => {
+      b.addEventListener("click", () => setSort(b.dataset.sort, false));
+    });
+
+    renderStats();
+    renderTable();
+    renderCards();
+  </script>
+</body>
+</html>

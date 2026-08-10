@@ -4,6 +4,7 @@ weights/
 __pycache__/
 *.pyc
 *.flac
+!gallery/assets/*.flac
 *.wav
 *.mp3
 *.opus

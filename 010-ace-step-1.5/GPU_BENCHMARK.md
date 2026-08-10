@@ -4,6 +4,7 @@
 任务：**同一** smoke — `acestep-v15-turbo` · 20s 器乐 lo-fi · seed **42** · 8 steps · `thinking=false`（不加载 LM）
 
 原始 meta：[`bench/`](bench/) · 汇总 [`bench/summary.json`](bench/summary.json)  
+交互 Gallery：[`gallery/index.html`](gallery/index.html)（总表 + 各卡 FLAC 试听）  
 远程音频：`modal volume ls modal-lab-ace-step-1.5-outputs runs`
 
 ## 条件
