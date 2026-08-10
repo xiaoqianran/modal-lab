@@ -148,7 +148,7 @@ sim_image = (
         "imageio-ffmpeg",
         "opencv-python-headless",
         "gymnasium",
-        "mujoco",
+        "mujoco==3.3.1",
         "numba",
         "h5py",
         "lxml",
@@ -163,16 +163,18 @@ sim_image = (
         "git clone --depth 1 https://github.com/ARISE-Initiative/robosuite.git /opt/robosuite",
         # no-deps: avoid teleop extras (pynput/evdev) on headless Modal
         "cd /opt/robosuite && pip install -e . --no-deps --no-cache-dir",
-        "pip install --no-cache-dir 'mujoco>=3.0' 'scipy' 'Pillow' 'opencv-python-headless' 'numba' 'termcolor' 'gymnasium'",
+        "pip install --no-cache-dir 'mujoco==3.3.1' 'scipy' 'Pillow' 'opencv-python-headless' 'numba' 'termcolor' 'gymnasium'",
         "git clone --depth 1 https://github.com/robocasa/robocasa.git /opt/robocasa",
         "cd /opt/robocasa && pip install -e . --no-deps --no-cache-dir",
         # non-interactive private macros
-        "python -c \"import shutil, robocasa, os; "
-        "bp=robocasa.__path__[0]; "
+        "python -c \"import shutil, os; "
+        "bp='/opt/robocasa/robocasa'; "
         "src=os.path.join(bp,'macros.py'); "
         "dst=os.path.join(bp,'macros_private.py'); "
         "shutil.copyfile(src,dst); print('macros_private ok', dst)\"",
-        "python -c \"import robosuite, robocasa, gymnasium; print('robosuite', robosuite.__version__ if hasattr(robosuite,'__version__') else 'ok'); print('robocasa', robocasa.__path__)\"",
+        "python -c \"import mujoco; assert mujoco.__version__=='3.3.1', mujoco.__version__; "
+        "import robosuite, robocasa, gymnasium; print('mujoco', mujoco.__version__); "
+        "print('robocasa', robocasa.__path__)\"",
     )
     .env(
         {
