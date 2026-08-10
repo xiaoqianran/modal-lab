@@ -14,11 +14,12 @@ Modal 实验台：按 `NNN-topic` 编号做可复现实验。
 | 022 Hunyuan3D-2.1 | https://xiaoqianran.github.io/modal-lab/gpu-gallery/#hunyuan3d21 |
 | **023-a SPAR3D Mesh Studio** | https://xiaoqianran.github.io/modal-lab/023-a-spar3d/ |
 | **023-b SF3D Mesh Studio** | https://xiaoqianran.github.io/modal-lab/023-b-sf3d/ |
-| **TTS Signal Desk（025–028）** | https://xiaoqianran.github.io/modal-lab/tts-gallery/ |
+| **TTS Signal Desk（025–034）** | https://xiaoqianran.github.io/modal-lab/tts-gallery/ |
 | 025 Kokoro | https://xiaoqianran.github.io/modal-lab/025-kokoro/ |
 | 026 Chatterbox | https://xiaoqianran.github.io/modal-lab/026-chatterbox/ |
 | 027 Qwen3-TTS | https://xiaoqianran.github.io/modal-lab/027-qwen3-tts/ |
 | 028 Fish S2 | https://xiaoqianran.github.io/modal-lab/028-fish-s2/ |
+| 029 VoxCPM2 | https://xiaoqianran.github.io/modal-lab/029-voxcpm2/ |
 | 各实验 gallery | `https://xiaoqianran.github.io/modal-lab/<NNN-topic>/` |
 
 ### 每位作者请记住：出了 HTML 结果 → 部署到 Pages
@@ -88,7 +89,13 @@ I2V_GPU_ROADMAP.md      # image→3D 卡池约定与结论
 026-chatterbox/          # Chatterbox TTS Tier S2（默认 L4 · MIT · 多语/克隆）
 027-qwen3-tts/           # Qwen3-TTS Tier S3（默认 L4 · Apache · 中英+三模式）
 028-fish-s2/             # Fish Audio S2 Pro Tier S4（默认 L40S · Research · Elo#1）
-tts-gallery/             # TTS Signal Desk 全量 Listening Room（025–028）
+029-voxcpm2/             # VoxCPM2 Tier A1（默认 L4 · Apache · 速度/延迟）
+030-vibevoice/            # VibeVoice Realtime TTS Tier A2（默认 L4 · MIT · stars#1）
+031-cosyvoice3/           # CosyVoice3 Tier A3（默认 L4 · Apache · 中文方言）
+032-indextts2/            # IndexTTS-2 Tier A4（默认 L4 · 配音/情感）
+033-f5tts/                # F5-TTS Tier A5（默认 L4 · 零样本 · CC-BY-NC）
+034-higgs/                # Higgs Audio v2 Tier A6（默认 L40S · 收官）
+tts-gallery/             # TTS Signal Desk 全量 Listening Room（025–034）
 ```
 
 命名约定：`NNN-topic`（序号 + 主题）。`python main.py 001 …` 等短号在唯一时可解析到对应目录。
@@ -167,7 +174,13 @@ cd 022-hunyuan3d-2.1 && python run.py probe --gpu L40S
 | `026-chatterbox` | [Chatterbox](https://github.com/resemble-ai/chatterbox) 多语/克隆；**L4 · ~$0.014 · [Gallery](https://xiaoqianran.github.io/modal-lab/026-chatterbox/)** |
 | `027-qwen3-tts` | [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) 三模式；**L4 · ~$0.005 · [Gallery](https://xiaoqianran.github.io/modal-lab/027-qwen3-tts/)** |
 | `028-fish-s2` | [Fish S2 Pro](https://github.com/fishaudio/fish-speech) Elo 开源#1；**L40S · ~$0.06 · [Gallery](https://xiaoqianran.github.io/modal-lab/028-fish-s2/)** |
-| `tts-gallery` | **TTS Signal Desk** 025–028 全量试听与成本可视化 · [Room](https://xiaoqianran.github.io/modal-lab/tts-gallery/) |
+| `029-voxcpm2` | [VoxCPM2](https://github.com/OpenBMB/VoxCPM) tokenizer-free 2B；**L4 · ~$0.007 · [Gallery](https://xiaoqianran.github.io/modal-lab/029-voxcpm2/)** |
+| `030-vibevoice` | VibeVoice Realtime 0.5B；**L4 · ~$0.005 · [Gallery](https://xiaoqianran.github.io/modal-lab/030-vibevoice/)** |
+| `031-cosyvoice3` | CosyVoice3 0.5B；**L4 · ~$0.005–0.009 · [Gallery](https://xiaoqianran.github.io/modal-lab/031-cosyvoice3/)** |
+| `032-indextts2` | IndexTTS-2；**L4 · ~$0.008 · [Gallery](https://xiaoqianran.github.io/modal-lab/032-indextts2/)** |
+| `033-f5tts` | F5-TTS v1；**L4 · ~$0.0025 · [Gallery](https://xiaoqianran.github.io/modal-lab/033-f5tts/)** |
+| `034-higgs` | Higgs Audio v2 3B；**L40S · ~$0.01–0.027 · [Gallery](https://xiaoqianran.github.io/modal-lab/034-higgs/)** · **TTS 收官** |
+| `tts-gallery` | **TTS Signal Desk** 025–034 全量试听与成本可视化 · [Room](https://xiaoqianran.github.io/modal-lab/tts-gallery/) |
 | `gpu-gallery` | **L40S × PRO 6000 对照预览**（020 / 021 / 005） |
 | — | 音乐队列见 [MUSIC_ROADMAP.md](MUSIC_ROADMAP.md) · TTS 见 [TTS_ROADMAP.md](TTS_ROADMAP.md) · image→3D 见 [I2V_GPU_ROADMAP.md](I2V_GPU_ROADMAP.md) |
 

@@ -1,13 +1,13 @@
 {
   "lab": "modal-lab",
-  "tagline": "Signal Desk · TTS Tier S 全量试听 · Image→3D 对照",
+  "tagline": "Signal Desk · TTS 025–034 全量试听 · Image→3D 对照",
   "experiments": [
     {
       "id": "tts-gallery",
       "num": "TTS",
       "title": "TTS Signal Desk",
-      "subtitle": "025–028 全量 13 条 · 波形/成本可视化",
-      "blurb": "Kokoro · Chatterbox · Qwen3-TTS · Fish S2 Pro。13 条 Modal 实测音频，带波形解码、成本/VRAM 条形图与实时频谱。",
+      "subtitle": "025–034 全量 30 条 · 波形/成本可视化",
+      "blurb": "Kokoro → Higgs 十条模型。30 条 Modal 实测音频，带波形解码、成本/VRAM 条形图与实时频谱。",
       "href": "tts-gallery/",
       "tags": [
         "audio",
@@ -18,13 +18,13 @@
       "mood": "audio",
       "featured": true,
       "stats": {
-        "tracks": "13",
-        "models": "4",
+        "tracks": "30",
+        "models": "10",
         "viz": "wave+bars"
       },
       "accent": "#fbbf24",
       "available": true,
-      "badge": "NEW"
+      "badge": "S+A"
     },
     {
       "id": "025-kokoro",
@@ -119,6 +119,148 @@
       "accent": "#fbbf24",
       "available": true,
       "badge": "S4"
+    },
+    {
+      "id": "029-voxcpm2",
+      "num": "029",
+      "title": "VoxCPM2",
+      "subtitle": "Tokenizer-free 2B · 速度/延迟",
+      "blurb": "OpenBMB Apache · en/zh/design/clone 全绿。L4 · TTS ~$0.007 · clone ~$0.015 · VRAM 5.8GB。",
+      "href": "029-voxcpm2/",
+      "tags": [
+        "audio",
+        "tts",
+        "clone",
+        "featured"
+      ],
+      "mood": "audio",
+      "featured": true,
+      "stats": {
+        "GPU": "L4",
+        "VRAM": "5.8GB",
+        "usd": "$0.007"
+      },
+      "accent": "#34d399",
+      "available": true,
+      "badge": "A1"
+    },
+    {
+      "id": "030-vibevoice",
+      "num": "030",
+      "title": "VibeVoice Realtime",
+      "subtitle": "GH stars #1 · 流式长文",
+      "blurb": "Microsoft Realtime-0.5B · MIT · L4 · ~$0.005 · VRAM 2.8GB · 嵌入式音色 preset。",
+      "href": "030-vibevoice/",
+      "tags": [
+        "audio",
+        "tts",
+        "featured"
+      ],
+      "mood": "audio",
+      "featured": true,
+      "stats": {
+        "GPU": "L4",
+        "VRAM": "2.8GB",
+        "usd": "$0.005"
+      },
+      "accent": "#60a5fa",
+      "available": true,
+      "badge": "A2"
+    },
+    {
+      "id": "031-cosyvoice3",
+      "num": "031",
+      "title": "CosyVoice3",
+      "subtitle": "中文方言 SOTA · Apache",
+      "blurb": "Fun-CosyVoice3-0.5B · zero-shot / 四川话 instruct / EN。L4 · ~$0.005–0.009 · VRAM 3.6GB。",
+      "href": "031-cosyvoice3/",
+      "tags": [
+        "audio",
+        "tts",
+        "featured",
+        "zh"
+      ],
+      "mood": "audio",
+      "featured": true,
+      "stats": {
+        "GPU": "L4",
+        "VRAM": "3.6GB",
+        "usd": "$0.007"
+      },
+      "accent": "#3debc8",
+      "available": true,
+      "badge": "A3"
+    },
+    {
+      "id": "032-indextts2",
+      "num": "032",
+      "title": "IndexTTS-2",
+      "subtitle": "时长+情感 · 配音刚需",
+      "blurb": "Bilibili IndexTTS-2 · L4 · ~$0.007–0.009 · VRAM 7.3GB · emo_text 可控。",
+      "href": "032-indextts2/",
+      "tags": [
+        "audio",
+        "tts",
+        "featured",
+        "zh"
+      ],
+      "mood": "audio",
+      "featured": true,
+      "stats": {
+        "GPU": "L4",
+        "VRAM": "7.3GB",
+        "usd": "$0.008"
+      },
+      "accent": "#f472b6",
+      "available": true,
+      "badge": "A4"
+    },
+    {
+      "id": "033-f5tts",
+      "num": "033",
+      "title": "F5-TTS",
+      "subtitle": "零样本扩散克隆",
+      "blurb": "F5TTS_v1_Base · L4 · ~$0.0025 · VRAM 2.1GB · CC-BY-NC 权重。",
+      "href": "033-f5tts/",
+      "tags": [
+        "audio",
+        "tts",
+        "featured",
+        "clone"
+      ],
+      "mood": "audio",
+      "featured": true,
+      "stats": {
+        "GPU": "L4",
+        "VRAM": "2.1GB",
+        "usd": "$0.0025"
+      },
+      "accent": "#a78bfa",
+      "available": true,
+      "badge": "A5"
+    },
+    {
+      "id": "034-higgs",
+      "num": "034",
+      "title": "Higgs Audio v2",
+      "subtitle": "表情/场景 · 收官",
+      "blurb": "Boson 3B · L40S · quiet/expressive 全绿 · ~$0.011–0.027 · VRAM 15.7GB · TTS 收官。",
+      "href": "034-higgs/",
+      "tags": [
+        "audio",
+        "tts",
+        "featured"
+      ],
+      "mood": "audio",
+      "featured": true,
+      "stats": {
+        "GPU": "L40S",
+        "VRAM": "15.7GB",
+        "usd": "$0.011"
+      },
+      "accent": "#fb923c",
+      "available": true,
+      "badge": "A6"
     },
     {
       "id": "023-a-spar3d",

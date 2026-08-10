@@ -1,0 +1,5 @@
+{
+  "smoke_en": {"speaker": "Carter", "text": "VibeVoice Realtime is running on Modal."},
+  "smoke_long": {"speaker": "Emma", "text": "long-form narration sample"},
+  "smoke_emma": {"speaker": "Emma", "text": "Hello, this is Emma."}
+}

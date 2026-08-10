@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="modal-lab 033 F5-TTS · smoke 试听与成本" />
+  <title>033 · F5-TTS · modal-lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700;750;800&display=swap" rel="stylesheet" />
+  <style>
+
+:root {
+  color-scheme: dark;
+  --bg: #0b0a09;
+  --bg-elev: #141210;
+  --bg-card: #181614;
+  --bg-card-2: #1e1b18;
+  --line: rgba(242, 234, 220, 0.08);
+  --line-2: rgba(242, 234, 220, 0.14);
+  --ink: #f2eadc;
+  --muted: #9a9184;
+  --faint: #6b645a;
+  --signal: #ff4d6a;
+  --signal-2: #ff7a8e;
+  
+  --mint: #a78bfa;
+  --amber: #f0b429;
+  --violet: #a78bfa;
+  --ok: #a78bfa;
+  --k: #5b9dff;
+  --c: #c084fc;
+  --q: #a78bfa;
+  --f: #ff9f43;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --font: "DM Sans", system-ui, sans-serif;
+  --display: "Syne", "DM Sans", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --shadow: 0 28px 60px rgba(0,0,0,.45);
+  --player-h: 92px;
+  --max: 1120px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+body {
+  margin: 0; min-height: 100%;
+  font-family: var(--font);
+  color: var(--ink);
+  background:
+    radial-gradient(900px 420px at 0% 0%, rgba(255,77,106,.10), transparent 55%),
+    radial-gradient(700px 380px at 100% 0%, rgba(61,235,200,.07), transparent 50%),
+    var(--bg);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; }
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; border-radius: 8px; }
+.wrap { width: min(var(--max), calc(100% - 2rem)); margin: 0 auto; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* NAV */
+.nav {
+  position: sticky; top: 0; z-index: 50;
+  backdrop-filter: blur(18px) saturate(1.15);
+  background: color-mix(in oklab, var(--bg) 82%, transparent);
+  border-bottom: 1px solid var(--line);
+}
+.nav-inner {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: .75rem 1rem; padding: .85rem 0;
+}
+.brand { display: flex; align-items: center; gap: .7rem; min-width: 0; }
+.mark {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: linear-gradient(145deg, #2a1a1c, #12100e);
+  border: 1px solid var(--line-2);
+  display: grid; place-items: center;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+}
+.mark span {
+  font-family: var(--display); font-weight: 700; font-size: .78rem;
+  letter-spacing: .04em; color: var(--signal);
+}
+.brand h1 { margin: 0; font-family: var(--display); font-size: 1rem; font-weight: 700; letter-spacing: -.02em; }
+.brand p { margin: 0; color: var(--muted); font-size: .78rem; }
+.nav-links { display: flex; flex-wrap: wrap; gap: .35rem; }
+.nav-links a {
+  padding: .4rem .72rem; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--muted);
+  font-size: .8rem; font-weight: 500; transition: .2s var(--ease);
+}
+.nav-links a:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.03); }
+.nav-links a.primary {
+  background: var(--signal); color: #1a080c; border-color: transparent; font-weight: 650;
+}
+.nav-links a.primary:hover { background: var(--signal-2); color: #1a080c; }
+
+/* HERO */
+.hero { padding: 2.2rem 0 1.2rem; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: .5rem;
+  font-family: var(--mono); font-size: .7rem; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--signal); font-weight: 500;
+}
+.eyebrow i {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--signal);
+  box-shadow: 0 0 0 0 rgba(255,77,106,.5); animation: ping 1.8s ease infinite;
+  display: inline-block;
+}
+@keyframes ping {
+  0% { box-shadow: 0 0 0 0 rgba(255,77,106,.45); }
+  70% { box-shadow: 0 0 0 10px rgba(255,77,106,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,77,106,0); }
+}
+.hero h2 {
+  margin: .65rem 0 .5rem;
+  font-family: var(--display);
+  font-size: clamp(2rem, 1.2rem + 3.2vw, 3.35rem);
+  font-weight: 750; letter-spacing: -.035em; line-height: 1.05;
+  max-width: 16ch;
+}
+.hero h2 em { font-style: normal; color: var(--signal); }
+.lede { margin: 0; color: var(--muted); max-width: 54ch; font-size: 1.02rem; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.15rem; }
+.btn {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .62rem 1.05rem; border-radius: 999px;
+  font-weight: 600; font-size: .9rem;
+  border: 1px solid var(--line); transition: .2s var(--ease);
+}
+.btn:hover { border-color: var(--line-2); transform: translateY(-1px); }
+.btn.solid { background: var(--signal); color: #1a080c; border-color: transparent; }
+.btn.solid:hover { background: var(--signal-2); }
+.btn.ghost { color: var(--muted); }
+
+/* STAT STRIP */
+.stats-row {
+  display: grid; grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: .55rem; margin: 1.5rem 0 1.6rem;
+}
+@media (max-width: 720px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+.stat {
+  background: linear-gradient(180deg, rgba(255,255,255,.03), transparent), var(--bg-elev);
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  padding: .85rem .95rem;
+}
+.stat b {
+  display: block; font-family: var(--mono); font-size: 1.12rem; font-weight: 600;
+  letter-spacing: -.02em;
+}
+.stat span { color: var(--muted); font-size: .76rem; }
+
+/* CHARTS */
+.viz-grid {
+  display: grid; grid-template-columns: 1.15fr .85fr; gap: .85rem;
+  margin-bottom: 1.8rem;
+}
+@media (max-width: 860px) { .viz-grid { grid-template-columns: 1fr; } }
+.panel {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.05rem 1.1rem 1.15rem;
+  overflow: hidden;
+}
+.panel h3 {
+  margin: 0 0 .15rem;
+  font-family: var(--display); font-size: 1.05rem; font-weight: 700; letter-spacing: -.02em;
+}
+.panel .hint { margin: 0 0 1rem; color: var(--muted); font-size: .82rem; }
+.bar-row {
+  display: grid; grid-template-columns: 88px 1fr 64px;
+  gap: .55rem; align-items: center; margin: .45rem 0;
+}
+.bar-row .lab { font-size: .8rem; color: var(--muted); font-weight: 500; }
+.bar-track {
+  height: 10px; border-radius: 999px; background: rgba(255,255,255,.05);
+  overflow: hidden; position: relative;
+}
+.bar-fill {
+  height: 100%; border-radius: 999px;
+  background: var(--bar, var(--signal));
+  width: 0; transition: width 1s var(--ease);
+}
+.bar-row .val {
+  font-family: var(--mono); font-size: .72rem; color: var(--ink); text-align: right;
+}
+.radar-wrap { display: grid; place-items: center; min-height: 220px; }
+.radar-wrap svg { width: min(100%, 280px); height: auto; }
+
+/* SECTION */
+.sec-head {
+  display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between;
+  gap: .75rem; margin: 1.8rem 0 .85rem;
+}
+.sec-head h3 {
+  margin: 0; font-family: var(--display); font-size: 1.35rem; font-weight: 700;
+  letter-spacing: -.02em;
+}
+.sec-head p { margin: .2rem 0 0; color: var(--muted); font-size: .88rem; }
+.filters { display: flex; flex-wrap: wrap; gap: .35rem; }
+.filters button {
+  padding: .38rem .7rem; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--muted);
+  font-size: .8rem; font-weight: 500; transition: .18s var(--ease);
+}
+.filters button[aria-pressed="true"] {
+  color: var(--ink);
+  border-color: color-mix(in oklab, var(--active, var(--signal)) 50%, var(--line));
+  background: color-mix(in oklab, var(--active, var(--signal)) 14%, transparent);
+}
+
+/* TRACK CARDS */
+.tracks {
+  display: grid; grid-template-columns: 1fr; gap: .7rem;
+}
+.track {
+  display: grid; grid-template-columns: auto 1fr auto;
+  gap: .85rem; align-items: center;
+  background: linear-gradient(160deg, rgba(255,255,255,.025), transparent 40%), var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: .9rem 1rem;
+  transition: .22s var(--ease);
+}
+.track:hover { border-color: var(--line-2); transform: translateY(-1px); }
+.track.playing {
+  border-color: color-mix(in oklab, var(--accent, var(--signal)) 45%, var(--line));
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent, var(--signal)) 20%, transparent), var(--shadow);
+}
+.track[hidden] { display: none !important; }
+@media (max-width: 680px) {
+  .track { grid-template-columns: auto 1fr; }
+  .track .metrics { grid-column: 1 / -1; }
+}
+.play-btn {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: color-mix(in oklab, var(--accent, var(--signal)) 16%, transparent);
+  border: 1px solid color-mix(in oklab, var(--accent, var(--signal)) 40%, var(--line));
+  color: var(--ink);
+  display: grid; place-items: center;
+  transition: .2s var(--ease); flex-shrink: 0;
+}
+.play-btn:hover { background: color-mix(in oklab, var(--accent, var(--signal)) 28%, transparent); }
+.play-btn svg { width: 18px; height: 18px; }
+.track-body { min-width: 0; }
+.track-top { display: flex; flex-wrap: wrap; gap: .35rem .55rem; align-items: center; margin-bottom: .2rem; }
+.model-tag {
+  font-family: var(--mono); font-size: .66rem; letter-spacing: .04em;
+  padding: .15rem .4rem; border-radius: 6px;
+  background: color-mix(in oklab, var(--accent, var(--signal)) 16%, transparent);
+  border: 1px solid color-mix(in oklab, var(--accent, var(--signal)) 35%, var(--line));
+  color: var(--ink);
+}
+.track h4 { margin: 0; font-size: .98rem; font-weight: 650; letter-spacing: -.01em; }
+.track .sub { margin: .15rem 0 0; color: var(--muted); font-size: .8rem; }
+.prompt-box {
+  margin: .55rem 0 0; padding: .55rem .65rem;
+  background: rgba(0,0,0,.28); border: 1px solid var(--line);
+  border-radius: 10px; font-size: .86rem; color: #e6dfd2; line-height: 1.45;
+}
+.wave-canvas {
+  display: block; width: 100%; height: 44px; margin-top: .55rem;
+  border-radius: 8px; background: rgba(0,0,0,.25);
+}
+.metrics {
+  display: flex; flex-wrap: wrap; gap: .3rem; justify-content: flex-end;
+  max-width: 220px;
+}
+@media (max-width: 680px) { .metrics { max-width: none; justify-content: flex-start; } }
+.metrics span {
+  font-family: var(--mono); font-size: .68rem; color: var(--muted);
+  padding: .2rem .42rem; border-radius: 7px; border: 1px solid var(--line);
+  background: rgba(0,0,0,.2);
+}
+.metrics strong { color: var(--ink); font-weight: 500; }
+
+/* MODEL STRIP */
+.models {
+  display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: .65rem;
+  margin: .5rem 0 1.5rem;
+}
+@media (max-width: 900px) { .models { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .models { grid-template-columns: 1fr; } }
+.model-card {
+  display: flex; flex-direction: column; gap: .45rem;
+  padding: 1rem; border-radius: var(--radius);
+  background: var(--bg-card); border: 1px solid var(--line);
+  transition: .22s var(--ease); min-height: 168px;
+}
+.model-card:hover { border-color: var(--line-2); transform: translateY(-2px); box-shadow: var(--shadow); }
+.model-card .num { font-family: var(--mono); font-size: .7rem; color: var(--faint); letter-spacing: .06em; }
+.model-card h4 { margin: 0; font-family: var(--display); font-size: 1.05rem; font-weight: 700; }
+.model-card p { margin: 0; color: var(--muted); font-size: .82rem; flex: 1; }
+.model-card .row { display: flex; flex-wrap: wrap; gap: .3rem; }
+.model-card .row span {
+  font-family: var(--mono); font-size: .68rem; color: var(--muted);
+  padding: .15rem .38rem; border-radius: 6px; border: 1px solid var(--line);
+}
+.model-card .go { color: var(--muted); font-size: .8rem; font-weight: 600; }
+.model-card:hover .go { color: var(--ink); }
+
+/* TABLE */
+.matrix {
+  overflow: auto; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--bg-card); margin-bottom: 1.5rem;
+}
+table { width: 100%; border-collapse: collapse; font-size: .84rem; min-width: 640px; }
+th, td { padding: .55rem .7rem; text-align: left; border-bottom: 1px solid var(--line); }
+th {
+  color: var(--faint); font-size: .7rem; letter-spacing: .08em;
+  text-transform: uppercase; font-weight: 500; font-family: var(--mono);
+}
+tr:last-child td { border-bottom: 0; }
+td.num { font-family: var(--mono); font-size: .8rem; }
+
+/* DOCK PLAYER */
+.dock {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  background: color-mix(in oklab, var(--bg-elev) 92%, transparent);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--line);
+  padding: .65rem 0 calc(.65rem + env(safe-area-inset-bottom));
+  transform: translateY(110%); transition: transform .35s var(--ease);
+}
+.dock.show { transform: translateY(0); }
+.dock-inner {
+  width: min(var(--max), calc(100% - 2rem)); margin: 0 auto;
+  display: grid; grid-template-columns: auto 1fr auto; gap: .75rem; align-items: center;
+}
+@media (max-width: 560px) {
+  .dock-inner { grid-template-columns: auto 1fr; }
+  .dock .spec-wrap { display: none; }
+}
+.dock .play-btn { width: 44px; height: 44px; }
+.dock-meta { min-width: 0; }
+.dock-meta .t { font-weight: 650; font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dock-meta .s { color: var(--muted); font-size: .75rem; font-family: var(--mono); }
+.progress {
+  height: 4px; border-radius: 999px; background: rgba(255,255,255,.08);
+  margin-top: .4rem; cursor: pointer; overflow: hidden;
+}
+.progress > i {
+  display: block; height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--signal), #a78bfa);
+  border-radius: 999px;
+}
+.spec-wrap { width: 120px; height: 36px; }
+.spec-wrap canvas { width: 100%; height: 100%; display: block; }
+
+/* FOOTER */
+footer {
+  margin-top: 2.5rem; padding: 1.2rem 0 2rem;
+  border-top: 1px solid var(--line);
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: .75rem;
+  color: var(--faint); font-size: .82rem;
+}
+footer a { color: var(--muted); }
+footer a:hover { color: var(--ink); }
+body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
+
+/* EXP PAGE extras */
+.chips { display: flex; flex-wrap: wrap; gap: .35rem; margin: .9rem 0 1.1rem; }
+.chip {
+  font-family: var(--mono); font-size: .72rem; color: var(--muted);
+  padding: .22rem .5rem; border-radius: 999px; border: 1px solid var(--line);
+  background: rgba(0,0,0,.2);
+}
+.chip strong { color: var(--ink); font-weight: 500; }
+
+  .hero h2 { max-width: 20ch; }
+  </style>
+  <style>
+    .quote { margin:.35rem 0 .5rem; color:var(--muted); font-size:.88rem; font-style:italic; max-width:62ch; }
+    .meta-row { display:flex; flex-wrap:wrap; gap:.35rem; margin:.4rem 0 .55rem; }
+    .pill { font-size:.72rem; padding:.18rem .5rem; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
+    .note { margin-top:1rem; padding:.85rem 1rem; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.02); color:var(--muted); font-size:.88rem; }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="../tts-gallery/">
+        <div class="mark"><span>033</span></div>
+        <div>
+          <h1>F5-TTS</h1>
+          <p>modal-lab · Tier A5</p>
+        </div>
+      </a>
+      <nav class="nav-links">
+        <a href="../">Lab</a>
+        <a href="../tts-gallery/">Signal Desk</a>
+        <a class="primary" href="https://github.com/xiaoqianran/modal-lab/tree/main/033-f5tts" target="_blank" rel="noreferrer">源码</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <div class="eyebrow"><i></i> 033 · A5 · Modal smoke</div>
+      <h2 style="color:var(--ink)">F5-TTS</h2>
+      <p class="lede">SWivid <strong>F5TTS_v1_Base</strong> · flow-matching 零样本克隆 · 默认 <strong>L4</strong> · Code MIT / Model <strong>CC-BY-NC</strong>。本 lab 最便宜零样本克隆档之一。</p>
+      <div class="chips">
+        <span class="chip">GPU <strong>L4</strong></span>
+        <span class="chip">VRAM <strong>~2.1 GB</strong></span>
+        <span class="chip">EN <strong>$0.0027</strong></span>
+        <span class="chip">ZH <strong>$0.0025</strong></span>
+        <span class="chip">nfe <strong>32</strong></span>
+        <span class="chip">license <strong>CC-BY-NC</strong></span>
+        
+      </div>
+      <div class="hero-actions">
+        <a class="btn solid" href="#tracks" style="background:#a78bfa;color:#0c0b0a">试听全部 2 条</a>
+        <a class="btn ghost" href="../tts-gallery/">返回 Listening Room</a>
+        <a class="btn ghost" href="../COST_BENCHMARK.md">COST</a>
+      </div>
+    </section>
+
+    <div class="viz-grid">
+      <section class="panel">
+        <h3>本实验成本条</h3>
+        <p class="hint">每条 smoke 的 est USD（冷启动墙钟）</p>
+        <div class="bar-row">
+          <span class="lab">EN clone</span>
+          <div class="bar-track"><div class="bar-fill" data-w="27.0%" style="--bar:#a78bfa"></div></div>
+          <span class="val">$0.0027</span>
+        </div>
+        <div class="bar-row">
+          <span class="lab">ZH clone</span>
+          <div class="bar-track"><div class="bar-fill" data-w="25.0%" style="--bar:#a78bfa"></div></div>
+          <span class="val">$0.0025</span>
+        </div>
+      </section>
+      <section class="panel">
+        <h3>一览</h3>
+        <p class="hint">成功 2/2 · 全部可试听</p>
+        <div class="bar-row">
+          <span class="lab">tracks</span>
+          <div class="bar-track"><div class="bar-fill" data-w="100%" style="--bar:#a78bfa"></div></div>
+          <span class="val">2</span>
+        </div>
+        <div class="bar-row">
+          <span class="lab">success</span>
+          <div class="bar-track"><div class="bar-fill" data-w="100%" style="--bar:#a78bfa"></div></div>
+          <span class="val">100%</span>
+        </div>
+        <p class="note">模型权重 CC-BY-NC（Emilia 数据）；代码 MIT。官方 ref 音 basic_ref_en/zh。</p>
+      </section>
+    </div>
+
+    <div class="sec-head" id="tracks">
+      <div>
+        <h3>全部 2 条结果</h3>
+        <p>点播放 · 波形来自真实 wav · 底部 dock 带频谱</p>
+      </div>
+    </div>
+
+    <div class="tracks" id="track-list">
+
+<article class="track" data-id="033_en" data-model="033" data-lang="en" data-tags="033 en clone" style="--accent:#a78bfa">
+  <button class="play-btn" type="button" data-play="033_en" aria-label="播放 EN · clone">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+  </button>
+  <div class="track-body">
+    <div class="track-top">
+      <span class="model-tag">033</span>
+      <h4>EN · clone</h4>
+    </div>
+    <p class="sub">basic_ref_en</p>
+    <p class="quote">“Hello from F5-TTS on Modal lab. This is a zero-shot voice clone demo with flow matching.”</p>
+    <div class="meta-row">
+      <span class="pill mono">8.4s</span>
+      <span class="pill mono">$0.0027</span>
+      <span class="pill mono">wall 12.0s</span>
+      <span class="pill mono">VRAM 2.1G</span>
+    </div>
+    <canvas class="wave" data-wave="assets/smoke_en.wav" height="48"></canvas>
+    <audio data-id="033_en" preload="metadata" src="assets/smoke_en.wav"></audio>
+  </div>
+</article>
+
+<article class="track" data-id="033_zh" data-model="033" data-lang="zh" data-tags="033 zh clone" style="--accent:#a78bfa">
+  <button class="play-btn" type="button" data-play="033_zh" aria-label="播放 ZH · clone">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+  </button>
+  <div class="track-body">
+    <div class="track-top">
+      <span class="model-tag">033</span>
+      <h4>ZH · clone</h4>
+    </div>
+    <p class="sub">basic_ref_zh</p>
+    <p class="quote">“你好，这是 modal-lab 第零三三号 F5-TTS 实验。零样本克隆，中英皆可。”</p>
+    <div class="meta-row">
+      <span class="pill mono">11.0s</span>
+      <span class="pill mono">$0.0025</span>
+      <span class="pill mono">wall 11.2s</span>
+      <span class="pill mono">VRAM 2.1G</span>
+    </div>
+    <canvas class="wave" data-wave="assets/smoke_zh.wav" height="48"></canvas>
+    <audio data-id="033_zh" preload="metadata" src="assets/smoke_zh.wav"></audio>
+  </div>
+</article>
+    </div>
+
+    <p class="note">完整对照请打开 <a href="../tts-gallery/" style="color:#a78bfa">TTS Signal Desk</a> · 025–034 全量 30 条。</p>
+  </main>
+
+  <footer class="wrap" style="padding:2rem 0 7rem;color:var(--muted);font-size:.82rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
+    <span>033 · F5-TTS · modal-lab · 2026-08-11</span>
+    <span><a href="../tts-gallery/" style="color:inherit">← Signal Desk</a></span>
+  </footer>
+
+  <div class="dock" id="dock" hidden>
+    <div class="dock-inner wrap">
+      <button class="play-btn" type="button" id="dock-play" aria-label="播放/暂停">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <div class="dock-meta">
+        <strong id="dock-title">—</strong>
+        <span id="dock-sub">—</span>
+      </div>
+      <canvas id="spec" width="120" height="36"></canvas>
+      <div class="dock-time mono"><span id="cur">0:00</span> / <span id="dur">0:00</span></div>
+    </div>
+  </div>
+
+<script>
+
+// ---- Audio engine: one source, waveform decode, spectrum ----
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let currentId = null;
+let analyser = null;
+let sourceNode = null;
+let raf = 0;
+const waveCache = new Map();
+
+function ensureGraph(audioEl) {
+  if (audioEl._wired) return;
+  const src = audioCtx.createMediaElementSource(audioEl);
+  analyser = analyser || audioCtx.createAnalyser();
+  analyser.fftSize = 256;
+  src.connect(analyser);
+  analyser.connect(audioCtx.destination);
+  audioEl._wired = true;
+  sourceNode = src;
+}
+
+function stopAll(except) {
+  document.querySelectorAll("audio[data-audio]").forEach(a => {
+    if (a.dataset.audio !== except) { a.pause(); a.currentTime = 0; }
+  });
+  document.querySelectorAll(".track").forEach(t => t.classList.toggle("playing", t.dataset.id === except));
+}
+
+async function drawWaveform(canvas, url) {
+  if (!canvas || waveCache.has(url + canvas.dataset.wave)) {
+    const cached = waveCache.get(url + canvas.dataset.wave);
+    if (cached) paintWave(canvas, cached, canvas.dataset.accent || getComputedStyle(canvas.closest(".track")).getPropertyValue("--accent").trim() || "#ff4d6a");
+    return;
+  }
+  try {
+    const res = await fetch(url);
+    const buf = await res.arrayBuffer();
+    const audioBuf = await audioCtx.decodeAudioData(buf.slice(0));
+    const data = audioBuf.getChannelData(0);
+    const samples = 160;
+    const block = Math.floor(data.length / samples);
+    const peaks = new Float32Array(samples);
+    for (let i = 0; i < samples; i++) {
+      let max = 0;
+      const start = i * block;
+      for (let j = 0; j < block; j++) {
+        const v = Math.abs(data[start + j] || 0);
+        if (v > max) max = v;
+      }
+      peaks[i] = max;
+    }
+    waveCache.set(url + canvas.dataset.wave, peaks);
+    const accent = getComputedStyle(canvas.closest(".track")).getPropertyValue("--accent").trim() || "#ff4d6a";
+    paintWave(canvas, peaks, accent);
+  } catch (e) {
+    // silent fail — still playable via audio element
+  }
+}
+
+function paintWave(canvas, peaks, color) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = canvas.clientWidth || 300;
+  const h = canvas.clientHeight || 44;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+  const mid = h / 2;
+  const barW = w / peaks.length;
+  ctx.fillStyle = color;
+  for (let i = 0; i < peaks.length; i++) {
+    const amp = Math.max(2, peaks[i] * h * 0.9);
+    const x = i * barW;
+    ctx.globalAlpha = 0.35 + peaks[i] * 0.65;
+    ctx.fillRect(x + 0.5, mid - amp / 2, Math.max(1, barW - 1), amp);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawSpectrum() {
+  const canvas = document.getElementById("spec");
+  if (!canvas || !analyser) return;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const w = canvas.clientWidth || 120;
+  const h = canvas.clientHeight || 36;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(data);
+  ctx.clearRect(0, 0, w, h);
+  const n = 24;
+  const step = Math.floor(data.length / n);
+  const bw = w / n;
+  for (let i = 0; i < n; i++) {
+    let v = 0;
+    for (let j = 0; j < step; j++) v += data[i * step + j];
+    v = v / step / 255;
+    const bh = Math.max(2, v * h);
+    ctx.fillStyle = i % 2 ? "#ff4d6a" : "#34d399";
+    ctx.globalAlpha = 0.55 + v * 0.45;
+    ctx.fillRect(i * bw + 1, h - bh, bw - 2, bh);
+  }
+  ctx.globalAlpha = 1;
+  raf = requestAnimationFrame(drawSpectrum);
+}
+
+function playTrack(id) {
+  const audio = document.querySelector(`audio[data-audio="${id}"]`);
+  const track = document.querySelector(`.track[data-id="${id}"]`);
+  if (!audio || !track) return;
+  const dock = document.getElementById("dock");
+  document.body.classList.add("has-dock");
+  dock.classList.add("show");
+  document.getElementById("dock-title").textContent = track.querySelector("h4").textContent;
+  document.getElementById("dock-sub").textContent = track.querySelector(".model-tag").textContent + " · " + track.querySelector(".sub").textContent;
+
+  if (currentId === id && !audio.paused) {
+    audio.pause();
+    cancelAnimationFrame(raf);
+    updatePlayIcons();
+    return;
+  }
+  stopAll(id);
+  currentId = id;
+  ensureGraph(audio);
+  audioCtx.resume();
+  audio.play().catch(() => {});
+  cancelAnimationFrame(raf);
+  drawSpectrum();
+  updatePlayIcons();
+}
+
+function updatePlayIcons() {
+  document.querySelectorAll("[data-play]").forEach(btn => {
+    const id = btn.dataset.play;
+    const a = document.querySelector(`audio[data-audio="${id}"]`);
+    const playing = a && !a.paused && currentId === id;
+    btn.innerHTML = playing
+      ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  });
+  const dockBtn = document.getElementById("dock-play");
+  if (dockBtn && currentId) {
+    const a = document.querySelector(`audio[data-audio="${currentId}"]`);
+    const playing = a && !a.paused;
+    dockBtn.innerHTML = playing
+      ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  }
+}
+
+function tickProgress() {
+  if (currentId) {
+    const a = document.querySelector(`audio[data-audio="${currentId}"]`);
+    const bar = document.getElementById("prog-fill");
+    if (a && bar && a.duration) {
+      bar.style.width = ((a.currentTime / a.duration) * 100) + "%";
+    }
+  }
+  requestAnimationFrame(tickProgress);
+}
+
+function initPlayer() {
+  document.querySelectorAll("[data-play]").forEach(btn => {
+    btn.addEventListener("click", () => playTrack(btn.dataset.play));
+  });
+  document.getElementById("dock-play")?.addEventListener("click", () => {
+    if (currentId) playTrack(currentId);
+  });
+  document.getElementById("prog")?.addEventListener("click", (e) => {
+    if (!currentId) return;
+    const a = document.querySelector(`audio[data-audio="${currentId}"]`);
+    if (!a || !a.duration) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    a.currentTime = ((e.clientX - r.left) / r.width) * a.duration;
+  });
+  document.querySelectorAll("audio[data-audio]").forEach(a => {
+    a.addEventListener("ended", () => { updatePlayIcons(); cancelAnimationFrame(raf); });
+    a.addEventListener("pause", updatePlayIcons);
+    a.addEventListener("play", updatePlayIcons);
+  });
+  // lazy waveforms
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(en => {
+      if (en.isIntersecting) {
+        const c = en.target;
+        drawWaveform(c, c.dataset.src);
+        io.unobserve(c);
+      }
+    });
+  }, { rootMargin: "80px" });
+  document.querySelectorAll("canvas[data-wave]").forEach(c => io.observe(c));
+  tickProgress();
+
+  // animate cost bars
+  requestAnimationFrame(() => {
+    document.querySelectorAll(".bar-fill").forEach(el => {
+      el.style.width = el.dataset.w || "0%";
+    });
+  });
+}
+
+function initFilters() {
+  const btns = document.querySelectorAll(".filters [data-filter]");
+  btns.forEach(b => b.addEventListener("click", () => {
+    btns.forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+    const f = b.dataset.filter;
+    document.querySelectorAll(".track").forEach(t => {
+      const show = f === "all" || t.dataset.model === f || t.dataset.lang === f || (t.dataset.tags || "").split(" ").includes(f);
+      t.hidden = !show;
+    });
+  }));
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  initPlayer();
+  initFilters();
+});
+
+  </script>
+</body>
+</html>

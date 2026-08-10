@@ -105,12 +105,12 @@ Tier C  遗产 / 小众 / 未进主流调用
 
 | 优先级 | 模型 | 证据 | 建议号 | 备注 |
 |--------|------|------|--------|------|
-| A1 | **VoxCPM2** | GH **35k** · HF 643k | `029-voxcpm2` | 延迟/速度向 |
-| A2 | **VibeVoice** | GH **52k** 全场最高 · Realtime 0.5B 594k dl | `030-vibevoice` | 长对话/播客 |
-| A3 | **CosyVoice 3** | GH **22.7k** · 中文方言 SOTA · HF 下载偏低（ModelScope） | `031-cosyvoice3` | **中文刚需** |
-| A4 | **IndexTTS-2** | GH **22.5k** · 时长+情感控制 | `032-indextts2` | **配音刚需** |
-| A5 | **F5-TTS** | GH 15k · HF 740k · 零样本 | `033-f5tts` | 轻量克隆对照 |
-| A6 | **Higgs Audio** | Elo #7 · HF ~400k · GH 8k | `034-higgs` | 表情/多说话人 |
+| A1 | **VoxCPM2** | GH **35k** · HF 643k | `029-voxcpm2` | 延迟/速度向 · **✅ done** |
+| A2 | **VibeVoice** | GH **52k** 全场最高 · Realtime 0.5B 594k dl | `030-vibevoice` | 长对话/播客 · **✅ done (Realtime)** |
+| A3 | **CosyVoice 3** | GH **22.7k** · 中文方言 SOTA · HF 下载偏低（ModelScope） | `031-cosyvoice3` | **中文刚需** · **✅ done** |
+| A4 | **IndexTTS-2** | GH **22.5k** · 时长+情感控制 | `032-indextts2` | **配音刚需** · **✅ done** |
+| A5 | **F5-TTS** | GH 15k · HF 740k · 零样本 | `033-f5tts` | 轻量克隆对照 · **✅ done** |
+| A6 | **Higgs Audio** | Elo #7 · HF ~400k · GH 8k | `034-higgs` | 表情/多说话人 · **✅ done · 收官** |
 | A7 | **XTTS-v2** | HF **8.2M** · Elo 已掉 · **CPML 非商用** | `035-xtts-v2` | 遗产基线，可选 |
 
 ### Tier B — 场景冠军 / 质量黑马
@@ -260,7 +260,7 @@ GPU 单价（仓库既有）：T4 0.000164 · L4 0.000222 · L40S 0.000542 $/s�
 1. **按真实用量编号：025=Kokoro → 026=Chatterbox → 027=Qwen3-TTS → 028=Fish S2** ✅  
 2. 一次 **1 个** smoke 通再开下一个（对齐音乐线）。
 
-**进度：** 025 ✅ · 026 ✅ · 027 ✅ · 028 ✅ · **TTS Tier S 收官。** 下一波 029+。
+**进度：** **025–034 全线完成 ✅ · TTS 线收官 · 不做 035。**
 
 
 ---
@@ -318,4 +318,12 @@ Kokoro 1056 · Maya1 1042 · Higgs V3 1036 · Chatterbox 1014
 | 026 | `026-chatterbox/` | ✅ mtl_en/zh + turbo · gallery · COST |
 | 027 | `027-qwen3-tts/` | ✅ custom/design/clone · gallery · COST |
 | 028 | `028-fish-s2/` | ✅ en/zh/tags/clone · gallery · COST · **Tier S 收官** |
+| 029 | `029-voxcpm2/` | ✅ en/zh/design/clone · gallery · COST · **Tier A1** |
+| 030 | `030-vibevoice/` | ✅ Realtime-0.5B en/long/emma · gallery · COST · **Tier A2** |
+| 031 | `031-cosyvoice3/` | ✅ zh/dialect/en · gallery · COST · **Tier A3** |
+| 032 | `032-indextts2/` | ✅ zh/en/emo · gallery · COST · **Tier A4** |
+| 033 | `033-f5tts/` | ✅ en/zh clone · gallery · COST · **Tier A5** |
+| 034 | `034-higgs/` | ✅ en/expressive · gallery · COST · **Tier A6 · TTS 收官** |
+
+**STOP：做到 034 全部结束，不做 035。**
 

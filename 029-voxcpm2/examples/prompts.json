@@ -1,0 +1,6 @@
+{
+  "smoke_en": {"text": "VoxCPM2 is running on Modal."},
+  "smoke_zh": {"text": "你好，这是 modal-lab 第零二九号 VoxCPM2 实验。"},
+  "smoke_design": {"text": "(A young woman, gentle voice)Hello, welcome to VoxCPM2!"},
+  "smoke_clone": {"reference": "reference_speaker.wav", "text": "This is a controllable voice clone."}
+}
