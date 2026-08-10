@@ -103,6 +103,10 @@ sim_image = (
         "curl",
         "ca-certificates",
         "build-essential",
+        "g++",
+        "gcc",
+        "make",
+        "python3-dev",
         "libgl1",
         "libglib2.0-0",
         "libegl1",
@@ -122,13 +126,16 @@ sim_image = (
         "libxinerama1",
         "libxkbcommon0",
         "mesa-utils",
+        "linux-libc-dev",
     )
+    .env({"CC": "gcc", "CXX": "g++"})
     .pip_install(
         "torch==2.8.0",
         "torchvision==0.23.0",
         extra_index_url="https://download.pytorch.org/whl/cu128",
     )
     .pip_install(
+        # Headless eval stack only — skip pynput/hidapi/evdev teleop deps.
         "transformers==4.57.1",
         "accelerate",
         "safetensors",
@@ -150,11 +157,6 @@ sim_image = (
         "einops",
         "av",
         "qwen-vl-utils",
-        "pygame",
-        "pynput",
-        "hidapi",
-        "mink",
-        "loop-rate-limiters",
         "pyopengl",
     )
     .run_commands(
