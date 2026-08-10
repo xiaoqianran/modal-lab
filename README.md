@@ -20,7 +20,8 @@ main.py                 # 入口，调度到 001 / 002 / …
 010-ace-step-1.5/       # ACE-Step 1.5 音乐生成（默认 L4 · turbo DiT）
 011-stable-audio-3/     # Stable Audio 3 Medium（默认 L4 · FlashAttn）
 012-levo-2/             # LeVo 2 / SongGeneration v2（默认 L40S · v2-medium）
-013-yue/                # [PLAN] YuE 全曲
+013-yue/                # YuE 歌词→全曲（默认 L40S · en-cot）
+014-diffrhythm-2/       # DiffRhythm 2 全曲扩散（默认 L4）
 015-xiaomi-robotics-1-robocasa365/  # Xiaomi-Robotics-1 VLA · RoboCasa365 冒烟（默认 A100-40GB）
 016-musicgen/           # MusicGen small 器乐基线（默认 T4 · 占 016）
 017-xr1-robocasa365-sim/ # XR1 RoboCasa 仿真
@@ -83,6 +84,8 @@ cd 008-hy-pano && python run.py status
 | `010-ace-step-1.5` | [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5) 开源音乐生成；**默认 L4**；主包 turbo + 可选 1.7B LM |
 | `011-stable-audio-3` | [Stable Audio 3 Medium](https://huggingface.co/stabilityai/stable-audio-3-medium)；**默认 L4**（T4 无 FlashAttn） |
 | `012-levo-2` | [LeVo 2](https://github.com/levo-demo/LeVo) SongGeneration v2；**默认 L40S · v2-medium**（研究许可） |
+| `013-yue` | [YuE](https://github.com/multimodal-art-projection/YuE) 歌词→全曲；**L40S · en-cot · ~$0.43/2seg** |
+| `014-diffrhythm-2` | [DiffRhythm 2](https://github.com/ASLP-lab/DiffRhythm2) 全曲扩散；**L4 · 60s ~$0.016** |
 | `015-xiaomi-robotics-1-robocasa365` | [Xiaomi-Robotics-1](https://github.com/XiaomiRobotics/Xiaomi-Robotics-1) RoboCasa365 VLA 冒烟；**默认 A100-40GB** |
 | `016-musicgen` | [MusicGen](https://huggingface.co/facebook/musicgen-small) 器乐基线；**默认 T4 · small**（CC-BY-NC） |
 | — | 音乐队列总览见 [MUSIC_ROADMAP.md](MUSIC_ROADMAP.md) |

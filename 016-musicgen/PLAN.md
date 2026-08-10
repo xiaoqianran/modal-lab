@@ -1,17 +1,5 @@
-# 016 · MusicGen — PLAN
+# 016 · MusicGen
 
-## Slot
-
-- **016-musicgen** ✅ 已占位并 smoke 通过
-- 014 原 MusicGen 计划废弃
-- 017 = 仿真（不冲突）
-
-## Smoke
-
-| 项 | 值 |
-|----|-----|
-| model | small |
-| GPU | T4 |
-| wall | 31.8 s |
-| cost | ~$0.0052 |
-| VRAM | ~3.0 GB |
+- ✅ smoke + cost bench 完成
+- ⚠️ 曾被 017 仿真误写入 gallery mp4，已清理（2026-08-10）
+- 仿真请只写 `017-xr1-robocasa365-sim/`

@@ -3,89 +3,34 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>016 · XR-1 闭环仿真 + MusicGen</title>
+  <title>016 · MusicGen · 成本试听</title>
   <style>
-    :root { --bg:#0a0c10; --elev:#12161f; --line:rgba(255,255,255,.08); --fg:#eef1f6; --muted:#8b93a7; --accent:#6ea8fe; --ok:#3dd68c; --warm:#f0a46e; }
+    :root { --bg:#0a0c10; --elev:#12161f; --line:rgba(255,255,255,.08); --fg:#eef1f6; --muted:#8b93a7; --accent:#6ea8fe; --ok:#3dd68c; }
     * { box-sizing: border-box; }
-    body { margin:0; color:var(--fg); font-family:system-ui,sans-serif; background:radial-gradient(900px 480px at 10% -10%,rgba(110,168,254,.14),transparent 55%), radial-gradient(700px 360px at 100% 0%,rgba(61,214,140,.08),transparent 50%),var(--bg); line-height:1.5; }
+    body { margin:0; color:var(--fg); font-family:system-ui,sans-serif; background:radial-gradient(900px 480px at 10% -10%,rgba(110,168,254,.14),transparent 55%),var(--bg); line-height:1.5; }
     a { color:#3dd6c6; }
     .wrap { width:min(960px,calc(100% - 2rem)); margin:0 auto; padding:1.75rem 0 3rem; }
     .eyebrow { font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); font-weight:600; }
     h1 { margin:.4rem 0 .5rem; font-size:1.8rem; }
     .lede { color:var(--muted); max-width:62ch; }
     .card { margin-top:1rem; background:var(--elev); border:1px solid var(--line); border-radius:16px; padding:1rem 1.15rem; }
-    .card.sim { border-color:rgba(61,214,140,.28); box-shadow:0 0 0 1px rgba(61,214,140,.08), 0 18px 50px rgba(0,0,0,.35); }
-    .card.policy { border-color:rgba(110,168,254,.35); box-shadow:0 0 0 1px rgba(110,168,254,.1), 0 18px 50px rgba(0,0,0,.35); }
-    .row { display:flex; flex-wrap:wrap; justify-content:space-between; gap:.5rem; align-items:baseline; }
-    .chip { display:inline-block; border:1px solid rgba(255,255,255,.12); border-radius:999px; padding:.15rem .55rem; font-size:.75rem; color:var(--muted); margin-right:.25rem; margin-bottom:.2rem; }
+    .chip { display:inline-block; border:1px solid rgba(255,255,255,.12); border-radius:999px; padding:.15rem .55rem; font-size:.75rem; color:var(--muted); margin-right:.25rem; }
     .ok { border-color:rgba(61,214,140,.35); color:#b8f5d3; background:rgba(61,214,140,.1); }
     .cheap { border-color:rgba(110,168,254,.4); color:#cfe2ff; background:rgba(110,168,254,.12); }
-    .warm { border-color:rgba(240,164,110,.4); color:#f3d2b0; background:rgba(240,164,110,.1); }
     .box { margin:.65rem 0; padding:.7rem .85rem; border-radius:10px; background:rgba(0,0,0,.28); border:1px solid var(--line); font-size:.9rem; color:#d7dbe6; }
-    audio, video { width:100%; border-radius:10px; background:#000; }
-    video { border:1px solid var(--line); max-height:min(70vh, 520px); }
+    audio { width:100%; }
     table { width:100%; border-collapse:collapse; margin-top:1.2rem; font-size:.88rem; }
     th, td { border-bottom:1px solid var(--line); padding:.45rem .35rem; text-align:left; }
     th { color:var(--muted); font-weight:600; }
     footer { margin-top:1.5rem; color:var(--muted); font-size:.82rem; }
     code { background:rgba(255,255,255,.05); padding:.1rem .3rem; border-radius:6px; font-size:.85em; }
-    .note { margin-top:.75rem; padding:.7rem .85rem; border-radius:10px; background:rgba(240,164,110,.08); border:1px solid rgba(240,164,110,.22); color:#f3d2b0; font-size:.86rem; }
-    .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:.5rem; margin:.75rem 0; }
-    .stat { background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:10px; padding:.55rem .7rem; }
-    .stat .k { font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
-    .stat .v { font-family:ui-monospace,monospace; margin-top:.1rem; font-size:.92rem; }
-    h2.section { margin:2rem 0 .4rem; font-size:1.15rem; color:var(--muted); font-weight:600; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="eyebrow">016 gallery · 像样的 XR-1 闭环</div>
-    <h1>horizon=100 · L40S 闭环视频</h1>
-    <p class="lede">
-      不再是官方 smoke 的 20 步。默认 <strong>100 步</strong>，模型连续规划 7 次、推理合计 ~3s，整局约 <strong>$0.05</strong>。
-      代码在 <code>017-xr1-robocasa365-sim</code>。
-    </p>
-
-    <article class="card policy" id="policy">
-      <div class="row">
-        <h3 style="margin:0;font-size:1.15rem">XR-1 闭环 · CloseBlenderLid · h=100</h3>
-        <div>
-          <span class="chip ok">pipeline OK</span>
-          <span class="chip cheap">L40S · $0.05</span>
-          <span class="chip warm">task not done</span>
-        </div>
-      </div>
-      <div class="box">
-        三路相机（左 / 右 / 手腕）→ XR-1 → 12D 动作 → MuJoCo 执行 100 步。<br/>
-        指令：<em>Close the lid blender by securely placing the lid on top.</em>
-      </div>
-      <video controls autoplay loop muted playsinline preload="auto"
-             src="assets/CloseBlenderLid_policy_h100.mp4"></video>
-      <div class="stats">
-        <div class="stat"><div class="k">墙钟</div><div class="v">88 s</div></div>
-        <div class="stat"><div class="k">估费</div><div class="v">$0.048</div></div>
-        <div class="stat"><div class="k">步数</div><div class="v">100 / 100</div></div>
-        <div class="stat"><div class="k">推理</div><div class="v">7× · 共 3.0s</div></div>
-        <div class="stat"><div class="k">VRAM</div><div class="v">10.5 GB</div></div>
-        <div class="stat"><div class="k">视频</div><div class="v">101 帧 · 278KB</div></div>
-        <div class="stat"><div class="k">资产</div><div class="v">volume 复用</div></div>
-        <div class="stat"><div class="k">任务成功</div><div class="v">否</div></div>
-      </div>
-      <p class="note">
-        任务仍失败不代表链路坏了：单局 seed=7、无多 seed 统计。下一步若要成功率数字，再跑小规模多局评测。
-      </p>
-    </article>
-
-    <article class="card sim" id="sim">
-      <div class="row">
-        <h3 style="margin:0;font-size:1.15rem">对照 · 随机策略</h3>
-        <div><span class="chip warm">random</span></div>
-      </div>
-      <video controls loop muted playsinline preload="metadata"
-             src="assets/CloseBlenderLid_random.mp4"></video>
-    </article>
-
-    <h2 class="section">—— 016 MusicGen 试听 ——</h2>
+    <div class="eyebrow">016 · MusicGen · Cost bench</div>
+    <h1>MusicGen 器乐基线</h1>
+    <p class="lede">Meta MusicGen <strong>small</strong> · 默认 <strong>T4</strong>（全音乐线最便宜档）。许可 CC-BY-NC 4.0。仿真视频已迁至 <code>017-xr1-robocasa365-sim</code>。</p>
     <table>
       <thead><tr><th>run</th><th>GPU</th><th>墙钟</th><th>生成</th><th>估费</th><th>音频</th></tr></thead>
       <tbody>
@@ -98,32 +43,42 @@
     </table>
 
     <article class="card">
-      <div class="row"><h3 style="margin:0;font-size:1.05rem">默认 smoke · lo-fi 15s · T4</h3>
-      <div><span class="chip">$0.0052</span><span class="chip ok">OK</span></div></div>
+      <h3 style="margin:0 0 .4rem;font-size:1.05rem">默认 smoke · lo-fi 15s · T4</h3>
+      <div><span class="chip">$0.0052</span><span class="chip ok">OK</span></div>
+      <div class="box"><code>smoke_lofi</code></div>
       <audio controls preload="none" src="assets/smoke_lofi.wav"></audio>
     </article>
+
     <article class="card">
-      <div class="row"><h3 style="margin:0;font-size:1.05rem">最便宜 · lo-fi 8s · T4</h3>
-      <div><span class="chip">$0.0037</span><span class="chip cheap">cheapest</span></div></div>
+      <h3 style="margin:0 0 .4rem;font-size:1.05rem">最便宜冒烟 · lo-fi 8s · T4</h3>
+      <div><span class="chip">$0.0037</span><span class="chip cheap">cheapest</span><span class="chip ok">OK</span></div>
+      <div class="box"><code>bench_t4_8s</code></div>
       <audio controls preload="none" src="assets/bench_t4_8s.wav"></audio>
     </article>
+
     <article class="card">
-      <div class="row"><h3 style="margin:0;font-size:1.05rem">L4 对照 · 15s</h3>
-      <div><span class="chip">$0.0078</span></div></div>
+      <h3 style="margin:0 0 .4rem;font-size:1.05rem">对照 · lo-fi 15s · L4（更贵）</h3>
+      <div><span class="chip">$0.0078</span><span class="chip ok">OK</span></div>
+      <div class="box"><code>bench_l4_15s</code></div>
       <audio controls preload="none" src="assets/bench_l4_15s.wav"></audio>
     </article>
+
     <article class="card">
-      <div class="row"><h3 style="margin:0;font-size:1.05rem">jazz · 12s</h3>
-      <div><span class="chip">$0.0044</span></div></div>
+      <h3 style="margin:0 0 .4rem;font-size:1.05rem">其它任务 · jazz trio 12s · T4</h3>
+      <div><span class="chip">$0.0044</span><span class="chip ok">OK</span></div>
+      <div class="box"><code>bench_t4_jazz</code></div>
       <audio controls preload="none" src="assets/bench_t4_jazz.wav"></audio>
     </article>
+
     <article class="card">
-      <div class="row"><h3 style="margin:0;font-size:1.05rem">EDM · 12s</h3>
-      <div><span class="chip">$0.0051</span></div></div>
+      <h3 style="margin:0 0 .4rem;font-size:1.05rem">其它任务 · EDM 12s · T4</h3>
+      <div><span class="chip">$0.0051</span><span class="chip ok">OK</span></div>
+      <div class="box"><code>bench_t4_edm</code></div>
       <audio controls preload="none" src="assets/bench_t4_edm.wav"></audio>
     </article>
 
-    <footer>017 sim default: L40S · horizon=100 · assets volume reuse when available</footer>
+    <p class="lede" style="margin-top:1.25rem">明细 <a href="../COST_BENCHMARK.md">COST_BENCHMARK.md</a> · <code>python run.py smoke --duration 8</code></p>
+    <footer>016-musicgen · 纯音乐 · 勿与 017 仿真混放</footer>
   </div>
 </body>
 </html>
