@@ -113,7 +113,3 @@ runs/eval_mini_5x5_h200_long500_v1/
 ```
 
 Gallery：`gallery/data/success_OpenStandMixerHead_seed7.mp4`（任务成功回放）
-  long_h500/CloseBlenderLid/episode_*.mp4
-```
-
-Gallery：`gallery/data/success_OpenStandMixerHead_seed7.mp4`（任务成功回放）
