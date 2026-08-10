@@ -1,0 +1,113 @@
+{
+  "success": true,
+  "run_name": "smoke_close_blender_lid",
+  "hf_repo": "XiaomiRobotics/Xiaomi-Robotics-1-RoboCasa365",
+  "robot_type": "robocasa365",
+  "instruction": "close the blender lid",
+  "obs_history": 4,
+  "num_denoise_steps": 5,
+  "attn_implementation": "eager",
+  "gpu": "A100-40GB",
+  "timings_s": {
+    "load": 14.08,
+    "prep": 0.044,
+    "infer": 1.66,
+    "wall": 15.89
+  },
+  "cost_est_usd": 0.0093,
+  "vram": {
+    "before": {
+      "name": "NVIDIA A100-SXM4-40GB",
+      "mem_used_mib": 4.0,
+      "mem_total_mib": 40960.0,
+      "util_gpu_pct": 0.0
+    },
+    "after": {
+      "name": "NVIDIA A100-SXM4-40GB",
+      "mem_used_mib": 10471.0,
+      "mem_total_mib": 40960.0,
+      "util_gpu_pct": 45.0
+    },
+    "peak_alloc_gb": 9.668
+  },
+  "shapes": {
+    "actions_full": [
+      16,
+      60
+    ],
+    "actions_ee12": [
+      16,
+      12
+    ],
+    "action_mask": [
+      1,
+      16,
+      60
+    ],
+    "state": [
+      1,
+      4,
+      60
+    ],
+    "input_ids": [
+      1,
+      571
+    ]
+  },
+  "action_ee12_stats": {
+    "mean": [
+      0.004110000096261501,
+      0.004650000017136335,
+      -0.00203000009059906,
+      -0.0013500000350177288,
+      0.003169999923557043,
+      0.0035699999425560236,
+      0.010990000329911709,
+      -0.07924000173807144,
+      -0.2473900020122528,
+      -0.012360000051558018,
+      -9.000000136438757e-05,
+      0.49340999126434326
+    ],
+    "std": [
+      0.013100000098347664,
+      0.006839999929070473,
+      0.004430000204592943,
+      0.0025500000920146704,
+      0.002240000059828162,
+      0.0025500000920146704,
+      0.942300021648407,
+      0.1716800034046173,
+      0.2759700119495392,
+      0.018629999831318855,
+      0.00279999990016222,
+      0.8489800095558167
+    ],
+    "first_step": [
+      0.0004900000058114529,
+      -0.004879999905824661,
+      0.0019499999471008778,
+      -0.0009800000116229057,
+      0.0029299999587237835,
+      0.006839999929070473,
+      -0.9882799983024597,
+      0.008790000341832638,
+      0.04297000169754028,
+      -0.0019499999471008778,
+      -0.0009800000116229057,
+      1.0
+    ]
+  },
+  "robot_types": [
+    "robocasa365"
+  ],
+  "sheet_error": null,
+  "weights": {
+    "exists": true,
+    "path": "/weights/Xiaomi-Robotics-1-RoboCasa365",
+    "files": 66,
+    "size_gb": 10.123
+  },
+  "utc": "20260810T132546Z",
+  "note": "Synthetic multi-view smoke only — not a RoboCasa365 success-rate eval. Full benchmark needs MuJoCo + robocasa_365 client/server (see UPSTREAM)."
+}

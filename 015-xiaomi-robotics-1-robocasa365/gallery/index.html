@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>015 · Xiaomi-Robotics-1 · RoboCasa365 Smoke</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b0d12;
+      --bg-elev: #131821;
+      --bg-soft: #1a2130;
+      --line: rgba(255,255,255,0.08);
+      --line-strong: rgba(255,255,255,0.14);
+      --fg: #eef1f6;
+      --muted: #8b93a7;
+      --accent: #5b8cff;
+      --accent-2: #3dd6c6;
+      --warm: #f0a46e;
+      --ok: #3dd68c;
+      --danger: #ff7b72;
+      --radius: 14px;
+      --shadow: 0 18px 50px rgba(0,0,0,0.45);
+      --font: "DM Sans", system-ui, sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; min-height: 100%;
+      background:
+        radial-gradient(1100px 560px at 8% -12%, rgba(91,140,255,0.16), transparent 55%),
+        radial-gradient(900px 480px at 100% 0%, rgba(61,214,198,0.10), transparent 50%),
+        var(--bg);
+      color: var(--fg);
+      font-family: var(--font);
+      line-height: 1.5;
+    }
+    a { color: var(--accent-2); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { width: min(1180px, calc(100% - 2rem)); margin: 0 auto; padding: 1.5rem 0 3.5rem; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--accent-2); font-weight: 600;
+    }
+    .eyebrow::before {
+      content: ""; width: 8px; height: 8px; border-radius: 999px;
+      background: var(--ok); box-shadow: 0 0 0 4px rgba(61,214,140,0.18);
+    }
+    h1 {
+      margin: 0.35rem 0 0.45rem;
+      font-size: clamp(1.55rem, 3.4vw, 2.25rem);
+      letter-spacing: -0.03em; line-height: 1.15;
+    }
+    .lede { margin: 0; color: var(--muted); max-width: 64ch; font-size: 0.98rem; }
+    header.hero { display: grid; gap: 1rem; margin-bottom: 1.4rem; }
+    @media (min-width: 900px) {
+      header.hero { grid-template-columns: 1.45fr 1fr; align-items: end; }
+    }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+    .pill {
+      font-family: var(--mono); font-size: 0.74rem;
+      padding: 0.28rem 0.6rem; border-radius: 999px;
+      border: 1px solid var(--line-strong); background: rgba(255,255,255,0.03);
+      color: var(--muted);
+    }
+    .pill strong { color: var(--fg); font-weight: 500; }
+    .pill.ok { border-color: rgba(61,214,140,0.35); color: var(--ok); }
+    .grid {
+      display: grid; gap: 1rem;
+      grid-template-columns: repeat(12, 1fr);
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent 40%), var(--bg-elev);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card .hd {
+      display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem;
+      padding: 0.9rem 1rem 0.35rem; border-bottom: 1px solid transparent;
+    }
+    .card .hd h2 {
+      margin: 0; font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em;
+    }
+    .card .hd .sub { color: var(--muted); font-size: 0.78rem; font-family: var(--mono); }
+    .card .bd { padding: 0.75rem 1rem 1rem; }
+    .span-12 { grid-column: span 12; }
+    .span-7 { grid-column: span 12; }
+    .span-5 { grid-column: span 12; }
+    .span-4 { grid-column: span 12; }
+    .span-8 { grid-column: span 12; }
+    @media (min-width: 900px) {
+      .span-7 { grid-column: span 7; }
+      .span-5 { grid-column: span 5; }
+      .span-4 { grid-column: span 4; }
+      .span-8 { grid-column: span 8; }
+    }
+    .views {
+      width: 100%; display: block; border-radius: 10px;
+      background: #000; border: 1px solid var(--line);
+    }
+    .cam-labels {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.35rem;
+      margin-top: 0.55rem; text-align: center;
+      font-size: 0.72rem; color: var(--muted); font-family: var(--mono);
+    }
+    .stats {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem;
+    }
+    .stat {
+      background: var(--bg-soft); border: 1px solid var(--line);
+      border-radius: 10px; padding: 0.65rem 0.75rem;
+    }
+    .stat .k { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .stat .v { font-family: var(--mono); font-size: 0.98rem; margin-top: 0.15rem; color: var(--fg); }
+    .stat .v.accent { color: var(--accent-2); }
+    .note {
+      margin-top: 0.75rem; padding: 0.7rem 0.8rem; border-radius: 10px;
+      background: rgba(240,164,110,0.08); border: 1px solid rgba(240,164,110,0.22);
+      color: #f3d2b0; font-size: 0.82rem;
+    }
+    canvas.chart {
+      width: 100%; height: 280px; display: block;
+      background: #0a0c10; border-radius: 10px; border: 1px solid var(--line);
+    }
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 0.45rem 0.75rem;
+      margin-top: 0.65rem; font-size: 0.75rem; color: var(--muted);
+    }
+    .legend i {
+      display: inline-block; width: 10px; height: 10px; border-radius: 3px;
+      margin-right: 0.3rem; vertical-align: -1px;
+    }
+    .table-wrap { overflow: auto; max-height: 420px; border-radius: 10px; border: 1px solid var(--line); }
+    table {
+      width: 100%; border-collapse: collapse; font-family: var(--mono);
+      font-size: 0.74rem; white-space: nowrap;
+    }
+    th, td { padding: 0.4rem 0.55rem; border-bottom: 1px solid var(--line); text-align: right; }
+    th {
+      position: sticky; top: 0; background: #151b27; color: var(--muted);
+      font-weight: 500; text-align: right; z-index: 1;
+    }
+    th:first-child, td:first-child { text-align: left; color: var(--muted); }
+    tr:hover td { background: rgba(255,255,255,0.03); }
+    .heatmap {
+      display: grid; gap: 2px;
+      grid-template-columns: 42px repeat(12, 1fr);
+      font-family: var(--mono); font-size: 0.65rem;
+    }
+    .heatmap .lab {
+      display: flex; align-items: center; color: var(--muted); padding-right: 0.25rem;
+    }
+    .heatmap .cell {
+      aspect-ratio: 1.6 / 1; border-radius: 3px; min-height: 14px;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.85);
+    }
+    .heatmap .colh {
+      text-align: center; color: var(--muted); padding-bottom: 0.2rem;
+      writing-mode: horizontal-tb;
+    }
+    .links { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; font-size: 0.85rem; }
+    footer {
+      margin-top: 1.75rem; color: var(--muted); font-size: 0.8rem;
+      border-top: 1px solid var(--line); padding-top: 1rem;
+    }
+    code { font-family: var(--mono); font-size: 0.85em; color: #c9d4ff; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <div>
+        <div class="eyebrow">modal-lab · 015 · smoke ok</div>
+        <h1>Xiaomi-Robotics-1<br/>RoboCasa365 动作冒烟</h1>
+        <p class="lede">
+          从 Modal Volume 拉取的一次合成多视角前向结果：三相机观测 + 语言指令 →
+          16 步 × 12 维末端执行器动作。完整仿真评测不在本页范围。
+        </p>
+        <div class="links">
+          <a href="https://huggingface.co/XiaomiRobotics/Xiaomi-Robotics-1-RoboCasa365" target="_blank" rel="noopener">HF checkpoint</a>
+          <a href="https://github.com/XiaomiRobotics/Xiaomi-Robotics-1" target="_blank" rel="noopener">上游代码</a>
+          <a href="https://github.com/xiaoqianran/modal-lab/tree/main/015-xiaomi-robotics-1-robocasa365" target="_blank" rel="noopener">本实验目录</a>
+          <a href="data/meta.json">meta.json</a>
+          <a href="data/result.json">result.json</a>
+        </div>
+      </div>
+      <div class="pill-row" id="pills"></div>
+    </header>
+
+    <div class="grid">
+      <section class="card span-7">
+        <div class="hd">
+          <h2>合成输入视角</h2>
+          <span class="sub">left · right · wrist</span>
+        </div>
+        <div class="bd">
+          <img class="views" src="data/input_views.jpg" alt="synthetic multi-view contact sheet" />
+          <div class="cam-labels">
+            <div>Left agentview</div>
+            <div>Right agentview</div>
+            <div>Eye-in-hand</div>
+          </div>
+          <p class="note" id="instruction-note"></p>
+        </div>
+      </section>
+
+      <section class="card span-5">
+        <div class="hd">
+          <h2>运行指标</h2>
+          <span class="sub" id="run-name"></span>
+        </div>
+        <div class="bd">
+          <div class="stats" id="stats"></div>
+          <p class="note" id="scope-note"></p>
+        </div>
+      </section>
+
+      <section class="card span-8">
+        <div class="hd">
+          <h2>EE12 动作曲线</h2>
+          <span class="sub">16 steps · first 12 dims</span>
+        </div>
+        <div class="bd">
+          <canvas class="chart" id="chart" width="900" height="280"></canvas>
+          <div class="legend" id="legend"></div>
+        </div>
+      </section>
+
+      <section class="card span-4">
+        <div class="hd">
+          <h2>动作维度</h2>
+          <span class="sub">RoboCasa365 packing</span>
+        </div>
+        <div class="bd" id="dim-help" style="font-size:0.84rem;color:var(--muted)"></div>
+      </section>
+
+      <section class="card span-12">
+        <div class="hd">
+          <h2>动作热力图</h2>
+          <span class="sub">rows = steps · cols = EE12 dims · color = value</span>
+        </div>
+        <div class="bd">
+          <div class="heatmap" id="heatmap"></div>
+        </div>
+      </section>
+
+      <section class="card span-12">
+        <div class="hd">
+          <h2>逐步数值表</h2>
+          <span class="sub">actions_ee12.npy</span>
+        </div>
+        <div class="bd">
+          <div class="table-wrap">
+            <table id="table"></table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      modal-lab · 015-xiaomi-robotics-1-robocasa365 · 本地 gallery · 数据来自
+      <code>modal volume get modal-lab-xr1-robocasa365-outputs</code>
+    </footer>
+  </div>
+
+  <script id="payload" type="application/json">{"meta":{"success":true,"run_name":"smoke_close_blender_lid","hf_repo":"XiaomiRobotics/Xiaomi-Robotics-1-RoboCasa365","robot_type":"robocasa365","instruction":"close the blender lid","obs_history":4,"num_denoise_steps":5,"attn_implementation":"eager","gpu":"A100-40GB","timings_s":{"load":14.08,"prep":0.044,"infer":1.66,"wall":15.89},"cost_est_usd":0.0093,"vram":{"before":{"name":"NVIDIA A100-SXM4-40GB","mem_used_mib":4.0,"mem_total_mib":40960.0,"util_gpu_pct":0.0},"after":{"name":"NVIDIA A100-SXM4-40GB","mem_used_mib":10471.0,"mem_total_mib":40960.0,"util_gpu_pct":45.0},"peak_alloc_gb":9.668},"shapes":{"actions_full":[16,60],"actions_ee12":[16,12],"action_mask":[1,16,60],"state":[1,4,60],"input_ids":[1,571]},"action_ee12_stats":{"mean":[0.004110000096261501,0.004650000017136335,-0.00203000009059906,-0.0013500000350177288,0.003169999923557043,0.0035699999425560236,0.010990000329911709,-0.07924000173807144,-0.2473900020122528,-0.012360000051558018,-9.000000136438757e-05,0.49340999126434326],"std":[0.013100000098347664,0.006839999929070473,0.004430000204592943,0.0025500000920146704,0.002240000059828162,0.0025500000920146704,0.942300021648407,0.1716800034046173,0.2759700119495392,0.018629999831318855,0.00279999990016222,0.8489800095558167],"first_step":[0.0004900000058114529,-0.004879999905824661,0.0019499999471008778,-0.0009800000116229057,0.0029299999587237835,0.006839999929070473,-0.9882799983024597,0.008790000341832638,0.04297000169754028,-0.0019499999471008778,-0.0009800000116229057,1.0]},"robot_types":["robocasa365"],"sheet_error":null,"weights":{"exists":true,"path":"/weights/Xiaomi-Robotics-1-RoboCasa365","files":66,"size_gb":10.123},"utc":"20260810T132546Z","note":"Synthetic multi-view smoke only — not a RoboCasa365 success-rate eval. Full benchmark needs MuJoCo + robocasa_365 client/server (see UPSTREAM)."},"actions_ee12":[[0.0004879999905824661,-0.004883000161498785,0.0019529999699443579,-0.0009769999887794256,0.0029299999587237835,0.006835999898612499,-0.9882810115814209,0.0087890001013875,0.04296899959445,-0.0019529999699443579,-0.0009769999887794256,1.0],[0.038086000829935074,0.027343999594449997,-0.0078119998797774315,-0.005371000152081251,0.0078119998797774315,0.006835999898612499,-0.9921879768371582,0.0039059999398887157,-0.0019529999699443579,-0.0014649999793618917,0.005859000142663717,-0.9921879768371582],[0.0186769999563694,0.012938999570906162,-0.0078119998797774315,-0.0019529999699443579,0.005859000142663717,0.004149999935179949,-0.9921879768371582,0.005859000142663717,0.0019529999699443579,-0.0078119998797774315,0.0014649999793618917,-0.9921879768371582],[-0.005859000142663717,0.0016479999758303165,0.0026549999602138996,-0.0004879999905824661,0.002440999960526824,0.0039059999398887157,-0.9921879768371582,0.015869000926613808,0.011718999594449997,-0.010742000304162502,-0.0029299999587237835,1.015625],[0.01049800030887127,0.005675999913364649,-0.004639000166207552,0.0,0.0029299999587237835,0.004395000170916319,-0.9960939884185791,0.009643999859690666,-0.0009769999887794256,0.0,0.0007319999858736992,-1.0],[0.02831999957561493,0.005859000142663717,-0.009277000091969967,0.0,0.0,0.0039059999398887157,0.9804689884185791,0.005859000142663717,-0.0065310001373291016,0.0029299999587237835,-0.0004879999905824661,-0.921875],[-0.0029299999587237835,0.003539999946951866,0.0,0.0019529999699443579,0.0,0.0,0.9960939884185791,-0.15429699420928955,0.019043000414967537,0.015625,0.003783999942243099,0.9921879768371582],[0.005371000152081251,0.004883000161498785,0.001769999973475933,-0.0019529999699443579,0.0029299999587237835,0.0019529999699443579,0.9921879768371582,-0.5351560115814209,-0.21679699420928955,-0.017578000202775,-0.0009769999887794256,0.9882810115814209],[-0.0019529999699443579,0.0031739999540150166,0.0,-0.0039059999398887157,0.003295999951660633,0.0029299999587237835,-0.84375,-0.5039060115814209,-0.47070300579071045,-0.029296999797225,-0.005859000142663717,0.96875],[-0.0034179999493062496,0.0029299999587237835,0.001006999984383583,-0.0017089999746531248,0.0009769999887794256,0.0019529999699443579,0.9140620231628418,-0.037108998745679855,-0.3046880066394806,-0.0703120008111,0.0034179999493062496,0.9882810115814209],[-0.0078119998797774315,0.0029299999587237835,-0.00976600032299757,0.0,0.0078119998797774315,0.0026859999634325504,-0.9765620231628418,0.010131999850273132,-0.21386699378490448,-0.027343999594449997,0.0,0.984375],[-0.004883000161498785,0.002440999960526824,-0.0039059999398887157,-0.005371000152081251,0.0029299999587237835,0.0078119998797774315,-0.6210939884185791,-0.009277000091969967,-0.734375,-0.0078119998797774315,-0.002440999960526824,0.9765620231628418],[-0.0087890001013875,0.0,0.0039059999398887157,-0.005859000142663717,0.0034179999493062496,0.004883000161498785,0.734375,0.002196999965235591,-0.7460939884185791,-0.015625,-0.00041199999395757914,0.9765620231628418],[0.0019529999699443579,0.0029299999587237835,-0.0012209999840706587,-0.00030499999411404133,0.0019529999699443579,0.0039059999398887157,0.9882810115814209,-0.03515600040555,-0.6875,-0.019286999478936195,0.0012209999840706587,0.9882810115814209],[-0.005859000142663717,0.0029299999587237835,-0.0014649999793618917,0.0019529999699443579,0.0036619999445974827,0.0039059999398887157,0.9882810115814209,-0.0668950006365776,-0.38867199420928955,-0.0039059999398887157,-0.0009769999887794256,0.984375],[0.0039059999398887157,0.0,0.002196999965235591,0.002440999960526824,0.0017089999746531248,-0.0029299999587237835,0.984375,0.011718999594449997,-0.2617189884185791,-0.0031739999540150166,-0.0029299999587237835,0.9375]],"actions_full_step0":[0.0004879999905824661,-0.004883000161498785,0.0019529999699443579,-0.0009769999887794256,0.0029299999587237835,0.006835999898612499,-0.9882810115814209,0.0087890001013875,0.04296899959445,-0.0019529999699443579,-0.0009769999887794256,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"actions_full_active_mask":[true,true,true,true,true,true,true,true,true,true,true,true,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]}</script>
+  <script>
+    const DIM_LABELS = [
+      "L-pos-x", "L-pos-y", "L-pos-z",
+      "L-rot-x", "L-rot-y", "L-rot-z",
+      "L-grip",
+      "R-pos-x", "R-pos-y", "R-pos-z",
+      "R-rot-x", "R-rot-y"
+    ];
+    // Note: packing is 12-d slice of 60-d; R-grip etc. may sit beyond 12 in full pack.
+    const DIM_HELP = [
+      ["0–2", "Left EE position Δ"],
+      ["3–5", "Left EE axis-angle Δ"],
+      ["6", "Left gripper"],
+      ["7–9", "Right EE position Δ (packed; may be unused on single-arm)"],
+      ["10–11", "Right EE rotation (first 2 of 3 in 12-d view)"],
+    ];
+    const COLORS = [
+      "#5b8cff","#3dd6c6","#f0a46e","#c084fc","#34d399","#f472b6",
+      "#fbbf24","#60a5fa","#a78bfa","#2dd4bf","#fb7185","#94a3b8"
+    ];
+
+    const data = JSON.parse(document.getElementById("payload").textContent);
+    const meta = data.meta;
+    const ee = data.actions_ee12; // [16][12]
+
+    // pills
+    const pills = document.getElementById("pills");
+    const pillItems = [
+      ["status", meta.success ? "success" : "failed", meta.success ? "ok" : ""],
+      ["gpu", meta.gpu],
+      ["attn", meta.attn_implementation],
+      ["infer", (meta.timings_s?.infer ?? "?") + "s"],
+      ["peak vram", (meta.vram?.peak_alloc_gb ?? "?") + " GB"],
+      ["cost", "$" + (meta.cost_est_usd ?? "?")],
+      ["shape", "16×12 EE"],
+    ];
+    pills.innerHTML = pillItems.map(([k,v,cls]) =>
+      `<span class="pill ${cls||""}">${k}: <strong>${v}</strong></span>`
+    ).join("");
+
+    document.getElementById("run-name").textContent = meta.run_name || "";
+    document.getElementById("instruction-note").textContent =
+      "指令：「" + meta.instruction + "」 · obs_history=" + meta.obs_history +
+      " · denoise steps=" + meta.num_denoise_steps + " · robot_type=" + meta.robot_type;
+    document.getElementById("scope-note").textContent = meta.note || "";
+
+    const stats = document.getElementById("stats");
+    const s = meta.timings_s || {};
+    const v = meta.vram || {};
+    const rows = [
+      ["Load", (s.load ?? "—") + " s"],
+      ["Prep", (s.prep ?? "—") + " s"],
+      ["Infer", (s.infer ?? "—") + " s", true],
+      ["Wall", (s.wall ?? "—") + " s"],
+      ["GPU", v.after?.name || meta.gpu || "—"],
+      ["Mem after", (v.after?.mem_used_mib ? (v.after.mem_used_mib/1024).toFixed(2) + " GB" : "—")],
+      ["Peak alloc", (v.peak_alloc_gb ?? "—") + " GB", true],
+      ["Weights", (meta.weights?.size_gb ?? "—") + " GB"],
+      ["Est. cost", "$" + (meta.cost_est_usd ?? "—"), true],
+      ["UTC", meta.utc || "—"],
+    ];
+    stats.innerHTML = rows.map(([k,v,acc]) =>
+      `<div class="stat"><div class="k">${k}</div><div class="v ${acc?"accent":""}">${v}</div></div>`
+    ).join("");
+
+    document.getElementById("dim-help").innerHTML =
+      "<p style='margin:0 0 0.6rem'>RoboCasa365 评测端取动作前 <code>12</code> 维（全量 <code>16×60</code>）。</p>" +
+      "<ul style='margin:0;padding-left:1.1rem'>" +
+      DIM_HELP.map(([a,b]) => `<li><code>${a}</code> — ${b}</li>`).join("") +
+      "</ul>" +
+      "<p style='margin:0.7rem 0 0;font-size:0.78rem'>本 run 为合成观测，动作数值<strong>不代表</strong>仿真成功率，只验证张量协议与推理通路。</p>";
+
+    // chart
+    const canvas = document.getElementById("chart");
+    const ctx = canvas.getContext("2d");
+    function drawChart() {
+      const dpr = window.devicePixelRatio || 1;
+      const cssW = canvas.clientWidth || 900;
+      const cssH = 280;
+      canvas.width = Math.floor(cssW * dpr);
+      canvas.height = Math.floor(cssH * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const W = cssW, H = cssH;
+      const pad = { t: 16, r: 12, b: 28, l: 44 };
+      const iw = W - pad.l - pad.r;
+      const ih = H - pad.t - pad.b;
+      ctx.clearRect(0,0,W,H);
+      ctx.fillStyle = "#0a0c10";
+      ctx.fillRect(0,0,W,H);
+
+      let min = Infinity, max = -Infinity;
+      for (const row of ee) for (const x of row) { min = Math.min(min,x); max = Math.max(max,x); }
+      if (min === max) { min -= 1; max += 1; }
+      const yAt = (v) => pad.t + ih * (1 - (v - min) / (max - min));
+      const xAt = (i) => pad.l + iw * (i / (ee.length - 1 || 1));
+
+      // grid
+      ctx.strokeStyle = "rgba(255,255,255,0.06)";
+      ctx.lineWidth = 1;
+      for (let g = 0; g <= 4; g++) {
+        const y = pad.t + (ih * g) / 4;
+        ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + iw, y); ctx.stroke();
+        const val = max - ((max - min) * g) / 4;
+        ctx.fillStyle = "#8b93a7";
+        ctx.font = "11px JetBrains Mono, monospace";
+        ctx.textAlign = "right";
+        ctx.fillText(val.toFixed(2), pad.l - 6, y + 3);
+      }
+      for (let i = 0; i < ee.length; i++) {
+        const x = xAt(i);
+        ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t + ih); ctx.stroke();
+        ctx.fillStyle = "#8b93a7";
+        ctx.textAlign = "center";
+        ctx.fillText(String(i), x, H - 8);
+      }
+      // zero line
+      if (min < 0 && max > 0) {
+        ctx.strokeStyle = "rgba(255,255,255,0.18)";
+        ctx.setLineDash([4,4]);
+        ctx.beginPath(); ctx.moveTo(pad.l, yAt(0)); ctx.lineTo(pad.l + iw, yAt(0)); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      for (let d = 0; d < 12; d++) {
+        ctx.strokeStyle = COLORS[d];
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        for (let t = 0; t < ee.length; t++) {
+          const x = xAt(t), y = yAt(ee[t][d]);
+          if (t === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+      }
+    }
+    drawChart();
+    window.addEventListener("resize", drawChart);
+
+    document.getElementById("legend").innerHTML = DIM_LABELS.map((lab,i) =>
+      `<span><i style="background:${COLORS[i]}"></i>${lab}</span>`
+    ).join("");
+
+    // heatmap
+    const hm = document.getElementById("heatmap");
+    let absMax = 0;
+    for (const row of ee) for (const x of row) absMax = Math.max(absMax, Math.abs(x));
+    if (absMax < 1e-6) absMax = 1;
+    const colorFor = (v) => {
+      const t = Math.max(-1, Math.min(1, v / absMax));
+      if (t >= 0) {
+        const a = t;
+        return `rgba(61,214,198,${0.15 + 0.85*a})`;
+      } else {
+        const a = -t;
+        return `rgba(255,123,114,${0.15 + 0.85*a})`;
+      }
+    };
+    let hmHtml = `<div></div>` + DIM_LABELS.map((l,i) =>
+      `<div class="colh" title="${l}">${i}</div>`
+    ).join("");
+    for (let t = 0; t < ee.length; t++) {
+      hmHtml += `<div class="lab">t${t}</div>`;
+      for (let d = 0; d < 12; d++) {
+        const v = ee[t][d];
+        hmHtml += `<div class="cell" style="background:${colorFor(v)}" title="t${t} ${DIM_LABELS[d]}=${v.toFixed(4)}">${Math.abs(v) > 0.15 ? v.toFixed(1) : ""}</div>`;
+      }
+    }
+    hm.innerHTML = hmHtml;
+
+    // table
+    const table = document.getElementById("table");
+    let th = "<tr><th>step</th>" + DIM_LABELS.map(l => `<th>${l}</th>`).join("") + "</tr>";
+    let body = ee.map((row, t) =>
+      `<tr><td>t${t}</td>` + row.map(v => `<td>${v.toFixed(4)}</td>`).join("") + "</tr>"
+    ).join("");
+    table.innerHTML = th + body;
+  </script>
+</body>
+</html>

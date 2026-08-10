@@ -92,3 +92,16 @@ modal volume get modal-lab-xr1-robocasa365-outputs runs/smoke_close_blender_lid 
 ## 许可
 
 上游 **Apache-2.0**。生成/部署请自行合规。
+
+## 结果 Gallery
+
+冒烟产物已拉取到 [`gallery/`](gallery/)：
+
+```bash
+cd 015-xiaomi-robotics-1-robocasa365/gallery
+python -m http.server 8765
+# 打开 http://127.0.0.1:8765/
+```
+
+含：合成三视角、EE12 曲线/热力图/数值表、GPU·耗时·显存摘要。
+原始文件：`gallery/data/{meta.json,result.json,actions_*.npy,input_views.jpg}`。
