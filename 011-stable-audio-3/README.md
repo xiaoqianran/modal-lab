@@ -69,6 +69,10 @@ python run.py t2a --gpu A10 --prompt "..." --duration 60
 
 > **T4 不可用**：FlashAttention 2 仅支持 Ampere+，T4(Turing) 会 `RuntimeError: FlashAttention only supports Ampere GPUs or newer`。
 
+## Gallery
+
+生成试听：打开 [`gallery/index.html`](gallery/index.html)。
+
 ## 许可
 
 - [Stability AI Community License](https://huggingface.co/stabilityai/stable-audio-3/blob/main/LICENSE.md)

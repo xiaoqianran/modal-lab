@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>010 · ACE-Step 1.5 · 生成试听</title>
+  <title>011 · Stable Audio 3 Medium · 生成试听</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -14,7 +14,7 @@
       --line: rgba(255,255,255,.08);
       --fg: #eef1f6;
       --muted: #8b93a7;
-      --accent: #7c6cff;
+      --accent: #ff6b9d;
       --teal: #3dd6c6;
       --ok: #3dd68c;
       --warm: #f0a46e;
@@ -26,7 +26,7 @@
     body {
       margin: 0; min-height: 100%; color: var(--fg); font-family: var(--font);
       background:
-        radial-gradient(900px 480px at 12% -10%, rgba(124,108,255,.18), transparent 55%),
+        radial-gradient(900px 480px at 10% -12%, rgba(255,107,157,.14), transparent 55%),
         radial-gradient(700px 400px at 100% 0%, rgba(61,214,198,.1), transparent 50%),
         var(--bg);
       line-height: 1.5;
@@ -37,16 +37,16 @@
     .eyebrow {
       display: inline-flex; align-items: center; gap: .45rem;
       font-size: .78rem; letter-spacing: .08em; text-transform: uppercase;
-      color: var(--teal); font-weight: 600;
+      color: var(--accent); font-weight: 600;
     }
     .eyebrow::before {
       content: ""; width: 8px; height: 8px; border-radius: 999px; background: var(--ok);
       box-shadow: 0 0 0 4px rgba(61,214,140,.18);
     }
     h1 { margin: .4rem 0 .5rem; font-size: clamp(1.6rem, 3.5vw, 2.2rem); letter-spacing: -.03em; }
-    .lede { color: var(--muted); max-width: 58ch; margin: 0 0 1.25rem; }
+    .lede { color: var(--muted); max-width: 60ch; margin: 0 0 1.25rem; }
     .hero-card {
-      background: linear-gradient(160deg, rgba(124,108,255,.12), transparent 50%), var(--elev);
+      background: linear-gradient(160deg, rgba(255,107,157,.12), transparent 48%), var(--elev);
       border: 1px solid var(--line); border-radius: calc(var(--radius) + 4px);
       padding: 1.25rem 1.35rem 1.35rem; box-shadow: 0 20px 50px rgba(0,0,0,.4);
     }
@@ -64,7 +64,7 @@
       color: #d7dbe6; font-size: .95rem;
     }
     .prompt-box .k { display: block; font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .25rem; }
-    audio { width: 100%; height: 42px; margin-top: .15rem; }
+    audio { width: 100%; height: 42px; }
     .metrics {
       display: grid; grid-template-columns: repeat(2, 1fr); gap: .55rem; margin-top: 1rem;
     }
@@ -75,16 +75,12 @@
     }
     .metric .k { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
     .metric .v { margin-top: .15rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
-    .section { margin-top: 1.5rem; }
-    .section h3 { margin: 0 0 .75rem; font-size: 1rem; }
-    .grid { display: grid; gap: .75rem; grid-template-columns: 1fr; }
-    @media (min-width: 720px) { .grid { grid-template-columns: 1fr 1fr; } }
-    .mini {
-      border: 1px solid var(--line); background: var(--elev); border-radius: var(--radius);
-      padding: .9rem;
+    .notes {
+      margin-top: 1.25rem; padding: 1rem 1.1rem; border-radius: var(--radius);
+      border: 1px solid var(--line); background: var(--elev); color: var(--muted); font-size: .9rem;
     }
-    .mini h4 { margin: 0 0 .35rem; font-size: .95rem; }
-    .mini p { margin: 0 0 .65rem; color: var(--muted); font-size: .82rem; }
+    .notes strong { color: var(--fg); }
+    .notes ul { margin: .4rem 0 0; padding-left: 1.15rem; }
     footer {
       margin-top: 1.75rem; color: var(--muted); font-size: .82rem;
       display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; justify-content: space-between;
@@ -94,73 +90,59 @@
 </head>
 <body>
   <div class="wrap">
-    <div class="eyebrow">010 · ACE-Step 1.5 · Gallery</div>
+    <div class="eyebrow">011 · Stable Audio 3 Medium · Gallery</div>
     <h1>生成试听</h1>
     <p class="lede">
-      Modal 上跑通的 ACE-Step 1.5 turbo 文本生乐。主曲为 smoke 器乐 lo-fi；多卡对照音频见
-      <a href="gpu-bench.html">GPU Bench</a>。
+      Stability AI Stable Audio 3 <strong>medium</strong>（1.4B）在 Modal 上的冒烟结果。默认 GPU 为 <strong>L4</strong>
+      （FlashAttention 需 Ampere+；T4 不可用）。
     </p>
 
     <article class="hero-card">
       <div class="title-row">
         <div>
-          <h2>smoke_lofi · 器乐 lo-fi</h2>
+          <h2>smoke_house · Festival House</h2>
           <div class="chips">
-            <span class="chip">模型 <strong>acestep-v15-turbo</strong></span>
+            <span class="chip">模型 <strong>medium</strong></span>
             <span class="chip">GPU <strong>L4</strong></span>
             <span class="chip">时长 <strong>20s</strong></span>
             <span class="chip">seed <strong>42</strong></span>
             <span class="chip">steps <strong>8</strong></span>
+            <span class="chip">SR <strong>44.1 kHz</strong></span>
           </div>
         </div>
         <div class="chip" style="align-self:center;border-color:rgba(61,214,140,.35);color:#b8f5d3;background:rgba(61,214,140,.1)">OK · 成功</div>
       </div>
       <div class="prompt-box">
-        <span class="k">风格 / Caption</span>
-        lo-fi hip hop instrumental（smoke 默认器乐 · thinking 关闭 · 无歌词）
+        <span class="k">Prompt</span>
+        Uplifting house music instrumental, sunny festival energy, punchy four-on-the-floor kick, warm pads, 124 BPM
       </div>
-      <audio controls preload="metadata" src="assets/smoke_lofi.flac"></audio>
+      <audio controls preload="metadata" src="assets/smoke_house.flac"></audio>
       <div class="metrics">
-        <div class="metric"><div class="k">墙钟</div><div class="v">33.1 s</div></div>
-        <div class="metric"><div class="k">估费</div><div class="v">$0.0074</div></div>
-        <div class="metric"><div class="k">生成</div><div class="v">~6 s</div></div>
-        <div class="metric"><div class="k">格式</div><div class="v">FLAC</div></div>
+        <div class="metric"><div class="k">墙钟</div><div class="v">43.7 s</div></div>
+        <div class="metric"><div class="k">加载 / 生成</div><div class="v">40.1 / 3.4 s</div></div>
+        <div class="metric"><div class="k">估费</div><div class="v">$0.0097</div></div>
+        <div class="metric"><div class="k">峰值 VRAM</div><div class="v">9.3 GB</div></div>
       </div>
     </article>
 
-    <section class="section">
-      <h3>同 prompt · 8 卡试听（seed 42）</h3>
-      <p style="color:var(--muted);font-size:.88rem;margin:.15rem 0 .85rem">完整表与排序见 <a href="gpu-bench.html">gpu-bench.html</a></p>
-      <div class="grid" id="bench"></div>
-    </section>
+    <div class="notes">
+      <strong>说明</strong>
+      <ul>
+        <li>门禁权重：<code>stabilityai/stable-audio-3-medium</code> · Stability Community License</li>
+        <li>推理库：官方 <code>stable-audio-3</code> + FlashAttention 2 · fp16 · chunked decode</li>
+        <li>最长约 6 分 20 秒；本 smoke 固定 20s 压成本</li>
+        <li>换 prompt：<code>python run.py t2a --prompt "..." --duration 30</code></li>
+      </ul>
+    </div>
 
     <footer>
       <div>
-        实验：<code>010-ace-step-1.5</code> ·
+        实验：<code>011-stable-audio-3</code> ·
         <a href="../README.md">README</a> ·
-        <a href="../GPU_BENCHMARK.md">GPU_BENCHMARK</a>
+        <a href="https://huggingface.co/stabilityai/stable-audio-3-medium" target="_blank" rel="noreferrer">HF model</a>
       </div>
-      <div>modal-lab · ACE-Step 1.5</div>
+      <div>modal-lab · Stable Audio 3</div>
     </footer>
   </div>
-  <script>
-    const GPUS = [
-      ["A100-80GB", "bench_A100_80GB"],
-      ["A10", "bench_A10"],
-      ["L40S", "bench_L40S"],
-      ["RTX-PRO-6000", "bench_RTX_PRO_6000"],
-      ["L4", "bench_L4"],
-      ["T4", "bench_T4"],
-      ["A100-40GB", "bench_A100_40GB"],
-      ["H100", "bench_H100"],
-    ];
-    document.getElementById("bench").innerHTML = GPUS.map(([name, file]) => `
-      <div class="mini">
-        <h4>${name}</h4>
-        <p>同一 lo-fi prompt · seed 42 · 20s</p>
-        <audio controls preload="none" src="assets/${file}.flac"></audio>
-      </div>
-    `).join("");
-  </script>
 </body>
 </html>
