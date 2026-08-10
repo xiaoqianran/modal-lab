@@ -157,6 +157,7 @@ def _write_meta(scene: str, payload: dict) -> None:
 
 
 def _seed_minimal_scene(scene: str, from_008: str = "smoke_qwen") -> Path:
+    """Seed scene dir with panorama from 008 volume, existing scene, or official case000."""
     scene_path = _scene_dir(scene)
     scene_path.mkdir(parents=True, exist_ok=True)
     pano = scene_path / "panorama.png"
@@ -166,11 +167,28 @@ def _seed_minimal_scene(scene: str, from_008: str = "smoke_qwen") -> Path:
             Path(PANO_MOUNT) / "runs" / from_008 / from_008 / "panorama.png",
         ]
         src = next((p for p in candidates if p.is_file()), None)
-        if src is None:
-            runs = Path(PANO_MOUNT) / "runs"
-            avail = sorted(p.name for p in runs.iterdir() if p.is_dir()) if runs.is_dir() else []
-            raise FileNotFoundError(f"no panorama for {from_008}; available={avail}")
-        shutil.copy2(src, pano)
+        if src is not None:
+            shutil.copy2(src, pano)
+            print(f"[seed] panorama from 008 {src}")
+        else:
+            # Fallback: official HY-World-2.0 example (no 008 dependency)
+            url = (
+                "https://raw.githubusercontent.com/Tencent-Hunyuan/HY-World-2.0/"
+                "main/examples/worldgen/case000/panorama.png"
+            )
+            print(f"[seed] 008 run '{from_008}' missing; downloading official case000…")
+            try:
+                import urllib.request
+                urllib.request.urlretrieve(url, pano)
+            except Exception as e:
+                runs = Path(PANO_MOUNT) / "runs"
+                avail = sorted(p.name for p in runs.iterdir() if p.is_dir()) if runs.is_dir() else []
+                raise FileNotFoundError(
+                    f"no panorama for {from_008}; available={avail}; official download failed: {e}"
+                ) from e
+            if not pano.is_file() or pano.stat().st_size < 1000:
+                raise FileNotFoundError(f"official panorama download looks empty: {pano}")
+            print(f"[seed] official case000 → {pano} ({pano.stat().st_size} bytes)")
     meta = scene_path / "meta_info.json"
     if not meta.is_file():
         meta.write_text(json.dumps({"scene_type": "indoor", "scene": scene}, indent=2))
