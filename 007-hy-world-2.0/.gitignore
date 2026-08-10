@@ -1,0 +1,6 @@
+outputs/
+gallery-assets/
+.venv/
+__pycache__/
+*.pyc
+.DS_Store

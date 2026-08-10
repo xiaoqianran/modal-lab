@@ -1,0 +1,51 @@
+{
+  "ok": true,
+  "app": "modal-lab-hy-world-2",
+  "upstream": "https://github.com/Tencent-Hunyuan/HY-World-2.0",
+  "hf_repo": "tencent/HY-World-2.0",
+  "hf_subfolder": "HY-WorldMirror-2.0",
+  "component": "WorldMirror-2.0 (worldrecon only)",
+  "load_src": "/weights/HY-WorldMirror-2.0",
+  "example": "Desk",
+  "image_dir": "/root/examples/Desk",
+  "n_images": 2,
+  "image_names": [
+    "530554609_3367433673396747_2161028887770608277_n.jpg",
+    "532328457_1311198870420578_2167456836351167380_n.jpg"
+  ],
+  "target_size": 518,
+  "enable_bf16": true,
+  "save_gs": false,
+  "n_points_saved": 330542,
+  "pipeline_result_dir": "/outputs/runs/bench_L4_desk2",
+  "gpu_request": "L4",
+  "gpu_actual": "NVIDIA L4",
+  "seconds": {
+    "load": 17.69,
+    "forward_and_save": 2.63,
+    "total": 25.96
+  },
+  "est_cost_usd": 0.0058,
+  "price_per_sec": 0.000222,
+  "vram": {
+    "gpu_name_smi": "NVIDIA L4",
+    "peak_mem_used_mib": 5122.0,
+    "peak_mem_used_gb": 5.0,
+    "mem_total_mib": 23034.0,
+    "n_samples": 47
+  },
+  "volume": "modal-lab-hy-world-2-outputs",
+  "run_dir": "runs/bench_L4_desk2",
+  "outputs": [
+    "camera_params.json",
+    "depth/depth_0000.npy",
+    "depth/depth_0000.png",
+    "depth/depth_0001.npy",
+    "depth/depth_0001.png",
+    "normal/normal_0000.png",
+    "normal/normal_0001.png",
+    "pipeline_timing.json",
+    "points.ply"
+  ],
+  "cost_note": "Default path is WorldMirror 2.0 recon only. Full HY-World generation (Pano 80B + Stereo 17B) is NOT run."
+}

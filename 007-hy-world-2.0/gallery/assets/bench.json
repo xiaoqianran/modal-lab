@@ -1,0 +1,105 @@
+{
+  "condition": {
+    "example": "Desk",
+    "n_images": 2,
+    "target_size": 518,
+    "enable_bf16": true,
+    "save_gs": false,
+    "date": "2026-08-10",
+    "note": "Cold start includes model load every run. Cost = total_s \u00d7 Modal public $/s."
+  },
+  "gpus": [
+    {
+      "id": "bench_T4_desk2",
+      "gpu_request": "T4",
+      "gpu_actual": "Tesla T4",
+      "price_per_sec": 0.000164,
+      "load_s": 18.17,
+      "forward_s": 4.92,
+      "total_s": 27.18,
+      "est_cost_usd": 0.0045,
+      "peak_vram_gb": 4.89,
+      "mem_total_mib": 15360.0,
+      "n_points": 330776,
+      "forward_cost_usd": 0.000807,
+      "load_cost_usd": 0.00298
+    },
+    {
+      "id": "bench_L4_desk2",
+      "gpu_request": "L4",
+      "gpu_actual": "NVIDIA L4",
+      "price_per_sec": 0.000222,
+      "load_s": 17.69,
+      "forward_s": 2.63,
+      "total_s": 25.96,
+      "est_cost_usd": 0.0058,
+      "peak_vram_gb": 5.0,
+      "mem_total_mib": 23034.0,
+      "n_points": 330542,
+      "forward_cost_usd": 0.000584,
+      "load_cost_usd": 0.003927
+    },
+    {
+      "id": "bench_L40S_desk2",
+      "gpu_request": "L40S",
+      "gpu_actual": "NVIDIA L40S",
+      "price_per_sec": 0.000542,
+      "load_s": 13.02,
+      "forward_s": 1.82,
+      "total_s": 17.91,
+      "est_cost_usd": 0.0097,
+      "peak_vram_gb": 5.27,
+      "mem_total_mib": 46068.0,
+      "n_points": 332910,
+      "forward_cost_usd": 0.000986,
+      "load_cost_usd": 0.007057
+    },
+    {
+      "id": "bench_RTX_PRO_6000_desk2",
+      "gpu_request": "RTX-PRO-6000",
+      "gpu_actual": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "price_per_sec": 0.000842,
+      "load_s": 11.87,
+      "forward_s": 2.54,
+      "total_s": 18.9,
+      "est_cost_usd": 0.0159,
+      "peak_vram_gb": 5.45,
+      "mem_total_mib": 97887.0,
+      "n_points": 330995,
+      "forward_cost_usd": 0.002139,
+      "load_cost_usd": 0.009995
+    }
+  ],
+  "vs_006": {
+    "006": {
+      "name": "006 HunyuanWorld-Mirror",
+      "upstream": "https://github.com/Tencent-Hunyuan/HunyuanWorld-Mirror",
+      "hf": "tencent/HunyuanWorld-Mirror",
+      "generation": "WorldMirror 1.x",
+      "env": "CUDA 12.4 \u00b7 torch 2.4 \u00b7 py3.10",
+      "default_gpu": "L4",
+      "example": "Bright_Room",
+      "n_points": 274125,
+      "peak_vram_gb": 7.66,
+      "total_s": 44.87,
+      "forward_s": 2.98,
+      "est_cost_usd": 0.01,
+      "gpu_actual": "NVIDIA L4"
+    },
+    "007": {
+      "name": "007 HY-World 2.0",
+      "upstream": "https://github.com/Tencent-Hunyuan/HY-World-2.0",
+      "hf": "tencent/HY-World-2.0 / HY-WorldMirror-2.0",
+      "generation": "WorldMirror 2.0 (worldrecon only)",
+      "env": "CUDA 12.8 \u00b7 torch 2.7.1 \u00b7 py3.11",
+      "default_gpu": "T4",
+      "example": "Desk",
+      "n_points": 330776,
+      "peak_vram_gb": 4.89,
+      "total_s": 27.7,
+      "forward_s": 5.41,
+      "est_cost_usd": 0.0045,
+      "gpu_actual": "Tesla T4"
+    }
+  }
+}
