@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HunyuanWorld-Mirror · Run Gallery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0c0e12;
+      --bg-elev: #141820;
+      --bg-soft: #1a2030;
+      --line: rgba(255, 255, 255, 0.08);
+      --line-strong: rgba(255, 255, 255, 0.14);
+      --fg: #eef1f6;
+      --muted: #8b93a7;
+      --accent: #3dd6c6;
+      --accent-2: #f0a46e;
+      --danger: #ff7b72;
+      --ok: #3dd68c;
+      --radius: 14px;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+      --font: "DM Sans", system-ui, sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(61, 214, 198, 0.12), transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, rgba(240, 164, 110, 0.08), transparent 50%),
+        var(--bg);
+      color: var(--fg);
+      font-family: var(--font);
+      line-height: 1.5;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .wrap {
+      width: min(1200px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 1.5rem 0 3rem;
+    }
+
+    header.hero {
+      display: grid;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (min-width: 860px) {
+      header.hero {
+        grid-template-columns: 1.4fr 1fr;
+        align-items: end;
+      }
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--ok);
+      box-shadow: 0 0 0 4px rgba(61, 214, 140, 0.18);
+    }
+
+    h1 {
+      margin: 0.35rem 0 0.4rem;
+      font-size: clamp(1.6rem, 3.5vw, 2.35rem);
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      font-weight: 700;
+    }
+
+    .lede {
+      margin: 0;
+      color: var(--muted);
+      max-width: 48ch;
+      font-size: 0.98rem;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: flex-start;
+    }
+    @media (min-width: 860px) {
+      .badge-row { justify-content: flex-end; }
+    }
+
+    .badge {
+      border: 1px solid var(--line-strong);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 999px;
+      padding: 0.4rem 0.75rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      backdrop-filter: blur(8px);
+    }
+    .badge strong {
+      color: var(--fg);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin: 1rem 0 1.5rem;
+    }
+    @media (min-width: 720px) {
+      .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
+    .stat {
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 0.95rem 1rem;
+      box-shadow: var(--shadow);
+    }
+    .stat .label {
+      color: var(--muted);
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 0.3rem;
+    }
+    .stat .value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat .sub {
+      margin-top: 0.2rem;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-family: var(--mono);
+    }
+
+    .panel {
+      background: var(--bg-elev);
+      border: 1px solid var(--line);
+      border-radius: calc(var(--radius) + 4px);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.25rem;
+    }
+
+    .panel-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.9rem 1.1rem;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .panel-head h2 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .panel-head p {
+      margin: 0.15rem 0 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+    button.ctrl {
+      appearance: none;
+      border: 1px solid var(--line-strong);
+      background: var(--bg-soft);
+      color: var(--fg);
+      border-radius: 999px;
+      padding: 0.45rem 0.85rem;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 160ms ease, border-color 160ms ease, transform 120ms ease;
+    }
+    button.ctrl:hover { border-color: rgba(61, 214, 198, 0.45); }
+    button.ctrl:active { transform: scale(0.98); }
+    button.ctrl.active {
+      background: rgba(61, 214, 198, 0.14);
+      border-color: rgba(61, 214, 198, 0.55);
+      color: var(--accent);
+    }
+    button.ctrl:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    #viewer {
+      position: relative;
+      height: min(62vh, 560px);
+      background:
+        linear-gradient(180deg, #0a0c10, #10151f 70%, #0d1118);
+      touch-action: none;
+    }
+    #viewer canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    .viewer-hint {
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      z-index: 2;
+      padding: 0.4rem 0.65rem;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.75rem;
+      pointer-events: none;
+      backdrop-filter: blur(6px);
+    }
+    .viewer-status {
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      z-index: 2;
+      padding: 0.4rem 0.65rem;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--line);
+      color: var(--fg);
+      font-size: 0.75rem;
+      font-family: var(--mono);
+      backdrop-filter: blur(6px);
+    }
+    .viewer-status.error { color: var(--danger); }
+
+    .frames {
+      display: grid;
+      gap: 1rem;
+      padding: 1rem;
+    }
+    @media (min-width: 900px) {
+      .frames { grid-template-columns: 1fr 1fr; }
+    }
+
+    .frame-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.02);
+      overflow: hidden;
+    }
+    .frame-card h3 {
+      margin: 0;
+      padding: 0.75rem 0.9rem;
+      font-size: 0.9rem;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .frame-card h3 span {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .tri {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 520px) {
+      .tri { grid-template-columns: repeat(3, 1fr); }
+    }
+    .tri figure {
+      margin: 0;
+      border-top: 1px solid var(--line);
+      background: #07090d;
+    }
+    .tri figure:first-child { border-top: 0; }
+    @media (min-width: 520px) {
+      .tri figure {
+        border-top: 0;
+        border-left: 1px solid var(--line);
+      }
+      .tri figure:first-child { border-left: 0; }
+    }
+    .tri img {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 518 / 294;
+      object-fit: cover;
+      background: #000;
+    }
+    .tri figcaption {
+      padding: 0.45rem 0.65rem 0.6rem;
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .meta-grid {
+      display: grid;
+      gap: 0.75rem;
+      padding: 1rem;
+    }
+    @media (min-width: 800px) {
+      .meta-grid { grid-template-columns: 1.2fr 1fr; }
+    }
+    pre.block {
+      margin: 0;
+      padding: 0.9rem 1rem;
+      border-radius: 12px;
+      background: #0a0d12;
+      border: 1px solid var(--line);
+      overflow: auto;
+      max-height: 280px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      line-height: 1.55;
+      color: #c8d0e0;
+    }
+    .kv {
+      display: grid;
+      gap: 0.45rem;
+    }
+    .kv row, .kv .row {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 0.5rem;
+      padding: 0.55rem 0.7rem;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.02);
+      font-size: 0.86rem;
+    }
+    .kv .k { color: var(--muted); }
+    .kv .v {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      word-break: break-all;
+    }
+
+    footer {
+      margin-top: 1.5rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+      justify-content: space-between;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <div>
+        <div class="eyebrow">006 · HunyuanWorld-Mirror · Modal L4</div>
+        <h1>Bright Room 重建结果</h1>
+        <p class="lede">
+          从 Modal Volume 拉取的 smoke 产物：多视图点云、深度、法线与相机参数。
+          默认最低成本 L4，2 视图 feed-forward 推理。
+        </p>
+      </div>
+      <div class="badge-row" id="badges">
+        <div class="badge">GPU <strong id="b-gpu">…</strong></div>
+        <div class="badge">Forward <strong id="b-fwd">…</strong></div>
+        <div class="badge">Cost <strong id="b-cost">…</strong></div>
+        <div class="badge">VRAM <strong id="b-vram">…</strong></div>
+      </div>
+    </header>
+
+    <section class="stats" id="stats">
+      <div class="stat">
+        <div class="label">Preview points</div>
+        <div class="value" id="s-pts">—</div>
+        <div class="sub" id="s-pts-sub">downsampled for web</div>
+      </div>
+      <div class="stat">
+        <div class="label">Full pointmap</div>
+        <div class="value" id="s-full">—</div>
+        <div class="sub">from volume PLY</div>
+      </div>
+      <div class="stat">
+        <div class="label">Views</div>
+        <div class="value" id="s-views">—</div>
+        <div class="sub" id="s-res">—</div>
+      </div>
+      <div class="stat">
+        <div class="label">Total GPU time</div>
+        <div class="value" id="s-total">—</div>
+        <div class="sub" id="s-load">—</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>3D Point Cloud</h2>
+          <p>拖拽旋转 · 滚轮缩放 · 右键平移（触控可单指旋转）</p>
+        </div>
+        <div class="controls">
+          <button class="ctrl active" type="button" id="btn-auto" aria-pressed="true">自动旋转</button>
+          <button class="ctrl" type="button" id="btn-reset">重置视角</button>
+          <button class="ctrl" type="button" id="btn-size">点大小</button>
+        </div>
+      </div>
+      <div id="viewer">
+        <div class="viewer-status" id="v-status">loading…</div>
+        <div class="viewer-hint">assets/points.bin · 16B/point</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>输入 · 深度 · 法线</h2>
+          <p>每帧三列对照；深度为可视化 PNG，法线映射到 RGB</p>
+        </div>
+      </div>
+      <div class="frames" id="frames"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Run Meta & Cameras</h2>
+          <p>原始 meta.json / cameras.json</p>
+        </div>
+      </div>
+      <div class="meta-grid">
+        <div class="kv" id="kv"></div>
+        <pre class="block" id="meta-pre">loading…</pre>
+      </div>
+    </section>
+
+    <footer>
+      <div>
+        Upstream:
+        <a href="https://github.com/Tencent-Hunyuan/HunyuanWorld-Mirror" target="_blank" rel="noreferrer">HunyuanWorld-Mirror</a>
+        · Weights:
+        <a href="https://huggingface.co/tencent/HunyuanWorld-Mirror" target="_blank" rel="noreferrer">HF</a>
+        · Lab:
+        <a href="https://github.com/xiaoqianran/modal-lab" target="_blank" rel="noreferrer">modal-lab/006</a>
+      </div>
+      <div id="foot-run">run: smoke_bright_room</div>
+    </footer>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+    const $ = (id) => document.getElementById(id);
+    const fmt = {
+      num: (n) => n.toLocaleString("en-US"),
+      sec: (s) => `${Number(s).toFixed(2)}s`,
+      usd: (v) => (v == null ? "—" : `$${Number(v).toFixed(2)}`),
+    };
+
+    async function loadJSON(url) {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`fetch ${url}: ${r.status}`);
+      return r.json();
+    }
+
+    function fillMeta(manifest) {
+      const m = manifest.meta || {};
+      const sec = m.seconds || {};
+      $("b-gpu").textContent = m.gpu_actual || m.gpu_request || "—";
+      $("b-fwd").textContent = sec.forward != null ? fmt.sec(sec.forward) : "—";
+      $("b-cost").textContent = fmt.usd(m.est_cost_usd);
+      $("b-vram").textContent = m.vram?.peak_mem_used_gb != null
+        ? `${m.vram.peak_mem_used_gb} GB`
+        : "—";
+
+      $("s-pts").textContent = fmt.num(manifest.n_points_preview);
+      $("s-pts-sub").textContent = `of ${fmt.num(manifest.n_points_full)} full`;
+      $("s-full").textContent = fmt.num(manifest.n_points_full);
+      $("s-views").textContent = String(m.n_images ?? manifest.frames?.length ?? "—");
+      $("s-res").textContent = m.resolution ? `${m.resolution[1]}×${m.resolution[0]}` : "—";
+      $("s-total").textContent = sec.total != null ? fmt.sec(sec.total) : "—";
+      $("s-load").textContent = sec.load != null ? `load ${fmt.sec(sec.load)}` : "";
+
+      const rows = [
+        ["run_dir", m.run_dir],
+        ["example", m.example],
+        ["load_src", m.load_src],
+        ["volume", m.volume],
+        ["hf_repo", m.hf_repo],
+        ["price/s", m.price_per_sec],
+      ];
+      $("kv").innerHTML = rows
+        .map(
+          ([k, v]) =>
+            `<div class="row"><div class="k">${k}</div><div class="v">${
+              v ?? "—"
+            }</div></div>`
+        )
+        .join("");
+      $("meta-pre").textContent = JSON.stringify(m, null, 2);
+      $("foot-run").textContent = `run: ${m.run_dir || manifest.source_run}`;
+    }
+
+    function renderFrames(frames) {
+      const root = $("frames");
+      root.innerHTML = frames
+        .map(
+          (f, i) => `
+        <article class="frame-card">
+          <h3>Frame ${i} <span>${f.image.split("/").pop()}</span></h3>
+          <div class="tri">
+            <figure>
+              <img src="assets/${f.image}" alt="input ${i}" loading="lazy" />
+              <figcaption>Input</figcaption>
+            </figure>
+            <figure>
+              <img src="assets/${f.depth}" alt="depth ${i}" loading="lazy" />
+              <figcaption>Depth</figcaption>
+            </figure>
+            <figure>
+              <img src="assets/${f.normal}" alt="normal ${i}" loading="lazy" />
+              <figcaption>Normal</figcaption>
+            </figure>
+          </div>
+        </article>`
+        )
+        .join("");
+    }
+
+    async function initViewer(manifest) {
+      const status = $("v-status");
+      const host = $("viewer");
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x0c0e12, 0.035);
+
+      const camera = new THREE.PerspectiveCamera(
+        55,
+        host.clientWidth / host.clientHeight,
+        0.01,
+        100
+      );
+      camera.position.set(0.15, -1.35, 1.55);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(host.clientWidth, host.clientHeight, false);
+      renderer.setClearColor(0x000000, 0);
+      host.appendChild(renderer.domElement);
+
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.06;
+      controls.minDistance = 0.35;
+      controls.maxDistance = 8;
+      controls.target.set(0, 0, 0);
+
+      // soft ground grid
+      const grid = new THREE.GridHelper(4, 20, 0x2a3344, 0x1a2230);
+      grid.position.y = -0.85;
+      scene.add(grid);
+
+      status.textContent = "fetching points.bin…";
+      const res = await fetch("assets/points.bin");
+      if (!res.ok) throw new Error(`points.bin ${res.status}`);
+      const buf = await res.arrayBuffer();
+      const n = manifest.n_points_preview;
+      const bytes = n * 16;
+      if (buf.byteLength < bytes) throw new Error("points.bin truncated");
+
+      const positions = new Float32Array(n * 3);
+      const colors = new Float32Array(n * 3);
+      const view = new DataView(buf);
+      for (let i = 0; i < n; i++) {
+        const o = i * 16;
+        positions[i * 3 + 0] = view.getFloat32(o + 0, true);
+        positions[i * 3 + 1] = view.getFloat32(o + 4, true);
+        positions[i * 3 + 2] = view.getFloat32(o + 8, true);
+        colors[i * 3 + 0] = view.getUint8(o + 12) / 255;
+        colors[i * 3 + 1] = view.getUint8(o + 13) / 255;
+        colors[i * 3 + 2] = view.getUint8(o + 14) / 255;
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      geometry.computeBoundingSphere();
+
+      let pointSize = 0.012;
+      const material = new THREE.PointsMaterial({
+        size: pointSize,
+        vertexColors: true,
+        sizeAttenuation: true,
+        transparent: true,
+        opacity: 0.95,
+        depthWrite: true,
+      });
+      const cloud = new THREE.Points(geometry, material);
+      // PLY often y-down / z-forward; mild reorient for nicer default
+      cloud.rotation.x = -Math.PI * 0.5;
+      scene.add(cloud);
+
+      status.textContent = `${n.toLocaleString()} pts`;
+      status.classList.remove("error");
+
+      let autoRotate = true;
+      $("btn-auto").addEventListener("click", () => {
+        autoRotate = !autoRotate;
+        $("btn-auto").classList.toggle("active", autoRotate);
+        $("btn-auto").setAttribute("aria-pressed", String(autoRotate));
+      });
+      $("btn-reset").addEventListener("click", () => {
+        camera.position.set(0.15, -1.35, 1.55);
+        controls.target.set(0, 0, 0);
+        controls.update();
+      });
+      $("btn-size").addEventListener("click", () => {
+        pointSize = pointSize >= 0.02 ? 0.008 : pointSize + 0.004;
+        material.size = pointSize;
+        $("btn-size").textContent = `点大小 ${pointSize.toFixed(3)}`;
+      });
+
+      controls.addEventListener("start", () => {
+        autoRotate = false;
+        $("btn-auto").classList.remove("active");
+        $("btn-auto").setAttribute("aria-pressed", "false");
+      });
+
+      const onResize = () => {
+        const w = host.clientWidth;
+        const h = host.clientHeight;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h, false);
+      };
+      window.addEventListener("resize", onResize);
+
+      const clock = new THREE.Clock();
+      function tick() {
+        const dt = clock.getDelta();
+        if (autoRotate) cloud.rotation.z += dt * 0.18;
+        controls.update();
+        renderer.render(scene, camera);
+        requestAnimationFrame(tick);
+      }
+      tick();
+    }
+
+    async function main() {
+      try {
+        const manifest = await loadJSON("assets/manifest.json");
+        fillMeta(manifest);
+        renderFrames(manifest.frames || []);
+        await initViewer(manifest);
+      } catch (err) {
+        console.error(err);
+        $("v-status").textContent = String(err.message || err);
+        $("v-status").classList.add("error");
+        $("meta-pre").textContent = String(err);
+      }
+    }
+
+    main();
+  </script>
+</body>
+</html>

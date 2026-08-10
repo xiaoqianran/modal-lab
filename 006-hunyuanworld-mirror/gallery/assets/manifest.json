@@ -1,0 +1,79 @@
+{
+  "n_points_full": 274125,
+  "n_points_preview": 80000,
+  "center": [
+    0.10981845110654831,
+    -0.03201841190457344,
+    0.9655352234840393
+  ],
+  "scale": 0.6076573729515076,
+  "bytes_per_point": 16,
+  "layout": "xyz_f32_rgb_u8_a_u8",
+  "source_run": "smoke_bright_room",
+  "meta": {
+    "ok": true,
+    "app": "modal-lab-hunyuanworld-mirror",
+    "upstream": "https://github.com/Tencent-Hunyuan/HunyuanWorld-Mirror",
+    "hf_repo": "tencent/HunyuanWorld-Mirror",
+    "load_src": "/weights/ckpts",
+    "example": "Bright_Room",
+    "image_dir": "/root/examples/Bright_Room",
+    "n_images": 2,
+    "image_names": [
+      "image_0001.jpg",
+      "image_0035.jpg"
+    ],
+    "target_size": 518,
+    "resolution": [
+      294,
+      518
+    ],
+    "n_points_saved": 274125,
+    "save_gs": false,
+    "gpu_request": "L4",
+    "gpu_actual": "NVIDIA L4",
+    "seconds": {
+      "load": 39.53,
+      "prep": 0.04,
+      "forward": 2.98,
+      "total": 44.87
+    },
+    "est_cost_usd": 0.01,
+    "price_per_sec": 0.000222,
+    "vram": {
+      "gpu_name_smi": "NVIDIA L4",
+      "peak_mem_used_mib": 7840.0,
+      "peak_mem_used_gb": 7.66,
+      "mem_total_mib": 23034.0,
+      "n_samples": 41
+    },
+    "volume": "modal-lab-hunyuanworld-mirror-outputs",
+    "run_dir": "runs/smoke_bright_room",
+    "outputs": [
+      "cameras.json",
+      "depth/depth_0000.npy",
+      "depth/depth_0000.png",
+      "depth/depth_0001.npy",
+      "depth/depth_0001.png",
+      "images/image_0001.jpg",
+      "images/image_0035.jpg",
+      "normal/normal_0000.png",
+      "normal/normal_0001.png",
+      "pts_from_pointmap.ply"
+    ]
+  },
+  "frames": [
+    {
+      "id": 0,
+      "image": "images/image_0001.jpg",
+      "depth": "depth/depth_0000.png",
+      "normal": "normal/normal_0000.png"
+    },
+    {
+      "id": 1,
+      "image": "images/image_0035.jpg",
+      "depth": "depth/depth_0001.png",
+      "normal": "normal/normal_0001.png"
+    }
+  ]
+}

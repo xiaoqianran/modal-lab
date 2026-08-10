@@ -36,6 +36,23 @@ cd 006-hunyuanworld-mirror
 python run.py smoke --gpu L4
 ```
 
+## 结果展示（本地 Gallery）
+
+smoke 产物已拉取并做成静态页：
+
+```text
+gallery/
+  index.html          # 交互式 3D 点云 + 深度/法线对照 + meta
+  assets/             # images / depth / normal / points.bin / manifest.json
+```
+
+```bash
+cd 006-hunyuanworld-mirror/gallery
+python3 -m http.server 8080 --bind 0.0.0.0
+```
+
+实测 smoke：NVIDIA L4 · peak VRAM **7.66 GB** · forward **~3 s** · 估 **~$0.01** · 全量点云 274k（网页预览 80k）。
+
 ## Volume
 
 | Volume | 路径 |
