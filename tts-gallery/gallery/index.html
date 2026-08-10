@@ -4,45 +4,36 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
-  <meta name="description" content="modal-lab TTS Signal Desk · 025–034 全量 30 条 smoke 音频 · 成本/VRAM 可视化 · 波形试听" />
+  <meta name="description" content="modal-lab TTS Signal Desk · 025–034 全量 30 条 smoke · 成本/VRAM 可视化 · 波形试听" />
   <title>TTS Signal Desk · modal-lab</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700;750;800&display=swap" rel="stylesheet" />
-
   <style>
 
 :root {
   color-scheme: dark;
-  --bg: #0b0a09;
-  --bg-elev: #141210;
-  --bg-card: #181614;
-  --bg-card-2: #1e1b18;
-  --line: rgba(242, 234, 220, 0.08);
+  --bg: #090908;
+  --bg-elev: #12110f;
+  --bg-card: #161411;
+  --bg-card-2: #1c1916;
+  --line: rgba(242, 234, 220, 0.075);
   --line-2: rgba(242, 234, 220, 0.14);
-  --ink: #f2eadc;
+  --ink: #f4ecde;
   --muted: #9a9184;
-  --faint: #6b645a;
+  --faint: #6a635a;
   --signal: #ff4d6a;
   --signal-2: #ff7a8e;
-  
-  --mint: #3debc8;
-  --amber: #f0b429;
-  --violet: #a78bfa;
   --ok: #3debc8;
-  --k: #5b9dff;
-  --c: #c084fc;
-  --q: #3debc8;
-  --f: #ff9f43;
-  --radius: 16px;
-  --radius-sm: 10px;
+  --radius: 18px;
+  --radius-sm: 12px;
   --font: "DM Sans", system-ui, sans-serif;
   --display: "Syne", "DM Sans", system-ui, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, monospace;
   --ease: cubic-bezier(.22, 1, .36, 1);
-  --shadow: 0 28px 60px rgba(0,0,0,.45);
-  --player-h: 92px;
-  --max: 1120px;
+  --shadow: 0 30px 70px rgba(0,0,0,.5);
+  --max: 1180px;
+  --dock-h: 88px;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -55,29 +46,32 @@ body {
   font-family: var(--font);
   color: var(--ink);
   background:
-    radial-gradient(900px 420px at 0% 0%, rgba(255,77,106,.10), transparent 55%),
-    radial-gradient(700px 380px at 100% 0%, rgba(61,235,200,.07), transparent 50%),
+    radial-gradient(1000px 480px at -5% -10%, rgba(255,77,106,.09), transparent 55%),
+    radial-gradient(800px 420px at 105% 0%, rgba(61,235,200,.055), transparent 50%),
     var(--bg);
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  padding-bottom: calc(var(--dock-h) + 24px);
 }
 a { color: inherit; text-decoration: none; }
 button, input { font: inherit; color: inherit; }
 button { cursor: pointer; border: 0; background: none; }
 :focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; border-radius: 8px; }
-.wrap { width: min(var(--max), calc(100% - 2rem)); margin: 0 auto; }
+.wrap { width: min(var(--max), calc(100% - 1.75rem)); margin: 0 auto; }
 .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
 /* NAV */
 .nav {
   position: sticky; top: 0; z-index: 50;
-  backdrop-filter: blur(18px) saturate(1.15);
-  background: color-mix(in oklab, var(--bg) 82%, transparent);
-  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(18px) saturate(1.2);
+  background: color-mix(in oklab, var(--bg) 78%, transparent);
+  border-bottom: 1px solid transparent;
+  transition: border-color .2s var(--ease);
 }
+.nav.stuck { border-bottom-color: var(--line); }
 .nav-inner {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
-  gap: .75rem 1rem; padding: .85rem 0;
+  gap: .75rem 1rem; padding: .8rem 0;
 }
 .brand { display: flex; align-items: center; gap: .7rem; min-width: 0; }
 .mark {
@@ -86,18 +80,20 @@ button { cursor: pointer; border: 0; background: none; }
   border: 1px solid var(--line-2);
   display: grid; place-items: center;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  flex-shrink: 0;
 }
 .mark span {
-  font-family: var(--display); font-weight: 700; font-size: .78rem;
+  font-family: var(--display); font-weight: 700; font-size: .72rem;
   letter-spacing: .04em; color: var(--signal);
 }
 .brand h1 { margin: 0; font-family: var(--display); font-size: 1rem; font-weight: 700; letter-spacing: -.02em; }
-.brand p { margin: 0; color: var(--muted); font-size: .78rem; }
+.brand p { margin: 0; color: var(--muted); font-size: .76rem; }
 .nav-links { display: flex; flex-wrap: wrap; gap: .35rem; }
 .nav-links a {
-  padding: .4rem .72rem; border-radius: 999px;
+  padding: .42rem .75rem; border-radius: 999px;
   border: 1px solid var(--line); color: var(--muted);
   font-size: .8rem; font-weight: 500; transition: .2s var(--ease);
+  min-height: 36px; display: inline-flex; align-items: center;
 }
 .nav-links a:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.03); }
 .nav-links a.primary {
@@ -106,14 +102,14 @@ button { cursor: pointer; border: 0; background: none; }
 .nav-links a.primary:hover { background: var(--signal-2); color: #1a080c; }
 
 /* HERO */
-.hero { padding: 2.2rem 0 1.2rem; }
+.hero { padding: 1.9rem 0 1rem; }
 .eyebrow {
   display: inline-flex; align-items: center; gap: .5rem;
-  font-family: var(--mono); font-size: .7rem; letter-spacing: .14em;
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .14em;
   text-transform: uppercase; color: var(--signal); font-weight: 500;
 }
 .eyebrow i {
-  width: 8px; height: 8px; border-radius: 50%; background: var(--signal);
+  width: 7px; height: 7px; border-radius: 50%; background: var(--signal);
   box-shadow: 0 0 0 0 rgba(255,77,106,.5); animation: ping 1.8s ease infinite;
   display: inline-block;
 }
@@ -123,130 +119,198 @@ button { cursor: pointer; border: 0; background: none; }
   100% { box-shadow: 0 0 0 0 rgba(255,77,106,0); }
 }
 .hero h2 {
-  margin: .65rem 0 .5rem;
+  margin: .55rem 0 .45rem;
   font-family: var(--display);
-  font-size: clamp(2rem, 1.2rem + 3.2vw, 3.35rem);
+  font-size: clamp(1.85rem, 1.1rem + 2.8vw, 3rem);
   font-weight: 750; letter-spacing: -.035em; line-height: 1.05;
-  max-width: 16ch;
+  max-width: 18ch;
 }
 .hero h2 em { font-style: normal; color: var(--signal); }
-.lede { margin: 0; color: var(--muted); max-width: 54ch; font-size: 1.02rem; }
-.hero-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.15rem; }
+.lede { margin: 0; color: var(--muted); max-width: 56ch; font-size: 1rem; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.05rem; }
 .btn {
   display: inline-flex; align-items: center; gap: .4rem;
   padding: .62rem 1.05rem; border-radius: 999px;
-  font-weight: 600; font-size: .9rem;
+  font-weight: 600; font-size: .88rem;
   border: 1px solid var(--line); transition: .2s var(--ease);
+  min-height: 42px;
 }
 .btn:hover { border-color: var(--line-2); transform: translateY(-1px); }
 .btn.solid { background: var(--signal); color: #1a080c; border-color: transparent; }
 .btn.solid:hover { background: var(--signal-2); }
 .btn.ghost { color: var(--muted); }
 
-/* STAT STRIP */
 .stats-row {
   display: grid; grid-template-columns: repeat(4, minmax(0,1fr));
-  gap: .55rem; margin: 1.5rem 0 1.6rem;
+  gap: .55rem; margin: 1.35rem 0 1.5rem;
 }
 @media (max-width: 720px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
 .stat {
-  background: linear-gradient(180deg, rgba(255,255,255,.03), transparent), var(--bg-elev);
+  background: linear-gradient(180deg, rgba(255,255,255,.028), transparent), var(--bg-elev);
   border: 1px solid var(--line); border-radius: var(--radius-sm);
   padding: .85rem .95rem;
 }
 .stat b {
-  display: block; font-family: var(--mono); font-size: 1.12rem; font-weight: 600;
+  display: block; font-family: var(--mono); font-size: 1.15rem; font-weight: 600;
   letter-spacing: -.02em;
 }
-.stat span { color: var(--muted); font-size: .76rem; }
+.stat span { color: var(--muted); font-size: .74rem; }
 
-/* CHARTS */
+/* MODELS */
+.sec-label {
+  margin: 0 0 .55rem;
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--faint);
+}
+.models {
+  display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: .55rem;
+  margin: 0 0 1.6rem;
+}
+@media (max-width: 1100px) { .models { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 680px) { .models { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 400px) { .models { grid-template-columns: 1fr; } }
+.model-card {
+  display: flex; flex-direction: column; gap: .4rem;
+  padding: .9rem; border-radius: var(--radius-sm);
+  background: var(--bg-card); border: 1px solid var(--line);
+  transition: .22s var(--ease); min-height: 148px;
+  position: relative; overflow: hidden;
+}
+.model-card::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 2px;
+  background: var(--accent, var(--signal)); opacity: .85;
+}
+.model-card:hover { border-color: var(--line-2); transform: translateY(-2px); box-shadow: var(--shadow); }
+.model-card .num { font-family: var(--mono); font-size: .68rem; color: var(--faint); letter-spacing: .05em; }
+.model-card h4 { margin: 0; font-family: var(--display); font-size: .98rem; font-weight: 700; letter-spacing: -.02em; }
+.model-card p { margin: 0; color: var(--muted); font-size: .78rem; flex: 1; line-height: 1.4; }
+.model-card .row { display: flex; flex-wrap: wrap; gap: .28rem; }
+.model-card .row span {
+  font-family: var(--mono); font-size: .64rem; color: var(--muted);
+  padding: .14rem .36rem; border-radius: 6px; border: 1px solid var(--line);
+}
+.model-card .go { color: var(--muted); font-size: .76rem; font-weight: 600; margin-top: .15rem; }
+.model-card:hover .go { color: var(--ink); }
+
+/* VIZ */
 .viz-grid {
-  display: grid; grid-template-columns: 1.15fr .85fr; gap: .85rem;
-  margin-bottom: 1.8rem;
+  display: grid; grid-template-columns: 1.2fr .8fr; gap: .75rem;
+  margin-bottom: 1.5rem;
 }
 @media (max-width: 860px) { .viz-grid { grid-template-columns: 1fr; } }
 .panel {
   background: var(--bg-card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 1.05rem 1.1rem 1.15rem;
-  overflow: hidden;
+  padding: 1rem 1.05rem 1.1rem;
 }
 .panel h3 {
-  margin: 0 0 .15rem;
-  font-family: var(--display); font-size: 1.05rem; font-weight: 700; letter-spacing: -.02em;
+  margin: 0 0 .1rem;
+  font-family: var(--display); font-size: 1.02rem; font-weight: 700; letter-spacing: -.02em;
 }
-.panel .hint { margin: 0 0 1rem; color: var(--muted); font-size: .82rem; }
+.panel .hint { margin: 0 0 .85rem; color: var(--muted); font-size: .8rem; }
 .bar-row {
-  display: grid; grid-template-columns: 88px 1fr 64px;
-  gap: .55rem; align-items: center; margin: .45rem 0;
+  display: grid; grid-template-columns: 92px 1fr 58px;
+  gap: .5rem; align-items: center; margin: .38rem 0;
 }
-.bar-row .lab { font-size: .8rem; color: var(--muted); font-weight: 500; }
+.bar-row .lab { font-size: .76rem; color: var(--muted); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bar-track {
-  height: 10px; border-radius: 999px; background: rgba(255,255,255,.05);
-  overflow: hidden; position: relative;
+  height: 9px; border-radius: 999px; background: rgba(255,255,255,.045);
+  overflow: hidden;
 }
 .bar-fill {
   height: 100%; border-radius: 999px;
-  background: var(--bar, var(--signal));
+  background: linear-gradient(90deg, color-mix(in oklab, var(--bar, var(--signal)) 70%, #000), var(--bar, var(--signal)));
   width: 0; transition: width 1s var(--ease);
 }
 .bar-row .val {
-  font-family: var(--mono); font-size: .72rem; color: var(--ink); text-align: right;
+  font-family: var(--mono); font-size: .7rem; color: var(--ink); text-align: right;
 }
-.radar-wrap { display: grid; place-items: center; min-height: 220px; }
-.radar-wrap svg { width: min(100%, 280px); height: auto; }
 
-/* SECTION */
-.sec-head {
+/* TOOLBAR */
+.toolbar {
+  position: sticky; top: 58px; z-index: 40;
+  margin: 1.2rem 0 .85rem;
+  padding: .7rem .8rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: color-mix(in oklab, var(--bg-elev) 90%, transparent);
+  backdrop-filter: blur(14px);
+}
+.toolbar-top {
   display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between;
-  gap: .75rem; margin: 1.8rem 0 .85rem;
+  gap: .65rem; margin-bottom: .55rem;
 }
-.sec-head h3 {
-  margin: 0; font-family: var(--display); font-size: 1.35rem; font-weight: 700;
-  letter-spacing: -.02em;
+.toolbar-top h3 {
+  margin: 0; font-family: var(--display); font-size: 1.2rem; font-weight: 700; letter-spacing: -.02em;
 }
-.sec-head p { margin: .2rem 0 0; color: var(--muted); font-size: .88rem; }
-.filters { display: flex; flex-wrap: wrap; gap: .35rem; }
+.toolbar-top p { margin: .15rem 0 0; color: var(--muted); font-size: .82rem; }
+.search-wrap { position: relative; min-width: min(240px, 100%); }
+.search-wrap input {
+  width: 100%; padding: .5rem .75rem .5rem 2rem;
+  border-radius: 999px; border: 1px solid var(--line);
+  background: rgba(0,0,0,.28); color: var(--ink);
+  font-size: .84rem; min-height: 40px;
+}
+.search-wrap input::placeholder { color: var(--faint); }
+.search-wrap svg {
+  position: absolute; left: .7rem; top: 50%; transform: translateY(-50%);
+  width: 14px; height: 14px; color: var(--faint); pointer-events: none;
+}
+.filters { display: flex; flex-wrap: wrap; gap: .32rem; }
 .filters button {
-  padding: .38rem .7rem; border-radius: 999px;
+  padding: .36rem .62rem; border-radius: 999px;
   border: 1px solid var(--line); color: var(--muted);
-  font-size: .8rem; font-weight: 500; transition: .18s var(--ease);
+  font-size: .76rem; font-weight: 500; transition: .18s var(--ease);
+  min-height: 32px;
 }
 .filters button[aria-pressed="true"] {
   color: var(--ink);
   border-color: color-mix(in oklab, var(--active, var(--signal)) 50%, var(--line));
-  background: color-mix(in oklab, var(--active, var(--signal)) 14%, transparent);
+  background: color-mix(in oklab, var(--active, var(--signal)) 16%, transparent);
+}
+.count-pill {
+  font-family: var(--mono); font-size: .72rem; color: var(--muted);
+  padding: .25rem .55rem; border-radius: 999px; border: 1px solid var(--line);
 }
 
-/* TRACK CARDS */
-.tracks {
-  display: grid; grid-template-columns: 1fr; gap: .7rem;
+/* TRACKS */
+.group-head {
+  display: flex; align-items: center; gap: .55rem;
+  margin: 1.15rem 0 .45rem; padding-top: .25rem;
 }
+.group-head .dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent);
+}
+.group-head h4 {
+  margin: 0; font-family: var(--display); font-size: .95rem; font-weight: 700;
+}
+.group-head span { color: var(--muted); font-size: .78rem; font-family: var(--mono); }
+.tracks { display: grid; gap: .55rem; }
 .track {
   display: grid; grid-template-columns: auto 1fr auto;
-  gap: .85rem; align-items: center;
-  background: linear-gradient(160deg, rgba(255,255,255,.025), transparent 40%), var(--bg-card);
+  gap: .8rem; align-items: center;
+  background: linear-gradient(155deg, rgba(255,255,255,.02), transparent 42%), var(--bg-card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: .9rem 1rem;
-  transition: .22s var(--ease);
+  padding: .85rem .95rem;
+  transition: .2s var(--ease);
 }
 .track:hover { border-color: var(--line-2); transform: translateY(-1px); }
 .track.playing {
-  border-color: color-mix(in oklab, var(--accent, var(--signal)) 45%, var(--line));
-  box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent, var(--signal)) 20%, transparent), var(--shadow);
+  border-color: color-mix(in oklab, var(--accent, var(--signal)) 48%, var(--line));
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent, var(--signal)) 18%, transparent), var(--shadow);
 }
 .track[hidden] { display: none !important; }
-@media (max-width: 680px) {
+@media (max-width: 720px) {
   .track { grid-template-columns: auto 1fr; }
-  .track .metrics { grid-column: 1 / -1; }
+  .track .metrics { grid-column: 1 / -1; justify-content: flex-start; max-width: none; }
 }
 .play-btn {
   width: 48px; height: 48px; border-radius: 50%;
-  background: color-mix(in oklab, var(--accent, var(--signal)) 16%, transparent);
-  border: 1px solid color-mix(in oklab, var(--accent, var(--signal)) 40%, var(--line));
+  background: color-mix(in oklab, var(--accent, var(--signal)) 15%, transparent);
+  border: 1px solid color-mix(in oklab, var(--accent, var(--signal)) 38%, var(--line));
   color: var(--ink);
   display: grid; place-items: center;
   transition: .2s var(--ease); flex-shrink: 0;
@@ -254,129 +318,105 @@ button { cursor: pointer; border: 0; background: none; }
 .play-btn:hover { background: color-mix(in oklab, var(--accent, var(--signal)) 28%, transparent); }
 .play-btn svg { width: 18px; height: 18px; }
 .track-body { min-width: 0; }
-.track-top { display: flex; flex-wrap: wrap; gap: .35rem .55rem; align-items: center; margin-bottom: .2rem; }
+.track-top { display: flex; flex-wrap: wrap; gap: .3rem .5rem; align-items: center; margin-bottom: .12rem; }
 .model-tag {
-  font-family: var(--mono); font-size: .66rem; letter-spacing: .04em;
-  padding: .15rem .4rem; border-radius: 6px;
-  background: color-mix(in oklab, var(--accent, var(--signal)) 16%, transparent);
-  border: 1px solid color-mix(in oklab, var(--accent, var(--signal)) 35%, var(--line));
-  color: var(--ink);
+  font-family: var(--mono); font-size: .64rem; letter-spacing: .04em;
+  padding: .14rem .38rem; border-radius: 6px;
+  background: color-mix(in oklab, var(--accent, var(--signal)) 15%, transparent);
+  border: 1px solid color-mix(in oklab, var(--accent, var(--signal)) 32%, var(--line));
 }
-.track h4 { margin: 0; font-size: .98rem; font-weight: 650; letter-spacing: -.01em; }
-.track .sub { margin: .15rem 0 0; color: var(--muted); font-size: .8rem; }
+.track h4 { margin: 0; font-size: .95rem; font-weight: 650; letter-spacing: -.01em; }
+.track .sub { margin: .1rem 0 0; color: var(--muted); font-size: .78rem; }
 .prompt-box {
-  margin: .55rem 0 0; padding: .55rem .65rem;
+  margin: .45rem 0 0; padding: .5rem .6rem;
   background: rgba(0,0,0,.28); border: 1px solid var(--line);
-  border-radius: 10px; font-size: .86rem; color: #e6dfd2; line-height: 1.45;
+  border-radius: 10px; font-size: .84rem; color: #e6dfd2; line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .wave-canvas {
-  display: block; width: 100%; height: 44px; margin-top: .55rem;
-  border-radius: 8px; background: rgba(0,0,0,.25);
+  display: block; width: 100%; height: 42px; margin-top: .48rem;
+  border-radius: 8px; background: rgba(0,0,0,.22);
 }
 .metrics {
-  display: flex; flex-wrap: wrap; gap: .3rem; justify-content: flex-end;
-  max-width: 220px;
+  display: flex; flex-wrap: wrap; gap: .28rem; justify-content: flex-end;
+  max-width: 210px;
 }
-@media (max-width: 680px) { .metrics { max-width: none; justify-content: flex-start; } }
 .metrics span {
-  font-family: var(--mono); font-size: .68rem; color: var(--muted);
-  padding: .2rem .42rem; border-radius: 7px; border: 1px solid var(--line);
-  background: rgba(0,0,0,.2);
+  font-family: var(--mono); font-size: .66rem; color: var(--muted);
+  padding: .18rem .4rem; border-radius: 7px; border: 1px solid var(--line);
+  background: rgba(0,0,0,.18);
 }
 .metrics strong { color: var(--ink); font-weight: 500; }
 
-/* MODEL STRIP */
-.models {
-  display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: .65rem;
-  margin: .5rem 0 1.5rem;
-}
-@media (max-width: 900px) { .models { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 480px) { .models { grid-template-columns: 1fr; } }
-.model-card {
-  display: flex; flex-direction: column; gap: .45rem;
-  padding: 1rem; border-radius: var(--radius);
-  background: var(--bg-card); border: 1px solid var(--line);
-  transition: .22s var(--ease); min-height: 168px;
-}
-.model-card:hover { border-color: var(--line-2); transform: translateY(-2px); box-shadow: var(--shadow); }
-.model-card .num { font-family: var(--mono); font-size: .7rem; color: var(--faint); letter-spacing: .06em; }
-.model-card h4 { margin: 0; font-family: var(--display); font-size: 1.05rem; font-weight: 700; }
-.model-card p { margin: 0; color: var(--muted); font-size: .82rem; flex: 1; }
-.model-card .row { display: flex; flex-wrap: wrap; gap: .3rem; }
-.model-card .row span {
-  font-family: var(--mono); font-size: .68rem; color: var(--muted);
-  padding: .15rem .38rem; border-radius: 6px; border: 1px solid var(--line);
-}
-.model-card .go { color: var(--muted); font-size: .8rem; font-weight: 600; }
-.model-card:hover .go { color: var(--ink); }
-
-/* TABLE */
+/* MATRIX */
 .matrix {
   overflow: auto; border: 1px solid var(--line); border-radius: var(--radius);
-  background: var(--bg-card); margin-bottom: 1.5rem;
+  background: var(--bg-card); margin: 1.4rem 0 1.2rem;
 }
-table { width: 100%; border-collapse: collapse; font-size: .84rem; min-width: 640px; }
-th, td { padding: .55rem .7rem; text-align: left; border-bottom: 1px solid var(--line); }
+table { width: 100%; border-collapse: collapse; font-size: .82rem; min-width: 720px; }
+th, td { padding: .5rem .65rem; text-align: left; border-bottom: 1px solid var(--line); }
 th {
-  color: var(--faint); font-size: .7rem; letter-spacing: .08em;
+  color: var(--faint); font-size: .68rem; letter-spacing: .08em;
   text-transform: uppercase; font-weight: 500; font-family: var(--mono);
+  position: sticky; top: 0; background: var(--bg-card-2);
 }
 tr:last-child td { border-bottom: 0; }
-td.num { font-family: var(--mono); font-size: .8rem; }
+tr:hover td { background: rgba(255,255,255,.015); }
+td.num { font-family: var(--mono); font-size: .78rem; }
+.play-mini {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid var(--line); color: var(--muted);
+  display: inline-grid; place-items: center; vertical-align: middle; margin-right: .35rem;
+}
+.play-mini:hover { color: var(--ink); border-color: var(--line-2); }
+.play-mini svg { width: 12px; height: 12px; }
 
-/* DOCK PLAYER */
+/* FOOTER + DOCK */
+footer.site {
+  padding: 1.5rem 0 1rem; color: var(--muted); font-size: .8rem;
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem;
+  border-top: 1px solid var(--line); margin-top: 1.5rem;
+}
+.kbd {
+  font-family: var(--mono); font-size: .68rem; padding: .08rem .35rem;
+  border-radius: 5px; border: 1px solid var(--line); color: var(--faint);
+}
 .dock {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
   background: color-mix(in oklab, var(--bg-elev) 92%, transparent);
   backdrop-filter: blur(16px);
   border-top: 1px solid var(--line);
-  padding: .65rem 0 calc(.65rem + env(safe-area-inset-bottom));
+  padding: .6rem 0 calc(.6rem + env(safe-area-inset-bottom));
   transform: translateY(110%); transition: transform .35s var(--ease);
 }
 .dock.show { transform: translateY(0); }
 .dock-inner {
-  width: min(var(--max), calc(100% - 2rem)); margin: 0 auto;
-  display: grid; grid-template-columns: auto 1fr auto; gap: .75rem; align-items: center;
+  width: min(var(--max), calc(100% - 1.75rem)); margin: 0 auto;
+  display: grid; grid-template-columns: auto 1fr auto auto; gap: .7rem; align-items: center;
 }
-@media (max-width: 560px) {
-  .dock-inner { grid-template-columns: auto 1fr; }
+@media (max-width: 640px) {
+  .dock-inner { grid-template-columns: auto 1fr auto; }
   .dock .spec-wrap { display: none; }
 }
 .dock .play-btn { width: 44px; height: 44px; }
 .dock-meta { min-width: 0; }
-.dock-meta .t { font-weight: 650; font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dock-meta .s { color: var(--muted); font-size: .75rem; font-family: var(--mono); }
+.dock-meta .t { font-weight: 650; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dock-meta .s { color: var(--muted); font-size: .72rem; font-family: var(--mono); }
 .progress {
-  height: 4px; border-radius: 999px; background: rgba(255,255,255,.08);
-  margin-top: .4rem; cursor: pointer; overflow: hidden;
+  height: 4px; border-radius: 999px; background: rgba(255,255,255,.06);
+  margin-top: .35rem; overflow: hidden; cursor: pointer;
 }
 .progress > i {
   display: block; height: 100%; width: 0%;
-  background: linear-gradient(90deg, var(--signal), var(--mint));
-  border-radius: 999px;
+  background: var(--accent, var(--signal)); border-radius: 999px;
 }
-.spec-wrap { width: 120px; height: 36px; }
-.spec-wrap canvas { width: 100%; height: 100%; display: block; }
-
-/* FOOTER */
-footer {
-  margin-top: 2.5rem; padding: 1.2rem 0 2rem;
-  border-top: 1px solid var(--line);
-  display: flex; flex-wrap: wrap; justify-content: space-between; gap: .75rem;
-  color: var(--faint); font-size: .82rem;
+.spec-wrap canvas { display: block; width: 100px; height: 32px; border-radius: 6px; }
+.dock-time { font-family: var(--mono); font-size: .72rem; color: var(--muted); white-space: nowrap; }
+.empty {
+  padding: 2rem 1rem; text-align: center; color: var(--muted); border: 1px dashed var(--line);
+  border-radius: var(--radius); display: none;
 }
-footer a { color: var(--muted); }
-footer a:hover { color: var(--ink); }
-body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
-
-/* EXP PAGE extras */
-.chips { display: flex; flex-wrap: wrap; gap: .35rem; margin: .9rem 0 1.1rem; }
-.chip {
-  font-family: var(--mono); font-size: .72rem; color: var(--muted);
-  padding: .22rem .5rem; border-radius: 999px; border: 1px solid var(--line);
-  background: rgba(0,0,0,.2);
-}
-.chip strong { color: var(--ink); font-weight: 500; }
+.empty.show { display: block; }
 
   </style>
 </head>
@@ -390,10 +430,10 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
           <p>modal-lab · 025–034 Listening Room</p>
         </div>
       </a>
-      <nav class="nav-links" aria-label="导航">
-        <a href="../">Lab 首页</a>
-        <a href="#tracks">全部音频</a>
-        <a href="#matrix">对照表</a>
+      <nav class="nav-links">
+        <a href="../">Lab</a>
+        <a href="#tracks">试听</a>
+        <a href="#matrix">矩阵</a>
         <a class="primary" href="https://github.com/xiaoqianran/modal-lab" target="_blank" rel="noreferrer">GitHub</a>
       </nav>
     </div>
@@ -401,264 +441,284 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
 
   <main class="wrap">
     <section class="hero">
-      <div class="eyebrow"><i></i> Tier S · 真实用量榜 · Modal 实测</div>
-      <h2>把 TTS 用量榜 S+A 放在一张 <em>工作台</em> 上听完</h2>
-      <p class="lede">
-        Kokoro → Higgs（025–034）。30 条 Modal smoke 音频全部上架：
-        波形可视化、成本 / VRAM 条形图、实时频谱，以及可筛选的试听列表。
-      </p>
+      <div class="eyebrow"><i></i> Live · Modal smoke · 2026-08-11</div>
+      <h2>把 TTS 用量榜 <em>S+A</em> 放在一张工作台上听完</h2>
+      <p class="lede">Kokoro → Higgs（025–034）。30 条 Modal 实测音频全部上架：波形可视化、成本 / VRAM 条形图、实时频谱，以及可筛选、可搜索的试听列。空格播放 / 暂停。</p>
       <div class="hero-actions">
-        <a class="btn solid" href="#tracks">开始试听 ↓</a>
-        <a class="btn ghost" href="#viz">看成本图</a>
+        <a class="btn solid" href="#tracks">开始试听 30 条</a>
+        <a class="btn ghost" href="#matrix">打开实测矩阵</a>
+        <a class="btn ghost" href="../">返回 lab 总览</a>
       </div>
     </section>
 
     <div class="stats-row">
-      <div class="stat"><b class="mono">30</b><span>smoke 音频全部展示</span></div>
+      <div class="stat"><b class="mono">30</b><span>smoke 音频 · 全部展示</span></div>
       <div class="stat"><b class="mono">10</b><span>S+A 模型 · 025–034</span></div>
-      <div class="stat"><b class="mono">$0.001</b><span>最低估费 · Kokoro</span></div>
+      <div class="stat"><b class="mono">$0.001</b><span>最便宜 · Kokoro T4</span></div>
       <div class="stat"><b class="mono">22 GB</b><span>峰值 VRAM · Fish</span></div>
     </div>
 
-    <div class="sec-head">
-      <div>
-        <h3>模型入口</h3>
-        <p>每家都有独立专页，这里是全量 Listening Room。</p>
-      </div>
-    </div>
-    <div class="models"><a class="model-card" href="../025-kokoro/" style="--accent:#5b9dff">
-    <span class="num">025 · S1</span>
-    <h4 style="color:#5b9dff">Kokoro-82M</h4>
-    <p>HF 下载榜 #1 · 最便宜基线</p>
-    <div class="row">
-      <span>GPU <strong style="color:var(--ink)">T4</strong></span>
-      <span>VRAM <strong style="color:var(--ink)">0.8GB</strong></span>
-      <span>~ <strong style="color:var(--ink)">$0.001</strong></span>
-      <span>2 tracks</span>
-    </div>
-    <span class="go">打开专页 →</span>
-  </a>
-<a class="model-card" href="../026-chatterbox/" style="--accent:#c084fc">
-    <span class="num">026 · S2</span>
-    <h4 style="color:#c084fc">Chatterbox</h4>
-    <p>多语 + Turbo 克隆 · MIT</p>
-    <div class="row">
-      <span>GPU <strong style="color:var(--ink)">L4</strong></span>
-      <span>VRAM <strong style="color:var(--ink)">3.5GB</strong></span>
-      <span>~ <strong style="color:var(--ink)">$0.014</strong></span>
-      <span>3 tracks</span>
-    </div>
-    <span class="go">打开专页 →</span>
-  </a>
-<a class="model-card" href="../027-qwen3-tts/" style="--accent:#3debc8">
-    <span class="num">027 · S3</span>
-    <h4 style="color:#3debc8">Qwen3-TTS</h4>
-    <p>Custom / Design / Clone</p>
-    <div class="row">
-      <span>GPU <strong style="color:var(--ink)">L4</strong></span>
-      <span>VRAM <strong style="color:var(--ink)">4.5GB</strong></span>
-      <span>~ <strong style="color:var(--ink)">$0.005</strong></span>
-      <span>4 tracks</span>
-    </div>
-    <span class="go">打开专页 →</span>
-  </a>
-<a class="model-card" href="../028-fish-s2/" style="--accent:#ff9f43">
-    <span class="num">028 · S4</span>
-    <h4 style="color:#ff9f43">Fish S2 Pro</h4>
-    <p>AA Elo 开源 #1 · Research</p>
-    <div class="row">
-      <span>GPU <strong style="color:var(--ink)">L40S</strong></span>
-      <span>VRAM <strong style="color:var(--ink)">22GB</strong></span>
-      <span>~ <strong style="color:var(--ink)">$0.06</strong></span>
-      <span>4 tracks</span>
-    </div>
-    <span class="go">打开专页 →</span>
-  </a>
-<a class="model-card" href="../029-voxcpm2/" style="--accent:#34d399">
-    <span class="num">029 · A1</span>
-    <h4 style="color:#34d399">VoxCPM2</h4>
-    <p>Tokenizer-free 2B · 速度/延迟</p>
-    <div class="row">
-      <span>GPU <strong style="color:var(--ink)">L4</strong></span>
-      <span>VRAM <strong style="color:var(--ink)">5.8GB</strong></span>
-      <span>~ <strong style="color:var(--ink)">$0.007</strong></span>
-      <span>4 tracks</span>
-    </div>
-    <span class="go">打开专页 →</span>
-  </a>
-<a class="model-card" href="../030-vibevoice/" style="--accent:#60a5fa">
-    <span class="num">030 · A2</span>
-    <h4 style="color:#60a5fa">VibeVoice RT</h4>
-    <p>GH stars #1 · 流式长文 · MIT</p>
-    <div class="row">
-      <span>GPU <strong style="color:var(--ink)">L4</strong></span>
-      <span>VRAM <strong style="color:var(--ink)">2.8GB</strong></span>
-      <span>~ <strong style="color:var(--ink)">$0.005</strong></span>
-      <span>3 tracks</span>
-    </div>
-    <span class="go">打开专页 →</span>
-  </a>
-<a class="model-card" href="../031-cosyvoice3/" style="--accent:#2dd4bf">
-    <span class="num">031 · A3</span>
-    <h4 style="color:#2dd4bf">CosyVoice3</h4>
-    <p>中文方言 SOTA · Apache</p>
-    <div class="row">
-      <span>GPU <strong style="color:var(--ink)">L4</strong></span>
-      <span>VRAM <strong style="color:var(--ink)">3.6GB</strong></span>
-      <span>~ <strong style="color:var(--ink)">$0.007</strong></span>
-      <span>3 tracks</span>
-    </div>
-    <span class="go">打开专页 →</span>
-  </a>
-<a class="model-card" href="../032-indextts2/" style="--accent:#f472b6">
-    <span class="num">032 · A4</span>
-    <h4 style="color:#f472b6">IndexTTS-2</h4>
-    <p>时长+情感 · 配音刚需</p>
-    <div class="row">
-      <span>GPU <strong style="color:var(--ink)">L4</strong></span>
-      <span>VRAM <strong style="color:var(--ink)">7.3GB</strong></span>
-      <span>~ <strong style="color:var(--ink)">$0.008</strong></span>
-      <span>3 tracks</span>
-    </div>
-    <span class="go">打开专页 →</span>
-  </a>
-<a class="model-card" href="../033-f5tts/" style="--accent:#a78bfa">
-    <span class="num">033 · A5</span>
-    <h4 style="color:#a78bfa">F5-TTS</h4>
-    <p>零样本最便宜克隆档</p>
-    <div class="row">
-      <span>GPU <strong style="color:var(--ink)">L4</strong></span>
-      <span>VRAM <strong style="color:var(--ink)">2.1GB</strong></span>
-      <span>~ <strong style="color:var(--ink)">$0.0025</strong></span>
-      <span>2 tracks</span>
-    </div>
-    <span class="go">打开专页 →</span>
-  </a>
-<a class="model-card" href="../034-higgs/" style="--accent:#fb923c">
-    <span class="num">034 · A6</span>
-    <h4 style="color:#fb923c">Higgs v2</h4>
-    <p>表情/场景 · TTS 收官</p>
-    <div class="row">
-      <span>GPU <strong style="color:var(--ink)">L40S</strong></span>
-      <span>VRAM <strong style="color:var(--ink)">15.7GB</strong></span>
-      <span>~ <strong style="color:var(--ink)">$0.011</strong></span>
-      <span>2 tracks</span>
-    </div>
-    <span class="go">打开专页 →</span>
-  </a></div>
+    <p class="sec-label">模型入口</p>
+    <div class="models">
 
-    <div id="viz"></div>
-    
-<div class="viz-grid">
-  <section class="panel">
-    <h3>成本对照 · smoke 估费</h3>
-    <p class="hint">Modal 冷启动墙钟 × GPU 单价 · 2026-08-11 实测均值</p>
-    <div class="bar-row">
-      <span class="lab">Kokoro</span>
-      <div class="bar-track"><div class="bar-fill" data-w="4.0%" style="--bar:#5b9dff"></div></div>
+<a class="model-card" href="../025-kokoro/" style="--accent:#5b9dff">
+  <span class="num">025 · S1</span>
+  <h4>Kokoro-82M</h4>
+  <p>HF 下载榜 #1 · 最便宜基线</p>
+  <div class="row">
+    <span>GPU T4</span>
+    <span>VRAM 0.8GB</span>
+    <span>~$0.001</span>
+    <span>2 tracks</span>
+  </div>
+  <span class="go">打开专页 →</span>
+</a>
+<a class="model-card" href="../026-chatterbox/" style="--accent:#c084fc">
+  <span class="num">026 · S2</span>
+  <h4>Chatterbox</h4>
+  <p>多语 + Turbo 克隆 · MIT</p>
+  <div class="row">
+    <span>GPU L4</span>
+    <span>VRAM 3.5GB</span>
+    <span>~$0.014</span>
+    <span>3 tracks</span>
+  </div>
+  <span class="go">打开专页 →</span>
+</a>
+<a class="model-card" href="../027-qwen3-tts/" style="--accent:#3debc8">
+  <span class="num">027 · S3</span>
+  <h4>Qwen3-TTS</h4>
+  <p>Custom / Design / Clone</p>
+  <div class="row">
+    <span>GPU L4</span>
+    <span>VRAM 4.5GB</span>
+    <span>~$0.005</span>
+    <span>4 tracks</span>
+  </div>
+  <span class="go">打开专页 →</span>
+</a>
+<a class="model-card" href="../028-fish-s2/" style="--accent:#ff9f43">
+  <span class="num">028 · S4</span>
+  <h4>Fish S2 Pro</h4>
+  <p>AA Elo 开源 #1 · Research</p>
+  <div class="row">
+    <span>GPU L40S</span>
+    <span>VRAM 22GB</span>
+    <span>~$0.06</span>
+    <span>4 tracks</span>
+  </div>
+  <span class="go">打开专页 →</span>
+</a>
+<a class="model-card" href="../029-voxcpm2/" style="--accent:#34d399">
+  <span class="num">029 · A1</span>
+  <h4>VoxCPM2</h4>
+  <p>Tokenizer-free 2B · 速度/延迟</p>
+  <div class="row">
+    <span>GPU L4</span>
+    <span>VRAM 5.8GB</span>
+    <span>~$0.007</span>
+    <span>4 tracks</span>
+  </div>
+  <span class="go">打开专页 →</span>
+</a>
+<a class="model-card" href="../030-vibevoice/" style="--accent:#60a5fa">
+  <span class="num">030 · A2</span>
+  <h4>VibeVoice RT</h4>
+  <p>GH stars #1 · 流式长文</p>
+  <div class="row">
+    <span>GPU L4</span>
+    <span>VRAM 2.8GB</span>
+    <span>~$0.005</span>
+    <span>3 tracks</span>
+  </div>
+  <span class="go">打开专页 →</span>
+</a>
+<a class="model-card" href="../031-cosyvoice3/" style="--accent:#2dd4bf">
+  <span class="num">031 · A3</span>
+  <h4>CosyVoice3</h4>
+  <p>中文方言 SOTA · Apache</p>
+  <div class="row">
+    <span>GPU L4</span>
+    <span>VRAM 3.6GB</span>
+    <span>~$0.007</span>
+    <span>3 tracks</span>
+  </div>
+  <span class="go">打开专页 →</span>
+</a>
+<a class="model-card" href="../032-indextts2/" style="--accent:#f472b6">
+  <span class="num">032 · A4</span>
+  <h4>IndexTTS-2</h4>
+  <p>时长 + 情感 · 配音刚需</p>
+  <div class="row">
+    <span>GPU L4</span>
+    <span>VRAM 7.3GB</span>
+    <span>~$0.008</span>
+    <span>3 tracks</span>
+  </div>
+  <span class="go">打开专页 →</span>
+</a>
+<a class="model-card" href="../033-f5tts/" style="--accent:#a78bfa">
+  <span class="num">033 · A5</span>
+  <h4>F5-TTS</h4>
+  <p>零样本最便宜克隆档</p>
+  <div class="row">
+    <span>GPU L4</span>
+    <span>VRAM 2.1GB</span>
+    <span>~$0.0025</span>
+    <span>2 tracks</span>
+  </div>
+  <span class="go">打开专页 →</span>
+</a>
+<a class="model-card" href="../034-higgs/" style="--accent:#fb923c">
+  <span class="num">034 · A6</span>
+  <h4>Higgs v2</h4>
+  <p>场景/表现力 · TTS 收官</p>
+  <div class="row">
+    <span>GPU L40S</span>
+    <span>VRAM 15.7GB</span>
+    <span>~$0.011</span>
+    <span>2 tracks</span>
+  </div>
+  <span class="go">打开专页 →</span>
+</a>
+    </div>
+
+    <div class="viz-grid">
+      <section class="panel">
+        <h3>成本对照 · 模型均费</h3>
+        <p class="hint">各模型 smoke est USD 均值（含冷启动墙钟）</p>
+        <div class="bar-row">
+      <span class="lab">Kokoro-82M</span>
+      <div class="bar-track"><div class="bar-fill" data-w="2.3%" style="--bar:#5b9dff"></div></div>
       <span class="val">$0.0014</span>
-    </div><div class="bar-row">
-      <span class="lab">Qwen3</span>
+    </div>
+    <div class="bar-row">
+      <span class="lab">F5-TTS</span>
+      <div class="bar-track"><div class="bar-fill" data-w="4.2%" style="--bar:#a78bfa"></div></div>
+      <span class="val">$0.0026</span>
+    </div>
+    <div class="bar-row">
+      <span class="lab">Qwen3-TTS</span>
       <div class="bar-track"><div class="bar-fill" data-w="7.9%" style="--bar:#3debc8"></div></div>
       <span class="val">$0.0049</span>
-    </div><div class="bar-row">
-      <span class="lab">VoxCPM2</span>
-      <div class="bar-track"><div class="bar-fill" data-w="11.9%" style="--bar:#34d399"></div></div>
-      <span class="val">$0.0074</span>
-
-    </div><div class="bar-row">
-      <span class="lab">F5-TTS</span>
-      <div class="bar-track"><div class="bar-fill" data-w="4.0%" style="--bar:#a78bfa"></div></div>
-      <span class="val">$0.0025</span>
-    </div><div class="bar-row">
-      <span class="lab">VibeVoice</span>
-      <div class="bar-track"><div class="bar-fill" data-w="8.9%" style="--bar:#60a5fa"></div></div>
+    </div>
+    <div class="bar-row">
+      <span class="lab">VibeVoice R</span>
+      <div class="bar-track"><div class="bar-fill" data-w="8.8%" style="--bar:#60a5fa"></div></div>
       <span class="val">$0.0055</span>
-    </div><div class="bar-row">
+    </div>
+    <div class="bar-row">
       <span class="lab">CosyVoice3</span>
-      <div class="bar-track"><div class="bar-fill" data-w="11.3%" style="--bar:#2dd4bf"></div></div>
-      <span class="val">$0.007</span>
-    </div><div class="bar-row">
+      <div class="bar-track"><div class="bar-fill" data-w="11.4%" style="--bar:#2dd4bf"></div></div>
+      <span class="val">$0.0071</span>
+    </div>
+    <div class="bar-row">
       <span class="lab">IndexTTS-2</span>
-      <div class="bar-track"><div class="bar-fill" data-w="13.2%" style="--bar:#f472b6"></div></div>
+      <div class="bar-track"><div class="bar-fill" data-w="13.3%" style="--bar:#f472b6"></div></div>
       <span class="val">$0.0082</span>
-    </div><div class="bar-row">
-      <span class="lab">Higgs v2</span>
-      <div class="bar-track"><div class="bar-fill" data-w="43.4%" style="--bar:#fb923c"></div></div>
-      <span class="val">$0.027</span>
-    </div><div class="bar-row">
+    </div>
+    <div class="bar-row">
+      <span class="lab">VoxCPM2</span>
+      <div class="bar-track"><div class="bar-fill" data-w="14.9%" style="--bar:#34d399"></div></div>
+      <span class="val">$0.0093</span>
+    </div>
+    <div class="bar-row">
       <span class="lab">Chatterbox</span>
-      <div class="bar-track"><div class="bar-fill" data-w="23.2%" style="--bar:#c084fc"></div></div>
-      <span class="val">$0.014</span>
-    </div><div class="bar-row">
-      <span class="lab">Fish S2</span>
+      <div class="bar-track"><div class="bar-fill" data-w="23.3%" style="--bar:#c084fc"></div></div>
+      <span class="val">$0.0144</span>
+    </div>
+    <div class="bar-row">
+      <span class="lab">Higgs v2</span>
+      <div class="bar-track"><div class="bar-fill" data-w="30.9%" style="--bar:#fb923c"></div></div>
+      <span class="val">$0.0192</span>
+    </div>
+    <div class="bar-row">
+      <span class="lab">Fish S2 Pro</span>
       <div class="bar-track"><div class="bar-fill" data-w="100.0%" style="--bar:#ff9f43"></div></div>
       <span class="val">$0.062</span>
     </div>
-  </section>
-  <section class="panel">
-    <h3>峰值 VRAM</h3>
-    <p class="hint">决定最低可用卡型 · Fish 需 L40S 档</p>
-    <div class="bar-row">
-      <span class="lab">Kokoro</span>
-      <div class="bar-track"><div class="bar-fill" data-w="4.0%" style="--bar:#5b9dff"></div></div>
+      </section>
+      <section class="panel">
+        <h3>峰值 VRAM</h3>
+        <p class="hint">决定最低可用卡型 · Fish / Higgs 需 L40S 档</p>
+        <div class="bar-row">
+      <span class="lab">Kokoro-82M</span>
+      <div class="bar-track"><div class="bar-fill" data-w="3.6%" style="--bar:#5b9dff"></div></div>
       <span class="val">0.8G</span>
-    </div><div class="bar-row">
-      <span class="lab">Chatterbox</span>
-      <div class="bar-track"><div class="bar-fill" data-w="15.3%" style="--bar:#c084fc"></div></div>
-      <span class="val">3.4G</span>
-    </div><div class="bar-row">
-      <span class="lab">Qwen3</span>
-      <div class="bar-track"><div class="bar-fill" data-w="20.3%" style="--bar:#3debc8"></div></div>
-      <span class="val">4.5G</span>
-    </div><div class="bar-row">
-      <span class="lab">VoxCPM2</span>
-      <div class="bar-track"><div class="bar-fill" data-w="26.1%" style="--bar:#34d399"></div></div>
-      <span class="val">5.8G</span>
-    </div><div class="bar-row">
+    </div>
+    <div class="bar-row">
       <span class="lab">F5-TTS</span>
-      <div class="bar-track"><div class="bar-fill" data-w="9.5%" style="--bar:#a78bfa"></div></div>
+      <div class="bar-track"><div class="bar-fill" data-w="9.4%" style="--bar:#a78bfa"></div></div>
       <span class="val">2.1G</span>
-    </div><div class="bar-row">
-      <span class="lab">VibeVoice</span>
+    </div>
+    <div class="bar-row">
+      <span class="lab">VibeVoice R</span>
       <div class="bar-track"><div class="bar-fill" data-w="12.7%" style="--bar:#60a5fa"></div></div>
       <span class="val">2.8G</span>
-    </div><div class="bar-row">
-      <span class="lab">CosyVoice3</span>
-      <div class="bar-track"><div class="bar-fill" data-w="16.4%" style="--bar:#2dd4bf"></div></div>
+    </div>
+    <div class="bar-row">
+      <span class="lab">Chatterbox</span>
+      <div class="bar-track"><div class="bar-fill" data-w="16.0%" style="--bar:#c084fc"></div></div>
       <span class="val">3.6G</span>
-    </div><div class="bar-row">
+    </div>
+    <div class="bar-row">
+      <span class="lab">CosyVoice3</span>
+      <div class="bar-track"><div class="bar-fill" data-w="16.2%" style="--bar:#2dd4bf"></div></div>
+      <span class="val">3.6G</span>
+    </div>
+    <div class="bar-row">
+      <span class="lab">Qwen3-TTS</span>
+      <div class="bar-track"><div class="bar-fill" data-w="21.2%" style="--bar:#3debc8"></div></div>
+      <span class="val">4.7G</span>
+    </div>
+    <div class="bar-row">
+      <span class="lab">VoxCPM2</span>
+      <div class="bar-track"><div class="bar-fill" data-w="26.3%" style="--bar:#34d399"></div></div>
+      <span class="val">5.8G</span>
+    </div>
+    <div class="bar-row">
       <span class="lab">IndexTTS-2</span>
       <div class="bar-track"><div class="bar-fill" data-w="33.2%" style="--bar:#f472b6"></div></div>
-      <span class="val">7.3G</span>
-    </div><div class="bar-row">
+      <span class="val">7.4G</span>
+    </div>
+    <div class="bar-row">
       <span class="lab">Higgs v2</span>
-      <div class="bar-track"><div class="bar-fill" data-w="71.4%" style="--bar:#fb923c"></div></div>
+      <div class="bar-track"><div class="bar-fill" data-w="70.7%" style="--bar:#fb923c"></div></div>
       <span class="val">15.7G</span>
-    </div><div class="bar-row">
-      <span class="lab">Fish S2</span>
+    </div>
+    <div class="bar-row">
+      <span class="lab">Fish S2 Pro</span>
       <div class="bar-track"><div class="bar-fill" data-w="100.0%" style="--bar:#ff9f43"></div></div>
       <span class="val">22.2G</span>
     </div>
-  </section>
-</div>
+      </section>
+    </div>
 
-    <div class="sec-head" id="tracks">
-      <div>
-        <h3>全部 30 条结果</h3>
-        <p>点播放 · 波形来自真实 wav 解码 · 底部 dock 带频谱</p>
+    <div class="toolbar" id="tracks">
+      <div class="toolbar-top">
+        <div>
+          <h3>全部 30 条结果</h3>
+          <p>点播放 · 波形来自真实 wav · 底部 dock 带频谱 · <span class="kbd">Space</span> <span class="kbd">←</span> <span class="kbd">→</span></p>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:.45rem;align-items:center">
+          <span class="count-pill" id="count">30 / 30</span>
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+            <input id="q" type="search" placeholder="搜索 模型 / 文案 / 场景…" autocomplete="off" />
+          </div>
+        </div>
       </div>
       <div class="filters" role="toolbar" aria-label="筛选">
         <button type="button" data-filter="all" aria-pressed="true">全部</button>
-        <button type="button" data-filter="025" style="--active:#5b9dff">025 Kokoro</button>
+        <button type="button" data-filter="025" style="--active:#5b9dff">025 Kokoro-82M</button>
         <button type="button" data-filter="026" style="--active:#c084fc">026 Chatterbox</button>
-        <button type="button" data-filter="027" style="--active:#3debc8">027 Qwen3</button>
+        <button type="button" data-filter="027" style="--active:#3debc8">027 Qwen3-TTS</button>
         <button type="button" data-filter="028" style="--active:#ff9f43">028 Fish</button>
-        <button type="button" data-filter="029" style="--active:#34d399">029 VoxCPM</button>
-        <button type="button" data-filter="030" style="--active:#60a5fa">030 Vibe</button>
-        <button type="button" data-filter="031" style="--active:#2dd4bf">031 Cosy</button>
-        <button type="button" data-filter="032" style="--active:#f472b6">032 Index</button>
-        <button type="button" data-filter="033" style="--active:#a78bfa">033 F5</button>
+        <button type="button" data-filter="029" style="--active:#34d399">029 VoxCPM2</button>
+        <button type="button" data-filter="030" style="--active:#60a5fa">030 VibeVoice</button>
+        <button type="button" data-filter="031" style="--active:#2dd4bf">031 CosyVoice3</button>
+        <button type="button" data-filter="032" style="--active:#f472b6">032 IndexTTS-2</button>
+        <button type="button" data-filter="033" style="--active:#a78bfa">033 F5-TTS</button>
         <button type="button" data-filter="034" style="--active:#fb923c">034 Higgs</button>
         <button type="button" data-filter="zh">中文</button>
         <button type="button" data-filter="en">English</button>
@@ -666,7 +726,15 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       </div>
     </div>
 
-    <div class="tracks" id="track-list">
+    <div id="empty" class="empty">没有匹配的结果，试试清空筛选或搜索词。</div>
+
+
+<div class="group-head" data-model="025" style="--accent:#5b9dff">
+  <span class="dot"></span>
+  <h4>025 · Kokoro-82M</h4>
+  <span>S1 · 2 tracks</span>
+</div>
+<div class="tracks">
 
 <article class="track" data-id="025_en" data-model="025" data-lang="en" data-tags="025 en preset" style="--accent:#5b9dff">
   <button class="play-btn" type="button" data-play="025_en" aria-label="播放 EN · af_heart">
@@ -674,47 +742,53 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
   </button>
   <div class="track-body">
     <div class="track-top">
-      <span class="model-tag">Kokoro</span>
+      <span class="model-tag">Kokoro-82M</span>
       <h4>EN · af_heart</h4>
     </div>
     <p class="sub">v1 · 24 kHz · Apache-2.0</p>
     <div class="prompt-box">Kokoro is an open-weight text-to-speech model with eighty-two million parameters. Despite its lightweight architecture, it delivers strong quality while staying fast and cheap.</div>
-    <canvas class="wave-canvas" data-wave="025_en" data-src="assets/025_en.wav" height="44"></canvas>
+    <canvas class="wave-canvas" data-wave="assets/025_en.wav" height="42"></canvas>
+    <audio data-id="025_en" preload="metadata" src="assets/025_en.wav"></audio>
   </div>
   <div class="metrics">
-    <span>GPU <strong>T4</strong></span>
-    <span>VRAM <strong>0.8G</strong></span>
-    <span>wall <strong>7.4s</strong></span>
-    <span>gen <strong>2.0s</strong></span>
-    <span>dur <strong>11.1s</strong></span>
-    <span>usd <strong>$0.0012</strong></span>
+      <span>GPU <strong>T4</strong></span>
+      <span>VRAM <strong>0.8G</strong></span>
+      <span>wall <strong>7.4s</strong></span>
+      <span>gen <strong>2.0s</strong></span>
+      <span>dur <strong>11.1s</strong></span>
+      <span>usd <strong>$0.0012</strong></span>
   </div>
-  <audio preload="none" data-audio="025_en" src="assets/025_en.wav"></audio>
 </article>
-
 <article class="track" data-id="025_zh" data-model="025" data-lang="zh" data-tags="025 zh preset" style="--accent:#5b9dff">
   <button class="play-btn" type="button" data-play="025_zh" aria-label="播放 ZH · zf_001">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
   </button>
   <div class="track-body">
     <div class="track-top">
-      <span class="model-tag">Kokoro</span>
+      <span class="model-tag">Kokoro-82M</span>
       <h4>ZH · zf_001</h4>
     </div>
     <p class="sub">v1.1-zh · 24 kHz · Apache-2.0</p>
-    <div class="prompt-box">你好，这是 modal-lab 第二十五号实验，Kokoro 文本转语音成本基线。</div>
-    <canvas class="wave-canvas" data-wave="025_zh" data-src="assets/025_zh.wav" height="44"></canvas>
+    <div class="prompt-box">你好，这是 modal-lab 第零二五号实验。Kokoro 是一款参数量仅八千两百万的开源语音合成模型，体积小、速度快，适合作为成本基线。</div>
+    <canvas class="wave-canvas" data-wave="assets/025_zh.wav" height="42"></canvas>
+    <audio data-id="025_zh" preload="metadata" src="assets/025_zh.wav"></audio>
   </div>
   <div class="metrics">
-    <span>GPU <strong>T4</strong></span>
-    <span>VRAM <strong>0.8G</strong></span>
-    <span>wall <strong>9.9s</strong></span>
-    <span>gen <strong>2.7s</strong></span>
-    <span>dur <strong>10.9s</strong></span>
-    <span>usd <strong>$0.0016</strong></span>
+      <span>GPU <strong>T4</strong></span>
+      <span>VRAM <strong>0.8G</strong></span>
+      <span>wall <strong>9.9s</strong></span>
+      <span>gen <strong>2.7s</strong></span>
+      <span>dur <strong>10.9s</strong></span>
+      <span>usd <strong>$0.0016</strong></span>
   </div>
-  <audio preload="none" data-audio="025_zh" src="assets/025_zh.wav"></audio>
 </article>
+</div>
+<div class="group-head" data-model="026" style="--accent:#c084fc">
+  <span class="dot"></span>
+  <h4>026 · Chatterbox</h4>
+  <span>S2 · 3 tracks</span>
+</div>
+<div class="tracks">
 
 <article class="track" data-id="026_mtl_en" data-model="026" data-lang="en" data-tags="026 en mtl" style="--accent:#c084fc">
   <button class="play-btn" type="button" data-play="026_mtl_en" aria-label="播放 MTL EN">
@@ -725,21 +799,20 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">Chatterbox</span>
       <h4>MTL EN</h4>
     </div>
-    <p class="sub">Multilingual V3 · MIT</p>
-    <div class="prompt-box">Chatterbox is running on Modal. This is the multilingual V3 model.</div>
-    <canvas class="wave-canvas" data-wave="026_mtl_en" data-src="assets/026_mtl_en.wav" height="44"></canvas>
+    <p class="sub">Multilingual V3</p>
+    <div class="prompt-box">Chatterbox is running on Modal. This is the multilingual model — natural speech across many languages.</div>
+    <canvas class="wave-canvas" data-wave="assets/026_mtl_en.wav" height="42"></canvas>
+    <audio data-id="026_mtl_en" preload="metadata" src="assets/026_mtl_en.wav"></audio>
   </div>
   <div class="metrics">
-    <span>GPU <strong>L4</strong></span>
-    <span>VRAM <strong>3.4G</strong></span>
-    <span>wall <strong>64.5s</strong></span>
-    <span>gen <strong>21.9s</strong></span>
-    <span>dur <strong>5.6s</strong></span>
-    <span>usd <strong>$0.014</strong></span>
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>3.4G</strong></span>
+      <span>wall <strong>64.5s</strong></span>
+      <span>gen <strong>21.9s</strong></span>
+      <span>dur <strong>5.6s</strong></span>
+      <span>usd <strong>$0.014</strong></span>
   </div>
-  <audio preload="none" data-audio="026_mtl_en" src="assets/026_mtl_en.wav"></audio>
 </article>
-
 <article class="track" data-id="026_mtl_zh" data-model="026" data-lang="zh" data-tags="026 zh mtl" style="--accent:#c084fc">
   <button class="play-btn" type="button" data-play="026_mtl_zh" aria-label="播放 MTL ZH">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
@@ -749,21 +822,20 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">Chatterbox</span>
       <h4>MTL ZH</h4>
     </div>
-    <p class="sub">Multilingual V3 · MIT</p>
-    <div class="prompt-box">你好，今天天气真不错，希望你有一个愉快的周末。</div>
-    <canvas class="wave-canvas" data-wave="026_mtl_zh" data-src="assets/026_mtl_zh.wav" height="44"></canvas>
+    <p class="sub">Multilingual V3</p>
+    <div class="prompt-box">你好，今天天气真不错，希望你有一个愉快的周末。这是 modal-lab 第零二六号 Chatterbox 实验。</div>
+    <canvas class="wave-canvas" data-wave="assets/026_mtl_zh.wav" height="42"></canvas>
+    <audio data-id="026_mtl_zh" preload="metadata" src="assets/026_mtl_zh.wav"></audio>
   </div>
   <div class="metrics">
-    <span>GPU <strong>L4</strong></span>
-    <span>VRAM <strong>3.5G</strong></span>
-    <span>wall <strong>69.0s</strong></span>
-    <span>gen <strong>28.6s</strong></span>
-    <span>dur <strong>12.1s</strong></span>
-    <span>usd <strong>$0.015</strong></span>
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>3.6G</strong></span>
+      <span>wall <strong>69.0s</strong></span>
+      <span>gen <strong>28.6s</strong></span>
+      <span>dur <strong>12.1s</strong></span>
+      <span>usd <strong>$0.015</strong></span>
   </div>
-  <audio preload="none" data-audio="026_mtl_zh" src="assets/026_mtl_zh.wav"></audio>
 </article>
-
 <article class="track" data-id="026_turbo" data-model="026" data-lang="en" data-tags="026 en clone turbo" style="--accent:#c084fc">
   <button class="play-btn" type="button" data-play="026_turbo" aria-label="播放 Turbo · Lucy clone">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
@@ -773,20 +845,27 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">Chatterbox</span>
       <h4>Turbo · Lucy clone</h4>
     </div>
-    <p class="sub">350M · [chuckle] tag · MIT</p>
-    <div class="prompt-box">Hi there [chuckle], have you got one minute to chat?</div>
-    <canvas class="wave-canvas" data-wave="026_turbo" data-src="assets/026_turbo.wav" height="44"></canvas>
+    <p class="sub">Turbo + [chuckle]</p>
+    <div class="prompt-box">Hi there, Sarah here from MochaFone calling you back [chuckle], have you got one minute to chat about the billing issue?</div>
+    <canvas class="wave-canvas" data-wave="assets/026_turbo.wav" height="42"></canvas>
+    <audio data-id="026_turbo" preload="metadata" src="assets/026_turbo.wav"></audio>
   </div>
   <div class="metrics">
-    <span>GPU <strong>L4</strong></span>
-    <span>VRAM <strong>3.3G</strong></span>
-    <span>wall <strong>61.7s</strong></span>
-    <span>gen <strong>27.5s</strong></span>
-    <span>dur <strong>7.2s</strong></span>
-    <span>usd <strong>$0.014</strong></span>
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>3.3G</strong></span>
+      <span>wall <strong>61.7s</strong></span>
+      <span>gen <strong>27.5s</strong></span>
+      <span>dur <strong>7.2s</strong></span>
+      <span>usd <strong>$0.014</strong></span>
   </div>
-  <audio preload="none" data-audio="026_turbo" src="assets/026_turbo.wav"></audio>
 </article>
+</div>
+<div class="group-head" data-model="027" style="--accent:#3debc8">
+  <span class="dot"></span>
+  <h4>027 · Qwen3-TTS</h4>
+  <span>S3 · 4 tracks</span>
+</div>
+<div class="tracks">
 
 <article class="track" data-id="027_custom_zh" data-model="027" data-lang="zh" data-tags="027 zh custom" style="--accent:#3debc8">
   <button class="play-btn" type="button" data-play="027_custom_zh" aria-label="播放 Custom · Vivian ZH">
@@ -797,21 +876,20 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">Qwen3-TTS</span>
       <h4>Custom · Vivian ZH</h4>
     </div>
-    <p class="sub">1.7B + instruct · Apache</p>
+    <p class="sub">CustomVoice 1.7B</p>
     <div class="prompt-box">你好，这是 modal-lab 第零二七号 Qwen3-TTS 实验。 · instruct: 用自然、温和的语气说</div>
-    <canvas class="wave-canvas" data-wave="027_custom_zh" data-src="assets/027_custom_zh.wav" height="44"></canvas>
+    <canvas class="wave-canvas" data-wave="assets/027_custom_zh.wav" height="42"></canvas>
+    <audio data-id="027_custom_zh" preload="metadata" src="assets/027_custom_zh.wav"></audio>
   </div>
   <div class="metrics">
-    <span>GPU <strong>L4</strong></span>
-    <span>VRAM <strong>4.5G</strong></span>
-    <span>wall <strong>24.0s</strong></span>
-    <span>gen <strong>16.8s</strong></span>
-    <span>dur <strong>9.3s</strong></span>
-    <span>usd <strong>$0.0053</strong></span>
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>4.5G</strong></span>
+      <span>wall <strong>24.0s</strong></span>
+      <span>gen <strong>16.8s</strong></span>
+      <span>dur <strong>9.3s</strong></span>
+      <span>usd <strong>$0.0053</strong></span>
   </div>
-  <audio preload="none" data-audio="027_custom_zh" src="assets/027_custom_zh.wav"></audio>
 </article>
-
 <article class="track" data-id="027_custom_en" data-model="027" data-lang="en" data-tags="027 en custom" style="--accent:#3debc8">
   <button class="play-btn" type="button" data-play="027_custom_en" aria-label="播放 Custom · Ryan EN">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
@@ -821,21 +899,20 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">Qwen3-TTS</span>
       <h4>Custom · Ryan EN</h4>
     </div>
-    <p class="sub">1.7B + instruct · Apache</p>
+    <p class="sub">CustomVoice 1.7B</p>
     <div class="prompt-box">Hello from Modal lab experiment zero two seven. · instruct: Speak cheerfully and clearly.</div>
-    <canvas class="wave-canvas" data-wave="027_custom_en" data-src="assets/027_custom_en.wav" height="44"></canvas>
+    <canvas class="wave-canvas" data-wave="assets/027_custom_en.wav" height="42"></canvas>
+    <audio data-id="027_custom_en" preload="metadata" src="assets/027_custom_en.wav"></audio>
   </div>
   <div class="metrics">
-    <span>GPU <strong>L4</strong></span>
-    <span>VRAM <strong>4.4G</strong></span>
-    <span>wall <strong>18.8s</strong></span>
-    <span>gen <strong>13.2s</strong></span>
-    <span>dur <strong>7.7s</strong></span>
-    <span>usd <strong>$0.0042</strong></span>
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>4.4G</strong></span>
+      <span>wall <strong>18.8s</strong></span>
+      <span>gen <strong>13.2s</strong></span>
+      <span>dur <strong>7.7s</strong></span>
+      <span>usd <strong>$0.0042</strong></span>
   </div>
-  <audio preload="none" data-audio="027_custom_en" src="assets/027_custom_en.wav"></audio>
 </article>
-
 <article class="track" data-id="027_design" data-model="027" data-lang="zh" data-tags="027 zh design" style="--accent:#3debc8">
   <button class="play-btn" type="button" data-play="027_design" aria-label="播放 VoiceDesign ZH">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
@@ -845,21 +922,20 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">Qwen3-TTS</span>
       <h4>VoiceDesign ZH</h4>
     </div>
-    <p class="sub">文本造声 · 1.7B</p>
+    <p class="sub">文本造声</p>
     <div class="prompt-box">哥哥，你回来啦，人家等了你好久好久了，要抱抱！ · design: 撒娇稚嫩萝莉女声</div>
-    <canvas class="wave-canvas" data-wave="027_design" data-src="assets/027_design.wav" height="44"></canvas>
+    <canvas class="wave-canvas" data-wave="assets/027_design.wav" height="42"></canvas>
+    <audio data-id="027_design" preload="metadata" src="assets/027_design.wav"></audio>
   </div>
   <div class="metrics">
-    <span>GPU <strong>L4</strong></span>
-    <span>VRAM <strong>4.3G</strong></span>
-    <span>wall <strong>18.4s</strong></span>
-    <span>gen <strong>11.5s</strong></span>
-    <span>dur <strong>5.4s</strong></span>
-    <span>usd <strong>$0.0041</strong></span>
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>4.3G</strong></span>
+      <span>wall <strong>18.4s</strong></span>
+      <span>gen <strong>11.5s</strong></span>
+      <span>dur <strong>5.4s</strong></span>
+      <span>usd <strong>$0.0041</strong></span>
   </div>
-  <audio preload="none" data-audio="027_design" src="assets/027_design.wav"></audio>
 </article>
-
 <article class="track" data-id="027_clone" data-model="027" data-lang="en" data-tags="027 en clone" style="--accent:#3debc8">
   <button class="play-btn" type="button" data-play="027_clone" aria-label="播放 Clone EN">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
@@ -869,20 +945,27 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">Qwen3-TTS</span>
       <h4>Clone EN</h4>
     </div>
-    <p class="sub">Base 1.7B · 3s 参考</p>
+    <p class="sub">3s 克隆</p>
     <div class="prompt-box">I am solving the equation on the board.</div>
-    <canvas class="wave-canvas" data-wave="027_clone" data-src="assets/027_clone.wav" height="44"></canvas>
+    <canvas class="wave-canvas" data-wave="assets/027_clone.wav" height="42"></canvas>
+    <audio data-id="027_clone" preload="metadata" src="assets/027_clone.wav"></audio>
   </div>
   <div class="metrics">
-    <span>GPU <strong>L4</strong></span>
-    <span>VRAM <strong>4.7G</strong></span>
-    <span>wall <strong>26.4s</strong></span>
-    <span>gen <strong>19.7s</strong></span>
-    <span>dur <strong>6.6s</strong></span>
-    <span>usd <strong>$0.0059</strong></span>
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>4.7G</strong></span>
+      <span>wall <strong>26.4s</strong></span>
+      <span>gen <strong>19.7s</strong></span>
+      <span>dur <strong>6.6s</strong></span>
+      <span>usd <strong>$0.0059</strong></span>
   </div>
-  <audio preload="none" data-audio="027_clone" src="assets/027_clone.wav"></audio>
 </article>
+</div>
+<div class="group-head" data-model="028" style="--accent:#ff9f43">
+  <span class="dot"></span>
+  <h4>028 · Fish S2 Pro</h4>
+  <span>S4 · 4 tracks</span>
+</div>
+<div class="tracks">
 
 <article class="track" data-id="028_en" data-model="028" data-lang="en" data-tags="028 en random" style="--accent:#ff9f43">
   <button class="play-btn" type="button" data-play="028_en" aria-label="播放 EN · random voice">
@@ -893,21 +976,20 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">Fish S2 Pro</span>
       <h4>EN · random voice</h4>
     </div>
-    <p class="sub">4B Dual-AR · Research</p>
+    <p class="sub">S2 Pro random</p>
     <div class="prompt-box">Fish Audio S2 Pro is running on Modal. This is the open-weights quality leader — natural multilingual speech.</div>
-    <canvas class="wave-canvas" data-wave="028_en" data-src="assets/028_en.wav" height="44"></canvas>
+    <canvas class="wave-canvas" data-wave="assets/028_en.wav" height="42"></canvas>
+    <audio data-id="028_en" preload="metadata" src="assets/028_en.wav"></audio>
   </div>
   <div class="metrics">
-    <span>GPU <strong>L40S</strong></span>
-    <span>VRAM <strong>22.2G</strong></span>
-    <span>wall <strong>131.1s</strong></span>
-    <span>gen <strong>58.0s</strong></span>
-    <span>dur <strong>8.9s</strong></span>
-    <span>usd <strong>$0.071</strong></span>
+      <span>GPU <strong>L40S</strong></span>
+      <span>VRAM <strong>22.2G</strong></span>
+      <span>wall <strong>131.1s</strong></span>
+      <span>gen <strong>58.0s</strong></span>
+      <span>dur <strong>8.9s</strong></span>
+      <span>usd <strong>$0.071</strong></span>
   </div>
-  <audio preload="none" data-audio="028_en" src="assets/028_en.wav"></audio>
 </article>
-
 <article class="track" data-id="028_zh" data-model="028" data-lang="zh" data-tags="028 zh random" style="--accent:#ff9f43">
   <button class="play-btn" type="button" data-play="028_zh" aria-label="播放 ZH · random voice">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
@@ -917,21 +999,20 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">Fish S2 Pro</span>
       <h4>ZH · random voice</h4>
     </div>
-    <p class="sub">4B Dual-AR · Research</p>
-    <div class="prompt-box">你好，这是 modal-lab 第零二八号 Fish Audio S2 Pro 实验。</div>
-    <canvas class="wave-canvas" data-wave="028_zh" data-src="assets/028_zh.wav" height="44"></canvas>
+    <p class="sub">S2 Pro random</p>
+    <div class="prompt-box">你好，这是 modal-lab 第零二八号 Fish Audio S2 Pro 实验。今天天气真不错，希望你有一个愉快的周末。</div>
+    <canvas class="wave-canvas" data-wave="assets/028_zh.wav" height="42"></canvas>
+    <audio data-id="028_zh" preload="metadata" src="assets/028_zh.wav"></audio>
   </div>
   <div class="metrics">
-    <span>GPU <strong>L40S</strong></span>
-    <span>VRAM <strong>22.2G</strong></span>
-    <span>wall <strong>114.7s</strong></span>
-    <span>gen <strong>59.3s</strong></span>
-    <span>dur <strong>8.6s</strong></span>
-    <span>usd <strong>$0.062</strong></span>
+      <span>GPU <strong>L40S</strong></span>
+      <span>VRAM <strong>22.2G</strong></span>
+      <span>wall <strong>114.7s</strong></span>
+      <span>gen <strong>59.3s</strong></span>
+      <span>dur <strong>8.6s</strong></span>
+      <span>usd <strong>$0.062</strong></span>
   </div>
-  <audio preload="none" data-audio="028_zh" src="assets/028_zh.wav"></audio>
 </article>
-
 <article class="track" data-id="028_tags" data-model="028" data-lang="en" data-tags="028 en tags" style="--accent:#ff9f43">
   <button class="play-btn" type="button" data-play="028_tags" aria-label="播放 Inline tags">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
@@ -941,21 +1022,20 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">Fish S2 Pro</span>
       <h4>Inline tags</h4>
     </div>
-    <p class="sub">[excited] [whisper] · Research</p>
-    <div class="prompt-box">Hi there [excited], welcome! [whisper] Soft parts work too.</div>
-    <canvas class="wave-canvas" data-wave="028_tags" data-src="assets/028_tags.wav" height="44"></canvas>
+    <p class="sub">[emotion] tags</p>
+    <div class="prompt-box">Hi there [excited], welcome to the demo! [chuckle] Can you believe this voice has over fifteen thousand control tags? [whisper] Soft parts work too.</div>
+    <canvas class="wave-canvas" data-wave="assets/028_tags.wav" height="42"></canvas>
+    <audio data-id="028_tags" preload="metadata" src="assets/028_tags.wav"></audio>
   </div>
   <div class="metrics">
-    <span>GPU <strong>L40S</strong></span>
-    <span>VRAM <strong>22.2G</strong></span>
-    <span>wall <strong>123.7s</strong></span>
-    <span>gen <strong>69.3s</strong></span>
-    <span>dur <strong>10.1s</strong></span>
-    <span>usd <strong>$0.067</strong></span>
+      <span>GPU <strong>L40S</strong></span>
+      <span>VRAM <strong>22.2G</strong></span>
+      <span>wall <strong>123.7s</strong></span>
+      <span>gen <strong>69.3s</strong></span>
+      <span>dur <strong>10.1s</strong></span>
+      <span>usd <strong>$0.067</strong></span>
   </div>
-  <audio preload="none" data-audio="028_tags" src="assets/028_tags.wav"></audio>
 </article>
-
 <article class="track" data-id="028_clone" data-model="028" data-lang="en" data-tags="028 en clone" style="--accent:#ff9f43">
   <button class="play-btn" type="button" data-play="028_clone" aria-label="播放 Clone EN">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
@@ -965,23 +1045,30 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">Fish S2 Pro</span>
       <h4>Clone EN</h4>
     </div>
-    <p class="sub">公开 ref · Research</p>
-    <div class="prompt-box">I am solving the equation on the board.</div>
-    <canvas class="wave-canvas" data-wave="028_clone" data-src="assets/028_clone.wav" height="44"></canvas>
+    <p class="sub">reference clone</p>
+    <div class="prompt-box">I am solving the equation on the board. Nobody said it would be this hard, but we are almost there!</div>
+    <canvas class="wave-canvas" data-wave="assets/028_clone.wav" height="42"></canvas>
+    <audio data-id="028_clone" preload="metadata" src="assets/028_clone.wav"></audio>
   </div>
   <div class="metrics">
-    <span>GPU <strong>L40S</strong></span>
-    <span>VRAM <strong>22.2G</strong></span>
-    <span>wall <strong>88.0s</strong></span>
-    <span>gen <strong>32.7s</strong></span>
-    <span>dur <strong>5.6s</strong></span>
-    <span>usd <strong>$0.048</strong></span>
+      <span>GPU <strong>L40S</strong></span>
+      <span>VRAM <strong>22.2G</strong></span>
+      <span>wall <strong>88.0s</strong></span>
+      <span>gen <strong>32.7s</strong></span>
+      <span>dur <strong>5.6s</strong></span>
+      <span>usd <strong>$0.048</strong></span>
   </div>
-  <audio preload="none" data-audio="028_clone" src="assets/028_clone.wav"></audio>
 </article>
+</div>
+<div class="group-head" data-model="029" style="--accent:#34d399">
+  <span class="dot"></span>
+  <h4>029 · VoxCPM2</h4>
+  <span>A1 · 4 tracks</span>
+</div>
+<div class="tracks">
 
 <article class="track" data-id="029_en" data-model="029" data-lang="en" data-tags="029 en tts" style="--accent:#34d399">
-  <button class="play-btn" type="button" data-play="029_en" aria-label="播放 VoxCPM2 EN">
+  <button class="play-btn" type="button" data-play="029_en" aria-label="播放 Smoke EN">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
   </button>
   <div class="track-body">
@@ -989,23 +1076,22 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">VoxCPM2</span>
       <h4>Smoke EN</h4>
     </div>
-    <p class="sub">2B · 48 kHz · Apache-2.0</p>
+    <p class="sub">tokenizer-free TTS</p>
     <div class="prompt-box">VoxCPM2 is running on Modal. This is a tokenizer-free multilingual text to speech model optimized for speed and natural prosody.</div>
-    <canvas class="wave-canvas" data-wave="029_en" data-src="assets/029_en.wav" height="44"></canvas>
+    <canvas class="wave-canvas" data-wave="assets/029_en.wav" height="42"></canvas>
+    <audio data-id="029_en" preload="metadata" src="assets/029_en.wav"></audio>
   </div>
   <div class="metrics">
-    <span>GPU <strong>L4</strong></span>
-    <span>VRAM <strong>5.8G</strong></span>
-    <span>wall <strong>33.0s</strong></span>
-    <span>gen <strong>13.1s</strong></span>
-    <span>dur <strong>8.5s</strong></span>
-    <span>usd <strong>$0.0073</strong></span>
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>5.8G</strong></span>
+      <span>wall <strong>33.0s</strong></span>
+      <span>gen <strong>13.1s</strong></span>
+      <span>dur <strong>8.5s</strong></span>
+      <span>usd <strong>$0.0073</strong></span>
   </div>
-  <audio preload="none" data-audio="029_en" src="assets/029_en.wav"></audio>
 </article>
-
 <article class="track" data-id="029_zh" data-model="029" data-lang="zh" data-tags="029 zh tts" style="--accent:#34d399">
-  <button class="play-btn" type="button" data-play="029_zh" aria-label="播放 VoxCPM2 ZH">
+  <button class="play-btn" type="button" data-play="029_zh" aria-label="播放 Smoke ZH">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
   </button>
   <div class="track-body">
@@ -1013,23 +1099,22 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">VoxCPM2</span>
       <h4>Smoke ZH</h4>
     </div>
-    <p class="sub">2B · 48 kHz · Apache-2.0</p>
+    <p class="sub">tokenizer-free TTS</p>
     <div class="prompt-box">你好，这是 modal-lab 第零二九号 VoxCPM2 实验。今天天气真不错，希望你有一个愉快的周末。</div>
-    <canvas class="wave-canvas" data-wave="029_zh" data-src="assets/029_zh.wav" height="44"></canvas>
+    <canvas class="wave-canvas" data-wave="assets/029_zh.wav" height="42"></canvas>
+    <audio data-id="029_zh" preload="metadata" src="assets/029_zh.wav"></audio>
   </div>
   <div class="metrics">
-    <span>GPU <strong>L4</strong></span>
-    <span>VRAM <strong>5.8G</strong></span>
-    <span>wall <strong>32.0s</strong></span>
-    <span>gen <strong>13.9s</strong></span>
-    <span>dur <strong>9.3s</strong></span>
-    <span>usd <strong>$0.0071</strong></span>
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>5.8G</strong></span>
+      <span>wall <strong>32.0s</strong></span>
+      <span>gen <strong>13.9s</strong></span>
+      <span>dur <strong>9.3s</strong></span>
+      <span>usd <strong>$0.0071</strong></span>
   </div>
-  <audio preload="none" data-audio="029_zh" src="assets/029_zh.wav"></audio>
 </article>
-
 <article class="track" data-id="029_design" data-model="029" data-lang="en" data-tags="029 en design" style="--accent:#34d399">
-  <button class="play-btn" type="button" data-play="029_design" aria-label="播放 VoxCPM2 Design">
+  <button class="play-btn" type="button" data-play="029_design" aria-label="播放 Voice Design">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
   </button>
   <div class="track-body">
@@ -1037,23 +1122,22 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">VoxCPM2</span>
       <h4>Voice Design</h4>
     </div>
-    <p class="sub">(desc)text · Apache-2.0</p>
+    <p class="sub">文本造声</p>
     <div class="prompt-box">(A young woman, gentle and sweet voice, warm midrange)Hello, welcome to VoxCPM2 voice design on Modal lab.</div>
-    <canvas class="wave-canvas" data-wave="029_design" data-src="assets/029_design.wav" height="44"></canvas>
+    <canvas class="wave-canvas" data-wave="assets/029_design.wav" height="42"></canvas>
+    <audio data-id="029_design" preload="metadata" src="assets/029_design.wav"></audio>
   </div>
   <div class="metrics">
-    <span>GPU <strong>L4</strong></span>
-    <span>VRAM <strong>5.6G</strong></span>
-    <span>wall <strong>34.8s</strong></span>
-    <span>gen <strong>9.6s</strong></span>
-    <span>dur <strong>4.0s</strong></span>
-    <span>usd <strong>$0.0077</strong></span>
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>5.6G</strong></span>
+      <span>wall <strong>34.8s</strong></span>
+      <span>gen <strong>9.6s</strong></span>
+      <span>dur <strong>4.0s</strong></span>
+      <span>usd <strong>$0.0077</strong></span>
   </div>
-  <audio preload="none" data-audio="029_design" src="assets/029_design.wav"></audio>
 </article>
-
 <article class="track" data-id="029_clone" data-model="029" data-lang="en" data-tags="029 en clone" style="--accent:#34d399">
-  <button class="play-btn" type="button" data-play="029_clone" aria-label="播放 VoxCPM2 Clone">
+  <button class="play-btn" type="button" data-play="029_clone" aria-label="播放 Clone · reference_speaker">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
   </button>
   <div class="track-body">
@@ -1061,34 +1145,50 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">VoxCPM2</span>
       <h4>Clone · reference_speaker</h4>
     </div>
-    <p class="sub">可控克隆 · 官方 ref · Apache</p>
+    <p class="sub">48k 可控克隆</p>
     <div class="prompt-box">This is a controllable voice clone generated by VoxCPM2 on Modal.</div>
-    <canvas class="wave-canvas" data-wave="029_clone" data-src="assets/029_clone.wav" height="44"></canvas>
+    <canvas class="wave-canvas" data-wave="assets/029_clone.wav" height="42"></canvas>
+    <audio data-id="029_clone" preload="metadata" src="assets/029_clone.wav"></audio>
   </div>
   <div class="metrics">
-    <span>GPU <strong>L4</strong></span>
-    <span>VRAM <strong>5.8G</strong></span>
-    <span>wall <strong>67.0s</strong></span>
-    <span>gen <strong>39.7s</strong></span>
-    <span>dur <strong>4.2s</strong></span>
-    <span>usd <strong>$0.0149</strong></span>
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>5.8G</strong></span>
+      <span>wall <strong>67.0s</strong></span>
+      <span>gen <strong>39.7s</strong></span>
+      <span>dur <strong>4.2s</strong></span>
+      <span>usd <strong>$0.015</strong></span>
   </div>
-  <audio preload="none" data-audio="029_clone" src="assets/029_clone.wav"></audio>
 </article>
+</div>
+<div class="group-head" data-model="030" style="--accent:#60a5fa">
+  <span class="dot"></span>
+  <h4>030 · VibeVoice RT</h4>
+  <span>A2 · 3 tracks</span>
+</div>
+<div class="tracks">
+
 <article class="track" data-id="030_en" data-model="030" data-lang="en" data-tags="030 en preset" style="--accent:#60a5fa">
   <button class="play-btn" type="button" data-play="030_en" aria-label="播放 Carter EN">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
   </button>
   <div class="track-body">
     <div class="track-top">
-      <span class="model-tag">VibeVoice</span>
+      <span class="model-tag">VibeVoice RT</span>
       <h4>Carter EN</h4>
     </div>
-    <p class="sub">Realtime 0.5B · MIT</p>
-    <div class="prompt-box">Hello from VibeVoice Realtime on Modal lab.</div>
-    <div class="meta mono">L4 · $0.0056 · 8.1s · 2.8GB</div>
+    <p class="sub">Realtime · man preset</p>
+    <div class="prompt-box">VibeVoice Realtime is running on Modal. This lightweight model supports streaming text input and robust long-form speech generation.</div>
+    <canvas class="wave-canvas" data-wave="assets/030_en.wav" height="42"></canvas>
+    <audio data-id="030_en" preload="metadata" src="assets/030_en.wav"></audio>
   </div>
-  <audio preload="none" src="assets/030_en.wav" data-track="030_en"></audio>
+  <div class="metrics">
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>2.8G</strong></span>
+      <span>wall <strong>25.4s</strong></span>
+      <span>gen <strong>8.7s</strong></span>
+      <span>dur <strong>8.1s</strong></span>
+      <span>usd <strong>$0.0056</strong></span>
+  </div>
 </article>
 <article class="track" data-id="030_long" data-model="030" data-lang="en" data-tags="030 en long" style="--accent:#60a5fa">
   <button class="play-btn" type="button" data-play="030_long" aria-label="播放 Emma Long">
@@ -1096,14 +1196,22 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
   </button>
   <div class="track-body">
     <div class="track-top">
-      <span class="model-tag">VibeVoice</span>
+      <span class="model-tag">VibeVoice RT</span>
       <h4>Emma Long</h4>
     </div>
-    <p class="sub">长句 ~27s 音频</p>
-    <div class="prompt-box">Long-form Emma voice demo.</div>
-    <div class="meta mono">L4 · $0.0058 · 27.2s · 2.8GB</div>
+    <p class="sub">~27s 长句 · RTF≈0.6</p>
+    <div class="prompt-box">Welcome to modal-lab experiment zero three zero. VibeVoice was designed for long conversational audio and podcast narration. Even this realtime half billion parameter variant can keep going for minutes while remaining lightweight enough for a single L4 GPU. Today we measure cold-</div>
+    <canvas class="wave-canvas" data-wave="assets/030_long.wav" height="42"></canvas>
+    <audio data-id="030_long" preload="metadata" src="assets/030_long.wav"></audio>
   </div>
-  <audio preload="none" src="assets/030_long.wav" data-track="030_long"></audio>
+  <div class="metrics">
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>2.8G</strong></span>
+      <span>wall <strong>26.1s</strong></span>
+      <span>gen <strong>16.3s</strong></span>
+      <span>dur <strong>27.2s</strong></span>
+      <span>usd <strong>$0.0058</strong></span>
+  </div>
 </article>
 <article class="track" data-id="030_emma" data-model="030" data-lang="en" data-tags="030 en preset" style="--accent:#60a5fa">
   <button class="play-btn" type="button" data-play="030_emma" aria-label="播放 Emma Short">
@@ -1111,15 +1219,31 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
   </button>
   <div class="track-body">
     <div class="track-top">
-      <span class="model-tag">VibeVoice</span>
+      <span class="model-tag">VibeVoice RT</span>
       <h4>Emma Short</h4>
     </div>
-    <p class="sub">短句</p>
-    <div class="prompt-box">Emma short smoke.</div>
-    <div class="meta mono">L4 · $0.0050 · 8.7s · 2.8GB</div>
+    <p class="sub">Realtime · woman preset</p>
+    <div class="prompt-box">Hello, this is Emma speaking through VibeVoice Realtime on Modal. Switching speakers only requires a different voice preset cache.</div>
+    <canvas class="wave-canvas" data-wave="assets/030_emma.wav" height="42"></canvas>
+    <audio data-id="030_emma" preload="metadata" src="assets/030_emma.wav"></audio>
   </div>
-  <audio preload="none" src="assets/030_emma.wav" data-track="030_emma"></audio>
+  <div class="metrics">
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>2.8G</strong></span>
+      <span>wall <strong>22.4s</strong></span>
+      <span>gen <strong>8.3s</strong></span>
+      <span>dur <strong>8.7s</strong></span>
+      <span>usd <strong>$0.0050</strong></span>
+  </div>
 </article>
+</div>
+<div class="group-head" data-model="031" style="--accent:#2dd4bf">
+  <span class="dot"></span>
+  <h4>031 · CosyVoice3</h4>
+  <span>A3 · 3 tracks</span>
+</div>
+<div class="tracks">
+
 <article class="track" data-id="031_zh" data-model="031" data-lang="zh" data-tags="031 zh zeroshot" style="--accent:#2dd4bf">
   <button class="play-btn" type="button" data-play="031_zh" aria-label="播放 Zero-shot ZH">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
@@ -1129,11 +1253,19 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">CosyVoice3</span>
       <h4>Zero-shot ZH</h4>
     </div>
-    <p class="sub">中文方言线</p>
-    <div class="prompt-box">你好，这是 CosyVoice3 实验。</div>
-    <div class="meta mono">L4 · $0.0094 · 9.4s · 3.6GB</div>
+    <p class="sub">Fun-CosyVoice3</p>
+    <div class="prompt-box">你好，这是 modal-lab 第零三一号 CosyVoice3 实验。今天天气真不错，希望你有一个愉快的周末。</div>
+    <canvas class="wave-canvas" data-wave="assets/031_zh.wav" height="42"></canvas>
+    <audio data-id="031_zh" preload="metadata" src="assets/031_zh.wav"></audio>
   </div>
-  <audio preload="none" src="assets/031_zh.wav" data-track="031_zh"></audio>
+  <div class="metrics">
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>3.6G</strong></span>
+      <span>wall <strong>42.2s</strong></span>
+      <span>gen <strong>13.2s</strong></span>
+      <span>dur <strong>9.4s</strong></span>
+      <span>usd <strong>$0.0094</strong></span>
+  </div>
 </article>
 <article class="track" data-id="031_dialect" data-model="031" data-lang="zh" data-tags="031 zh dialect" style="--accent:#2dd4bf">
   <button class="play-btn" type="button" data-play="031_dialect" aria-label="播放 四川话 instruct">
@@ -1144,11 +1276,19 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">CosyVoice3</span>
       <h4>四川话 instruct</h4>
     </div>
-    <p class="sub">方言 SOTA</p>
-    <div class="prompt-box">收到好友从远方寄来的生日礼物…</div>
-    <div class="meta mono">L4 · $0.0049 · 8.8s · 3.6GB</div>
+    <p class="sub">instruct2 方言</p>
+    <div class="prompt-box">收到好友从远方寄来的生日礼物，那份意外的惊喜与深深的祝福让我心中充满了甜蜜的快乐。</div>
+    <canvas class="wave-canvas" data-wave="assets/031_dialect.wav" height="42"></canvas>
+    <audio data-id="031_dialect" preload="metadata" src="assets/031_dialect.wav"></audio>
   </div>
-  <audio preload="none" src="assets/031_dialect.wav" data-track="031_dialect"></audio>
+  <div class="metrics">
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>3.6G</strong></span>
+      <span>wall <strong>21.9s</strong></span>
+      <span>gen <strong>8.8s</strong></span>
+      <span>dur <strong>8.8s</strong></span>
+      <span>usd <strong>$0.0049</strong></span>
+  </div>
 </article>
 <article class="track" data-id="031_en" data-model="031" data-lang="en" data-tags="031 en cross" style="--accent:#2dd4bf">
   <button class="play-btn" type="button" data-play="031_en" aria-label="播放 Cross-lingual EN">
@@ -1159,12 +1299,28 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">CosyVoice3</span>
       <h4>Cross-lingual EN</h4>
     </div>
-    <p class="sub">多语</p>
-    <div class="prompt-box">Hello from CosyVoice3 on Modal lab.</div>
-    <div class="meta mono">L4 · $0.0069 · 7.2s · 3.6GB</div>
+    <p class="sub">跨语种</p>
+    <div class="prompt-box">Hello from CosyVoice3 on Modal lab. This is a zero-shot multilingual speech synthesis demo.</div>
+    <canvas class="wave-canvas" data-wave="assets/031_en.wav" height="42"></canvas>
+    <audio data-id="031_en" preload="metadata" src="assets/031_en.wav"></audio>
   </div>
-  <audio preload="none" src="assets/031_en.wav" data-track="031_en"></audio>
+  <div class="metrics">
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>3.6G</strong></span>
+      <span>wall <strong>31.2s</strong></span>
+      <span>gen <strong>10.0s</strong></span>
+      <span>dur <strong>7.2s</strong></span>
+      <span>usd <strong>$0.0069</strong></span>
+  </div>
 </article>
+</div>
+<div class="group-head" data-model="032" style="--accent:#f472b6">
+  <span class="dot"></span>
+  <h4>032 · IndexTTS-2</h4>
+  <span>A4 · 3 tracks</span>
+</div>
+<div class="tracks">
+
 <article class="track" data-id="032_zh" data-model="032" data-lang="zh" data-tags="032 zh zeroshot" style="--accent:#f472b6">
   <button class="play-btn" type="button" data-play="032_zh" aria-label="播放 Zero-shot ZH">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
@@ -1174,11 +1330,19 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">IndexTTS-2</span>
       <h4>Zero-shot ZH</h4>
     </div>
-    <p class="sub">配音刚需</p>
-    <div class="prompt-box">精确时长与情感控制…</div>
-    <div class="meta mono">L4 · $0.0073 · 8.3s · 7.3GB</div>
+    <p class="sub">IndexTTS-2</p>
+    <div class="prompt-box">你好，这是 modal-lab 第零三二号 IndexTTS-2 实验。精确时长与情感控制，是中文配音的硬通货。</div>
+    <canvas class="wave-canvas" data-wave="assets/032_zh.wav" height="42"></canvas>
+    <audio data-id="032_zh" preload="metadata" src="assets/032_zh.wav"></audio>
   </div>
-  <audio preload="none" src="assets/032_zh.wav" data-track="032_zh"></audio>
+  <div class="metrics">
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>7.4G</strong></span>
+      <span>wall <strong>33.0s</strong></span>
+      <span>gen <strong>13.1s</strong></span>
+      <span>dur <strong>8.3s</strong></span>
+      <span>usd <strong>$0.0073</strong></span>
+  </div>
 </article>
 <article class="track" data-id="032_en" data-model="032" data-lang="en" data-tags="032 en zeroshot" style="--accent:#f472b6">
   <button class="play-btn" type="button" data-play="032_en" aria-label="播放 Zero-shot EN">
@@ -1189,11 +1353,19 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">IndexTTS-2</span>
       <h4>Zero-shot EN</h4>
     </div>
-    <p class="sub">Industrial AR</p>
-    <div class="prompt-box">Hello from IndexTTS-2 on Modal lab.</div>
-    <div class="meta mono">L4 · $0.0082 · 7.6s · 7.3GB</div>
+    <p class="sub">IndexTTS-2</p>
+    <div class="prompt-box">Hello from IndexTTS-2 on Modal lab. Industrial zero-shot speech with duration and emotion control.</div>
+    <canvas class="wave-canvas" data-wave="assets/032_en.wav" height="42"></canvas>
+    <audio data-id="032_en" preload="metadata" src="assets/032_en.wav"></audio>
   </div>
-  <audio preload="none" src="assets/032_en.wav" data-track="032_en"></audio>
+  <div class="metrics">
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>7.3G</strong></span>
+      <span>wall <strong>36.9s</strong></span>
+      <span>gen <strong>14.6s</strong></span>
+      <span>dur <strong>7.6s</strong></span>
+      <span>usd <strong>$0.0082</strong></span>
+  </div>
 </article>
 <article class="track" data-id="032_emo" data-model="032" data-lang="zh" data-tags="032 zh emo" style="--accent:#f472b6">
   <button class="play-btn" type="button" data-play="032_emo" aria-label="播放 Emo · 悲伤">
@@ -1205,11 +1377,27 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <h4>Emo · 悲伤</h4>
     </div>
     <p class="sub">emo_text</p>
-    <div class="prompt-box">这些年的时光终究是错付了…</div>
-    <div class="meta mono">L4 · $0.0092 · 8.3s · 7.3GB</div>
+    <div class="prompt-box">这些年的时光终究是错付了……我只希望你能过得比我好一点。</div>
+    <canvas class="wave-canvas" data-wave="assets/032_emo.wav" height="42"></canvas>
+    <audio data-id="032_emo" preload="metadata" src="assets/032_emo.wav"></audio>
   </div>
-  <audio preload="none" src="assets/032_emo.wav" data-track="032_emo"></audio>
+  <div class="metrics">
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>7.3G</strong></span>
+      <span>wall <strong>41.4s</strong></span>
+      <span>gen <strong>16.0s</strong></span>
+      <span>dur <strong>8.3s</strong></span>
+      <span>usd <strong>$0.0092</strong></span>
+  </div>
 </article>
+</div>
+<div class="group-head" data-model="033" style="--accent:#a78bfa">
+  <span class="dot"></span>
+  <h4>033 · F5-TTS</h4>
+  <span>A5 · 2 tracks</span>
+</div>
+<div class="tracks">
+
 <article class="track" data-id="033_en" data-model="033" data-lang="en" data-tags="033 en clone" style="--accent:#a78bfa">
   <button class="play-btn" type="button" data-play="033_en" aria-label="播放 Clone EN">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
@@ -1219,11 +1407,19 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">F5-TTS</span>
       <h4>Clone EN</h4>
     </div>
-    <p class="sub">最便宜零样本</p>
-    <div class="prompt-box">Hello from F5-TTS on Modal lab.</div>
-    <div class="meta mono">L4 · $0.0027 · 8.4s · 2.1GB</div>
+    <p class="sub">F5TTS_v1_Base</p>
+    <div class="prompt-box">Hello from F5-TTS on Modal lab. This is a zero-shot voice clone demo with flow matching.</div>
+    <canvas class="wave-canvas" data-wave="assets/033_en.wav" height="42"></canvas>
+    <audio data-id="033_en" preload="metadata" src="assets/033_en.wav"></audio>
   </div>
-  <audio preload="none" src="assets/033_en.wav" data-track="033_en"></audio>
+  <div class="metrics">
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>2.1G</strong></span>
+      <span>wall <strong>12.0s</strong></span>
+      <span>gen <strong>5.7s</strong></span>
+      <span>dur <strong>8.4s</strong></span>
+      <span>usd <strong>$0.0027</strong></span>
+  </div>
 </article>
 <article class="track" data-id="033_zh" data-model="033" data-lang="zh" data-tags="033 zh clone" style="--accent:#a78bfa">
   <button class="play-btn" type="button" data-play="033_zh" aria-label="播放 Clone ZH">
@@ -1234,12 +1430,28 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">F5-TTS</span>
       <h4>Clone ZH</h4>
     </div>
-    <p class="sub">CC-BY-NC 权重</p>
-    <div class="prompt-box">你好，这是 F5-TTS 实验。</div>
-    <div class="meta mono">L4 · $0.0025 · 11.0s · 2.1GB</div>
+    <p class="sub">F5TTS_v1_Base</p>
+    <div class="prompt-box">你好，这是 modal-lab 第零三三号 F5-TTS 实验。零样本克隆，中英皆可。</div>
+    <canvas class="wave-canvas" data-wave="assets/033_zh.wav" height="42"></canvas>
+    <audio data-id="033_zh" preload="metadata" src="assets/033_zh.wav"></audio>
   </div>
-  <audio preload="none" src="assets/033_zh.wav" data-track="033_zh"></audio>
+  <div class="metrics">
+      <span>GPU <strong>L4</strong></span>
+      <span>VRAM <strong>2.1G</strong></span>
+      <span>wall <strong>11.2s</strong></span>
+      <span>gen <strong>6.2s</strong></span>
+      <span>dur <strong>11.0s</strong></span>
+      <span>usd <strong>$0.0025</strong></span>
+  </div>
 </article>
+</div>
+<div class="group-head" data-model="034" style="--accent:#fb923c">
+  <span class="dot"></span>
+  <h4>034 · Higgs v2</h4>
+  <span>A6 · 2 tracks</span>
+</div>
+<div class="tracks">
+
 <article class="track" data-id="034_en" data-model="034" data-lang="en" data-tags="034 en scene" style="--accent:#fb923c">
   <button class="play-btn" type="button" data-play="034_en" aria-label="播放 Quiet room EN">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
@@ -1249,11 +1461,19 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <span class="model-tag">Higgs v2</span>
       <h4>Quiet room EN</h4>
     </div>
-    <p class="sub">收官</p>
-    <div class="prompt-box">The sun rises in the east…</div>
-    <div class="meta mono">L40S · $0.0269 · 8.3s · 15.7GB</div>
+    <p class="sub">scene prompt</p>
+    <div class="prompt-box">The sun rises in the east and sets in the west. This simple fact has been observed by humans for thousands of years.</div>
+    <canvas class="wave-canvas" data-wave="assets/034_en.wav" height="42"></canvas>
+    <audio data-id="034_en" preload="metadata" src="assets/034_en.wav"></audio>
   </div>
-  <audio preload="none" src="assets/034_en.wav" data-track="034_en"></audio>
+  <div class="metrics">
+      <span>GPU <strong>L40S</strong></span>
+      <span>VRAM <strong>15.7G</strong></span>
+      <span>wall <strong>49.6s</strong></span>
+      <span>gen <strong>6.2s</strong></span>
+      <span>dur <strong>8.3s</strong></span>
+      <span>usd <strong>$0.027</strong></span>
+  </div>
 </article>
 <article class="track" data-id="034_expressive" data-model="034" data-lang="en" data-tags="034 en expressive" style="--accent:#fb923c">
   <button class="play-btn" type="button" data-play="034_expressive" aria-label="播放 Expressive">
@@ -1265,410 +1485,645 @@ body.has-dock { padding-bottom: calc(var(--player-h) + 28px); }
       <h4>Expressive</h4>
     </div>
     <p class="sub">excited scene</p>
-    <div class="prompt-box">Wow! We finally shipped the last TTS experiment…</div>
-    <div class="meta mono">L40S · $0.0114 · 9.9s · 15.7GB</div>
+    <div class="prompt-box">Wow! Can you believe it? We finally shipped the last TTS experiment — Higgs Audio on Modal lab. What a journey!</div>
+    <canvas class="wave-canvas" data-wave="assets/034_expressive.wav" height="42"></canvas>
+    <audio data-id="034_expressive" preload="metadata" src="assets/034_expressive.wav"></audio>
   </div>
-  <audio preload="none" src="assets/034_expressive.wav" data-track="034_expressive"></audio>
+  <div class="metrics">
+      <span>GPU <strong>L40S</strong></span>
+      <span>VRAM <strong>15.7G</strong></span>
+      <span>wall <strong>21.1s</strong></span>
+      <span>gen <strong>7.0s</strong></span>
+      <span>dur <strong>9.9s</strong></span>
+      <span>usd <strong>$0.011</strong></span>
+  </div>
 </article>
+</div>
 
-    </div>
-
-    <div class="sec-head" id="matrix">
-      <div>
-        <h3>实测矩阵</h3>
-        <p>墙钟 / 生成 / 时长 / 费用 — 同一天同一批 smoke</p>
-      </div>
-    </div>
+    <p class="sec-label" id="matrix" style="margin-top:1.8rem">实测矩阵</p>
     <div class="matrix">
       <table>
         <thead>
           <tr>
-            <th>模型</th><th>样本</th><th>GPU</th><th>VRAM GB</th>
-            <th>wall s</th><th>gen s</th><th>audio s</th><th>est USD</th>
+            <th>模型</th><th>样本</th><th>GPU</th><th>VRAM</th><th>wall s</th><th>gen s</th><th>audio s</th><th>est USD</th>
           </tr>
         </thead>
         <tbody>
 <tr>
-      <td>Kokoro</td>
-      <td>EN · af_heart</td>
-      <td class="num">T4</td>
-      <td class="num">0.8</td>
-      <td class="num">7.4</td>
-      <td class="num">2.0</td>
-      <td class="num">11.1</td>
-      <td class="num">$0.0012</td>
-    </tr>
+  <td><button class="play-mini" type="button" data-play="025_en" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>Kokoro-82M</td>
+  <td>EN · af_heart</td>
+  <td class="num">T4</td>
+  <td class="num">0.8</td>
+  <td class="num">7.4</td>
+  <td class="num">2.0</td>
+  <td class="num">11.1</td>
+  <td class="num">$0.0012</td>
+</tr>
 <tr>
-      <td>Kokoro</td>
-      <td>ZH · zf_001</td>
-      <td class="num">T4</td>
-      <td class="num">0.8</td>
-      <td class="num">9.9</td>
-      <td class="num">2.7</td>
-      <td class="num">10.9</td>
-      <td class="num">$0.0016</td>
-    </tr>
+  <td><button class="play-mini" type="button" data-play="025_zh" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>Kokoro-82M</td>
+  <td>ZH · zf_001</td>
+  <td class="num">T4</td>
+  <td class="num">0.8</td>
+  <td class="num">9.9</td>
+  <td class="num">2.7</td>
+  <td class="num">10.9</td>
+  <td class="num">$0.0016</td>
+</tr>
 <tr>
-      <td>Chatterbox</td>
-      <td>MTL EN</td>
-      <td class="num">L4</td>
-      <td class="num">3.4</td>
-      <td class="num">64.5</td>
-      <td class="num">21.9</td>
-      <td class="num">5.6</td>
-      <td class="num">$0.014</td>
-    </tr>
+  <td><button class="play-mini" type="button" data-play="026_mtl_en" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>Chatterbox</td>
+  <td>MTL EN</td>
+  <td class="num">L4</td>
+  <td class="num">3.4</td>
+  <td class="num">64.5</td>
+  <td class="num">21.9</td>
+  <td class="num">5.6</td>
+  <td class="num">$0.0143</td>
+</tr>
 <tr>
-      <td>Chatterbox</td>
-      <td>MTL ZH</td>
-      <td class="num">L4</td>
-      <td class="num">3.5</td>
-      <td class="num">69.0</td>
-      <td class="num">28.6</td>
-      <td class="num">12.1</td>
-      <td class="num">$0.015</td>
-    </tr>
+  <td><button class="play-mini" type="button" data-play="026_mtl_zh" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>Chatterbox</td>
+  <td>MTL ZH</td>
+  <td class="num">L4</td>
+  <td class="num">3.6</td>
+  <td class="num">69.0</td>
+  <td class="num">28.6</td>
+  <td class="num">12.1</td>
+  <td class="num">$0.0153</td>
+</tr>
 <tr>
-      <td>Chatterbox</td>
-      <td>Turbo · Lucy clone</td>
-      <td class="num">L4</td>
-      <td class="num">3.3</td>
-      <td class="num">61.7</td>
-      <td class="num">27.5</td>
-      <td class="num">7.2</td>
-      <td class="num">$0.014</td>
-    </tr>
+  <td><button class="play-mini" type="button" data-play="026_turbo" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>Chatterbox</td>
+  <td>Turbo · Lucy clone</td>
+  <td class="num">L4</td>
+  <td class="num">3.3</td>
+  <td class="num">61.7</td>
+  <td class="num">27.5</td>
+  <td class="num">7.2</td>
+  <td class="num">$0.0137</td>
+</tr>
 <tr>
-      <td>Qwen3-TTS</td>
-      <td>Custom · Vivian ZH</td>
-      <td class="num">L4</td>
-      <td class="num">4.5</td>
-      <td class="num">24.0</td>
-      <td class="num">16.8</td>
-      <td class="num">9.3</td>
-      <td class="num">$0.0053</td>
-    </tr>
+  <td><button class="play-mini" type="button" data-play="027_custom_zh" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>Qwen3-TTS</td>
+  <td>Custom · Vivian ZH</td>
+  <td class="num">L4</td>
+  <td class="num">4.5</td>
+  <td class="num">24.0</td>
+  <td class="num">16.8</td>
+  <td class="num">9.3</td>
+  <td class="num">$0.0053</td>
+</tr>
 <tr>
-      <td>Qwen3-TTS</td>
-      <td>Custom · Ryan EN</td>
-      <td class="num">L4</td>
-      <td class="num">4.4</td>
-      <td class="num">18.8</td>
-      <td class="num">13.2</td>
-      <td class="num">7.7</td>
-      <td class="num">$0.0042</td>
-    </tr>
+  <td><button class="play-mini" type="button" data-play="027_custom_en" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>Qwen3-TTS</td>
+  <td>Custom · Ryan EN</td>
+  <td class="num">L4</td>
+  <td class="num">4.4</td>
+  <td class="num">18.8</td>
+  <td class="num">13.2</td>
+  <td class="num">7.7</td>
+  <td class="num">$0.0042</td>
+</tr>
 <tr>
-      <td>Qwen3-TTS</td>
-      <td>VoiceDesign ZH</td>
-      <td class="num">L4</td>
-      <td class="num">4.3</td>
-      <td class="num">18.4</td>
-      <td class="num">11.5</td>
-      <td class="num">5.4</td>
-      <td class="num">$0.0041</td>
-    </tr>
+  <td><button class="play-mini" type="button" data-play="027_design" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>Qwen3-TTS</td>
+  <td>VoiceDesign ZH</td>
+  <td class="num">L4</td>
+  <td class="num">4.3</td>
+  <td class="num">18.4</td>
+  <td class="num">11.5</td>
+  <td class="num">5.4</td>
+  <td class="num">$0.0041</td>
+</tr>
 <tr>
-      <td>Qwen3-TTS</td>
-      <td>Clone EN</td>
-      <td class="num">L4</td>
-      <td class="num">4.7</td>
-      <td class="num">26.4</td>
-      <td class="num">19.7</td>
-      <td class="num">6.6</td>
-      <td class="num">$0.0059</td>
-    </tr>
+  <td><button class="play-mini" type="button" data-play="027_clone" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>Qwen3-TTS</td>
+  <td>Clone EN</td>
+  <td class="num">L4</td>
+  <td class="num">4.7</td>
+  <td class="num">26.4</td>
+  <td class="num">19.7</td>
+  <td class="num">6.6</td>
+  <td class="num">$0.0059</td>
+</tr>
 <tr>
-      <td>Fish S2 Pro</td>
-      <td>EN · random voice</td>
-      <td class="num">L40S</td>
-      <td class="num">22.2</td>
-      <td class="num">131.1</td>
-      <td class="num">58.0</td>
-      <td class="num">8.9</td>
-      <td class="num">$0.071</td>
-    </tr>
+  <td><button class="play-mini" type="button" data-play="028_en" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>Fish S2 Pro</td>
+  <td>EN · random voice</td>
+  <td class="num">L40S</td>
+  <td class="num">22.2</td>
+  <td class="num">131.1</td>
+  <td class="num">58.0</td>
+  <td class="num">8.9</td>
+  <td class="num">$0.071</td>
+</tr>
 <tr>
-      <td>Fish S2 Pro</td>
-      <td>ZH · random voice</td>
-      <td class="num">L40S</td>
-      <td class="num">22.2</td>
-      <td class="num">114.7</td>
-      <td class="num">59.3</td>
-      <td class="num">8.6</td>
-      <td class="num">$0.062</td>
-    </tr>
+  <td><button class="play-mini" type="button" data-play="028_zh" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>Fish S2 Pro</td>
+  <td>ZH · random voice</td>
+  <td class="num">L40S</td>
+  <td class="num">22.2</td>
+  <td class="num">114.7</td>
+  <td class="num">59.3</td>
+  <td class="num">8.6</td>
+  <td class="num">$0.0622</td>
+</tr>
 <tr>
-      <td>Fish S2 Pro</td>
-      <td>Inline tags</td>
-      <td class="num">L40S</td>
-      <td class="num">22.2</td>
-      <td class="num">123.7</td>
-      <td class="num">69.3</td>
-      <td class="num">10.1</td>
-      <td class="num">$0.067</td>
-    </tr>
+  <td><button class="play-mini" type="button" data-play="028_tags" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>Fish S2 Pro</td>
+  <td>Inline tags</td>
+  <td class="num">L40S</td>
+  <td class="num">22.2</td>
+  <td class="num">123.7</td>
+  <td class="num">69.3</td>
+  <td class="num">10.1</td>
+  <td class="num">$0.067</td>
+</tr>
 <tr>
-      <td>Fish S2 Pro</td>
-      <td>Clone EN</td>
-      <td class="num">L40S</td>
-      <td class="num">22.2</td>
-      <td class="num">88.0</td>
-      <td class="num">32.7</td>
-      <td class="num">5.6</td>
-      <td class="num">$0.048</td>
-    </tr>
-        
-          <tr><td>VoxCPM2</td><td>EN TTS</td><td>L4</td><td>5.77</td><td>32.97</td><td>13.14</td><td>8.48</td><td>$0.0073</td></tr>
-          <tr><td>VoxCPM2</td><td>ZH TTS</td><td>L4</td><td>5.79</td><td>32.03</td><td>13.87</td><td>9.28</td><td>$0.0071</td></tr>
-          <tr><td>VoxCPM2</td><td>Design</td><td>L4</td><td>5.63</td><td>34.78</td><td>9.55</td><td>4.00</td><td>$0.0077</td></tr>
-          <tr><td>VoxCPM2</td><td>Clone</td><td>L4</td><td>5.84</td><td>66.99</td><td>39.66</td><td>4.16</td><td>$0.0149</td></tr>
-</tbody>
+  <td><button class="play-mini" type="button" data-play="028_clone" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>Fish S2 Pro</td>
+  <td>Clone EN</td>
+  <td class="num">L40S</td>
+  <td class="num">22.2</td>
+  <td class="num">88.0</td>
+  <td class="num">32.7</td>
+  <td class="num">5.6</td>
+  <td class="num">$0.0477</td>
+</tr>
+<tr>
+  <td><button class="play-mini" type="button" data-play="029_en" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>VoxCPM2</td>
+  <td>Smoke EN</td>
+  <td class="num">L4</td>
+  <td class="num">5.8</td>
+  <td class="num">33.0</td>
+  <td class="num">13.1</td>
+  <td class="num">8.5</td>
+  <td class="num">$0.0073</td>
+</tr>
+<tr>
+  <td><button class="play-mini" type="button" data-play="029_zh" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>VoxCPM2</td>
+  <td>Smoke ZH</td>
+  <td class="num">L4</td>
+  <td class="num">5.8</td>
+  <td class="num">32.0</td>
+  <td class="num">13.9</td>
+  <td class="num">9.3</td>
+  <td class="num">$0.0071</td>
+</tr>
+<tr>
+  <td><button class="play-mini" type="button" data-play="029_design" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>VoxCPM2</td>
+  <td>Voice Design</td>
+  <td class="num">L4</td>
+  <td class="num">5.6</td>
+  <td class="num">34.8</td>
+  <td class="num">9.6</td>
+  <td class="num">4.0</td>
+  <td class="num">$0.0077</td>
+</tr>
+<tr>
+  <td><button class="play-mini" type="button" data-play="029_clone" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>VoxCPM2</td>
+  <td>Clone · reference_speaker</td>
+  <td class="num">L4</td>
+  <td class="num">5.8</td>
+  <td class="num">67.0</td>
+  <td class="num">39.7</td>
+  <td class="num">4.2</td>
+  <td class="num">$0.0149</td>
+</tr>
+<tr>
+  <td><button class="play-mini" type="button" data-play="030_en" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>VibeVoice RT</td>
+  <td>Carter EN</td>
+  <td class="num">L4</td>
+  <td class="num">2.8</td>
+  <td class="num">25.4</td>
+  <td class="num">8.7</td>
+  <td class="num">8.1</td>
+  <td class="num">$0.0056</td>
+</tr>
+<tr>
+  <td><button class="play-mini" type="button" data-play="030_long" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>VibeVoice RT</td>
+  <td>Emma Long</td>
+  <td class="num">L4</td>
+  <td class="num">2.8</td>
+  <td class="num">26.1</td>
+  <td class="num">16.3</td>
+  <td class="num">27.2</td>
+  <td class="num">$0.0058</td>
+</tr>
+<tr>
+  <td><button class="play-mini" type="button" data-play="030_emma" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>VibeVoice RT</td>
+  <td>Emma Short</td>
+  <td class="num">L4</td>
+  <td class="num">2.8</td>
+  <td class="num">22.4</td>
+  <td class="num">8.3</td>
+  <td class="num">8.7</td>
+  <td class="num">$0.0050</td>
+</tr>
+<tr>
+  <td><button class="play-mini" type="button" data-play="031_zh" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>CosyVoice3</td>
+  <td>Zero-shot ZH</td>
+  <td class="num">L4</td>
+  <td class="num">3.6</td>
+  <td class="num">42.2</td>
+  <td class="num">13.2</td>
+  <td class="num">9.4</td>
+  <td class="num">$0.0094</td>
+</tr>
+<tr>
+  <td><button class="play-mini" type="button" data-play="031_dialect" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>CosyVoice3</td>
+  <td>四川话 instruct</td>
+  <td class="num">L4</td>
+  <td class="num">3.6</td>
+  <td class="num">21.9</td>
+  <td class="num">8.8</td>
+  <td class="num">8.8</td>
+  <td class="num">$0.0049</td>
+</tr>
+<tr>
+  <td><button class="play-mini" type="button" data-play="031_en" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>CosyVoice3</td>
+  <td>Cross-lingual EN</td>
+  <td class="num">L4</td>
+  <td class="num">3.6</td>
+  <td class="num">31.2</td>
+  <td class="num">10.0</td>
+  <td class="num">7.2</td>
+  <td class="num">$0.0069</td>
+</tr>
+<tr>
+  <td><button class="play-mini" type="button" data-play="032_zh" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>IndexTTS-2</td>
+  <td>Zero-shot ZH</td>
+  <td class="num">L4</td>
+  <td class="num">7.4</td>
+  <td class="num">33.0</td>
+  <td class="num">13.1</td>
+  <td class="num">8.3</td>
+  <td class="num">$0.0073</td>
+</tr>
+<tr>
+  <td><button class="play-mini" type="button" data-play="032_en" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>IndexTTS-2</td>
+  <td>Zero-shot EN</td>
+  <td class="num">L4</td>
+  <td class="num">7.3</td>
+  <td class="num">36.9</td>
+  <td class="num">14.6</td>
+  <td class="num">7.6</td>
+  <td class="num">$0.0082</td>
+</tr>
+<tr>
+  <td><button class="play-mini" type="button" data-play="032_emo" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>IndexTTS-2</td>
+  <td>Emo · 悲伤</td>
+  <td class="num">L4</td>
+  <td class="num">7.3</td>
+  <td class="num">41.4</td>
+  <td class="num">16.0</td>
+  <td class="num">8.3</td>
+  <td class="num">$0.0092</td>
+</tr>
+<tr>
+  <td><button class="play-mini" type="button" data-play="033_en" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>F5-TTS</td>
+  <td>Clone EN</td>
+  <td class="num">L4</td>
+  <td class="num">2.1</td>
+  <td class="num">12.0</td>
+  <td class="num">5.7</td>
+  <td class="num">8.4</td>
+  <td class="num">$0.0027</td>
+</tr>
+<tr>
+  <td><button class="play-mini" type="button" data-play="033_zh" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>F5-TTS</td>
+  <td>Clone ZH</td>
+  <td class="num">L4</td>
+  <td class="num">2.1</td>
+  <td class="num">11.2</td>
+  <td class="num">6.2</td>
+  <td class="num">11.0</td>
+  <td class="num">$0.0025</td>
+</tr>
+<tr>
+  <td><button class="play-mini" type="button" data-play="034_en" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>Higgs v2</td>
+  <td>Quiet room EN</td>
+  <td class="num">L40S</td>
+  <td class="num">15.7</td>
+  <td class="num">49.6</td>
+  <td class="num">6.2</td>
+  <td class="num">8.3</td>
+  <td class="num">$0.0269</td>
+</tr>
+<tr>
+  <td><button class="play-mini" type="button" data-play="034_expressive" aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>Higgs v2</td>
+  <td>Expressive</td>
+  <td class="num">L40S</td>
+  <td class="num">15.7</td>
+  <td class="num">21.1</td>
+  <td class="num">7.0</td>
+  <td class="num">9.9</td>
+  <td class="num">$0.0114</td>
+</tr>
+        </tbody>
       </table>
     </div>
 
-    <footer>
+    <footer class="site">
       <span>Signal Desk · modal-lab TTS 025–034 · 2026-08-11</span>
-      <span>
-        <a href="../">home</a> ·
-        <a href="https://github.com/xiaoqianran/modal-lab">repo</a> ·
-        <a href="https://github.com/xiaoqianran/modal-lab/blob/main/TTS_ROADMAP.md">roadmap</a>
-      </span>
+      <span>数据来自 Modal smoke meta.json · 单价 T4/L4/L40S 仓库既定</span>
     </footer>
   </main>
 
-  <div class="dock" id="dock" aria-live="polite">
+  <div class="dock" id="dock" hidden>
     <div class="dock-inner">
-      <button class="play-btn" id="dock-play" type="button" aria-label="播放/暂停" style="--accent:var(--signal)">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-      </button>
+      <button class="play-btn" type="button" id="dock-play" aria-label="播放/暂停"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>
       <div class="dock-meta">
-        <div class="t" id="dock-title">选择一条音频</div>
+        <div class="t" id="dock-title">—</div>
         <div class="s" id="dock-sub">—</div>
         <div class="progress" id="prog" role="slider" aria-label="进度"><i id="prog-fill"></i></div>
       </div>
-      <div class="spec-wrap"><canvas id="spec"></canvas></div>
+      <div class="spec-wrap"><canvas id="spec" width="100" height="32"></canvas></div>
+      <div class="dock-time"><span id="cur">0:00</span> / <span id="dur">0:00</span></div>
     </div>
   </div>
 
   <script>
 
-// ---- Audio engine: one source, waveform decode, spectrum ----
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>';
+
 let currentId = null;
+let audioCtx = null;
 let analyser = null;
-let sourceNode = null;
 let raf = 0;
 const waveCache = new Map();
 
-function ensureGraph(audioEl) {
-  if (audioEl._wired) return;
-  const src = audioCtx.createMediaElementSource(audioEl);
-  analyser = analyser || audioCtx.createAnalyser();
-  analyser.fftSize = 256;
-  src.connect(analyser);
-  analyser.connect(audioCtx.destination);
-  audioEl._wired = true;
-  sourceNode = src;
+function $(sel, root=document) { return root.querySelector(sel); }
+function $all(sel, root=document) { return [...root.querySelectorAll(sel)]; }
+
+function fmtTime(s) {
+  if (!isFinite(s)) return "0:00";
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return m + ":" + String(sec).padStart(2, "0");
 }
 
-function stopAll(except) {
-  document.querySelectorAll("audio[data-audio]").forEach(a => {
-    if (a.dataset.audio !== except) { a.pause(); a.currentTime = 0; }
+function getAudio(id) {
+  return document.querySelector(`audio[data-id="${id}"]`);
+}
+
+function setPlayingUI(id, playing) {
+  $all(".track").forEach(t => t.classList.toggle("playing", t.dataset.id === id && playing));
+  $all(`[data-play="${id}"]`).forEach(btn => {
+    btn.innerHTML = playing ? ICON_PAUSE : ICON_PLAY;
+    btn.setAttribute("aria-label", playing ? "暂停" : "播放");
   });
-  document.querySelectorAll(".track").forEach(t => t.classList.toggle("playing", t.dataset.id === except));
+  const dockPlay = $("#dock-play");
+  if (dockPlay) dockPlay.innerHTML = playing ? ICON_PAUSE : ICON_PLAY;
 }
 
-async function drawWaveform(canvas, url) {
-  if (!canvas || waveCache.has(url + canvas.dataset.wave)) {
-    const cached = waveCache.get(url + canvas.dataset.wave);
-    if (cached) paintWave(canvas, cached, canvas.dataset.accent || getComputedStyle(canvas.closest(".track")).getPropertyValue("--accent").trim() || "#ff4d6a");
-    return;
+function ensureAudioGraph(audio) {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
-  try {
-    const res = await fetch(url);
-    const buf = await res.arrayBuffer();
-    const audioBuf = await audioCtx.decodeAudioData(buf.slice(0));
-    const data = audioBuf.getChannelData(0);
-    const samples = 160;
-    const block = Math.floor(data.length / samples);
-    const peaks = new Float32Array(samples);
-    for (let i = 0; i < samples; i++) {
-      let max = 0;
-      const start = i * block;
-      for (let j = 0; j < block; j++) {
-        const v = Math.abs(data[start + j] || 0);
-        if (v > max) max = v;
-      }
-      peaks[i] = max;
-    }
-    waveCache.set(url + canvas.dataset.wave, peaks);
-    const accent = getComputedStyle(canvas.closest(".track")).getPropertyValue("--accent").trim() || "#ff4d6a";
-    paintWave(canvas, peaks, accent);
-  } catch (e) {
-    // silent fail — still playable via audio element
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  if (!audio._wired) {
+    const src = audioCtx.createMediaElementSource(audio);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    src.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    audio._wired = true;
   }
 }
 
-function paintWave(canvas, peaks, color) {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const w = canvas.clientWidth || 300;
-  const h = canvas.clientHeight || 44;
-  canvas.width = w * dpr; canvas.height = h * dpr;
-  const ctx = canvas.getContext("2d");
-  ctx.scale(dpr, dpr);
-  ctx.clearRect(0, 0, w, h);
-  const mid = h / 2;
-  const barW = w / peaks.length;
-  ctx.fillStyle = color;
-  for (let i = 0; i < peaks.length; i++) {
-    const amp = Math.max(2, peaks[i] * h * 0.9);
-    const x = i * barW;
-    ctx.globalAlpha = 0.35 + peaks[i] * 0.65;
-    ctx.fillRect(x + 0.5, mid - amp / 2, Math.max(1, barW - 1), amp);
-  }
-  ctx.globalAlpha = 1;
-}
-
-function drawSpectrum() {
-  const canvas = document.getElementById("spec");
+function drawSpec() {
+  const canvas = $("#spec");
   if (!canvas || !analyser) return;
-  const dpr = Math.min(devicePixelRatio || 1, 2);
-  const w = canvas.clientWidth || 120;
-  const h = canvas.clientHeight || 36;
-  canvas.width = w * dpr; canvas.height = h * dpr;
   const ctx = canvas.getContext("2d");
-  ctx.scale(dpr, dpr);
+  const w = canvas.width, h = canvas.height;
   const data = new Uint8Array(analyser.frequencyBinCount);
   analyser.getByteFrequencyData(data);
   ctx.clearRect(0, 0, w, h);
   const n = 24;
   const step = Math.floor(data.length / n);
-  const bw = w / n;
+  const barW = w / n - 1.5;
   for (let i = 0; i < n; i++) {
-    let v = 0;
-    for (let j = 0; j < step; j++) v += data[i * step + j];
-    v = v / step / 255;
+    const v = data[i * step] / 255;
     const bh = Math.max(2, v * h);
-    ctx.fillStyle = i % 2 ? "#ff4d6a" : "#3debc8";
-    ctx.globalAlpha = 0.55 + v * 0.45;
-    ctx.fillRect(i * bw + 1, h - bh, bw - 2, bh);
+    ctx.fillStyle = `rgba(255,77,106,${0.35 + v * 0.65})`;
+    ctx.fillRect(i * (barW + 1.5), h - bh, barW, bh);
+  }
+  raf = requestAnimationFrame(drawSpec);
+}
+
+async function drawWaveform(canvas, url) {
+  if (!canvas || !url) return;
+  const key = url;
+  let peaks = waveCache.get(key);
+  if (!peaks) {
+    try {
+      const res = await fetch(url);
+      const buf = await res.arrayBuffer();
+      const actx = new (window.AudioContext || window.webkitAudioContext)();
+      const audioBuf = await actx.decodeAudioData(buf.slice(0));
+      actx.close();
+      const ch = audioBuf.getChannelData(0);
+      const bars = Math.min(140, Math.floor(canvas.clientWidth || 140));
+      const block = Math.floor(ch.length / bars) || 1;
+      peaks = new Float32Array(bars);
+      for (let i = 0; i < bars; i++) {
+        let max = 0;
+        const start = i * block;
+        for (let j = 0; j < block && start + j < ch.length; j++) {
+          const v = Math.abs(ch[start + j]);
+          if (v > max) max = v;
+        }
+        peaks[i] = max;
+      }
+      waveCache.set(key, peaks);
+    } catch (e) {
+      return;
+    }
+  }
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth || 300;
+  const h = canvas.clientHeight || 42;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+  const accent = getComputedStyle(canvas.closest(".track") || document.documentElement).getPropertyValue("--accent").trim() || "#ff4d6a";
+  const mid = h / 2;
+  const gap = 1.2;
+  const barW = Math.max(1.5, (w / peaks.length) - gap);
+  for (let i = 0; i < peaks.length; i++) {
+    const bh = Math.max(2, peaks[i] * (h * 0.88));
+    const x = i * (barW + gap);
+    ctx.fillStyle = accent;
+    ctx.globalAlpha = 0.35 + peaks[i] * 0.55;
+    ctx.fillRect(x, mid - bh / 2, barW, bh);
   }
   ctx.globalAlpha = 1;
-  raf = requestAnimationFrame(drawSpectrum);
 }
 
-function playTrack(id) {
-  const audio = document.querySelector(`audio[data-audio="${id}"]`);
+function updateDock(id) {
   const track = document.querySelector(`.track[data-id="${id}"]`);
-  if (!audio || !track) return;
-  const dock = document.getElementById("dock");
-  document.body.classList.add("has-dock");
-  dock.classList.add("show");
-  document.getElementById("dock-title").textContent = track.querySelector("h4").textContent;
-  document.getElementById("dock-sub").textContent = track.querySelector(".model-tag").textContent + " · " + track.querySelector(".sub").textContent;
-
-  if (currentId === id && !audio.paused) {
-    audio.pause();
-    cancelAnimationFrame(raf);
-    updatePlayIcons();
-    return;
-  }
-  stopAll(id);
-  currentId = id;
-  ensureGraph(audio);
-  audioCtx.resume();
-  audio.play().catch(() => {});
-  cancelAnimationFrame(raf);
-  drawSpectrum();
-  updatePlayIcons();
-}
-
-function updatePlayIcons() {
-  document.querySelectorAll("[data-play]").forEach(btn => {
-    const id = btn.dataset.play;
-    const a = document.querySelector(`audio[data-audio="${id}"]`);
-    const playing = a && !a.paused && currentId === id;
-    btn.innerHTML = playing
-      ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>'
-      : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
-  });
-  const dockBtn = document.getElementById("dock-play");
-  if (dockBtn && currentId) {
-    const a = document.querySelector(`audio[data-audio="${currentId}"]`);
-    const playing = a && !a.paused;
-    dockBtn.innerHTML = playing
-      ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>'
-      : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
-  }
+  const audio = getAudio(id);
+  if (!track || !audio) return;
+  const title = track.querySelector("h4")?.textContent || id;
+  const sub = track.querySelector(".sub")?.textContent || "";
+  $("#dock-title").textContent = title;
+  $("#dock-sub").textContent = sub;
+  $("#dock").classList.add("show");
+  $("#dock").hidden = false;
+  $("#dur").textContent = fmtTime(audio.duration || 0);
+  const accent = getComputedStyle(track).getPropertyValue("--accent").trim();
+  $("#dock").style.setProperty("--accent", accent || "#ff4d6a");
 }
 
 function tickProgress() {
   if (currentId) {
-    const a = document.querySelector(`audio[data-audio="${currentId}"]`);
-    const bar = document.getElementById("prog-fill");
-    if (a && bar && a.duration) {
-      bar.style.width = ((a.currentTime / a.duration) * 100) + "%";
+    const a = getAudio(currentId);
+    if (a && !a.paused) {
+      const pct = a.duration ? (a.currentTime / a.duration) * 100 : 0;
+      const bar = $("#prog-fill");
+      if (bar) bar.style.width = pct + "%";
+      $("#cur").textContent = fmtTime(a.currentTime);
+      $("#dur").textContent = fmtTime(a.duration || 0);
     }
   }
   requestAnimationFrame(tickProgress);
 }
 
+async function playId(id) {
+  const audio = getAudio(id);
+  if (!audio) return;
+  if (currentId && currentId !== id) {
+    const prev = getAudio(currentId);
+    if (prev) { prev.pause(); prev.currentTime = 0; }
+    setPlayingUI(currentId, false);
+  }
+  currentId = id;
+  updateDock(id);
+  try {
+    ensureAudioGraph(audio);
+    cancelAnimationFrame(raf);
+    drawSpec();
+    await audio.play();
+    setPlayingUI(id, true);
+  } catch (e) {
+    console.warn(e);
+  }
+}
+
+function toggleId(id) {
+  const audio = getAudio(id);
+  if (!audio) return;
+  if (currentId === id && !audio.paused) {
+    audio.pause();
+    setPlayingUI(id, false);
+    return;
+  }
+  playId(id);
+}
+
 function initPlayer() {
-  document.querySelectorAll("[data-play]").forEach(btn => {
-    btn.addEventListener("click", () => playTrack(btn.dataset.play));
+  $all("[data-play]").forEach(btn => {
+    btn.addEventListener("click", () => toggleId(btn.dataset.play));
   });
-  document.getElementById("dock-play")?.addEventListener("click", () => {
-    if (currentId) playTrack(currentId);
+  $all("audio").forEach(a => {
+    a.addEventListener("ended", () => {
+      setPlayingUI(a.dataset.id, false);
+      // auto next visible
+      const list = $all(".track:not([hidden])");
+      const idx = list.findIndex(t => t.dataset.id === a.dataset.id);
+      if (idx >= 0 && idx < list.length - 1) playId(list[idx + 1].dataset.id);
+    });
+    a.addEventListener("pause", () => {
+      if (currentId === a.dataset.id) setPlayingUI(a.dataset.id, false);
+    });
+    a.addEventListener("play", () => setPlayingUI(a.dataset.id, true));
   });
-  document.getElementById("prog")?.addEventListener("click", (e) => {
+  const dockPlay = $("#dock-play");
+  if (dockPlay) dockPlay.addEventListener("click", () => {
+    if (currentId) toggleId(currentId);
+  });
+  const prog = $("#prog");
+  if (prog) prog.addEventListener("click", (e) => {
     if (!currentId) return;
-    const a = document.querySelector(`audio[data-audio="${currentId}"]`);
+    const a = getAudio(currentId);
     if (!a || !a.duration) return;
-    const r = e.currentTarget.getBoundingClientRect();
-    a.currentTime = ((e.clientX - r.left) / r.width) * a.duration;
-  });
-  document.querySelectorAll("audio[data-audio]").forEach(a => {
-    a.addEventListener("ended", () => { updatePlayIcons(); cancelAnimationFrame(raf); });
-    a.addEventListener("pause", updatePlayIcons);
-    a.addEventListener("play", updatePlayIcons);
+    const rect = prog.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    a.currentTime = ratio * a.duration;
   });
   // lazy waveforms
   const io = new IntersectionObserver((entries) => {
     entries.forEach(en => {
       if (en.isIntersecting) {
         const c = en.target;
-        drawWaveform(c, c.dataset.src);
+        drawWaveform(c, c.dataset.wave);
         io.unobserve(c);
       }
     });
-  }, { rootMargin: "80px" });
-  document.querySelectorAll("canvas[data-wave]").forEach(c => io.observe(c));
+  }, { rootMargin: "100px" });
+  $all("canvas.wave-canvas").forEach(c => io.observe(c));
   tickProgress();
-
-  // animate cost bars
   requestAnimationFrame(() => {
-    document.querySelectorAll(".bar-fill").forEach(el => {
-      el.style.width = el.dataset.w || "0%";
-    });
+    $all(".bar-fill").forEach(el => { el.style.width = el.dataset.w || "0%"; });
+  });
+  // keyboard
+  document.addEventListener("keydown", (e) => {
+    if (e.target.matches("input, textarea")) return;
+    if (e.code === "Space") {
+      e.preventDefault();
+      if (currentId) toggleId(currentId);
+      else {
+        const first = $(".track:not([hidden])");
+        if (first) playId(first.dataset.id);
+      }
+    } else if (e.code === "ArrowRight" && currentId) {
+      const a = getAudio(currentId); if (a) a.currentTime = Math.min(a.duration || 0, a.currentTime + 5);
+    } else if (e.code === "ArrowLeft" && currentId) {
+      const a = getAudio(currentId); if (a) a.currentTime = Math.max(0, a.currentTime - 5);
+    }
   });
 }
 
+function applyFilter() {
+  const active = $(".filters [aria-pressed='true']");
+  const f = active ? active.dataset.filter : "all";
+  const q = ($("#q")?.value || "").trim().toLowerCase();
+  let n = 0;
+  $all(".track").forEach(t => {
+    const tags = (t.dataset.tags || "") + " " + (t.dataset.model || "") + " " + (t.querySelector("h4")?.textContent || "") + " " + (t.querySelector(".prompt-box")?.textContent || "");
+    const matchF = f === "all" || t.dataset.model === f || t.dataset.lang === f || (t.dataset.tags || "").split(/\s+/).includes(f);
+    const matchQ = !q || tags.toLowerCase().includes(q);
+    const show = matchF && matchQ;
+    t.hidden = !show;
+    if (show) n++;
+  });
+  // group heads
+  $all(".group-head").forEach(g => {
+    const mid = g.dataset.model;
+    const any = $all(`.track[data-model="${mid}"]:not([hidden])`).length > 0;
+    g.hidden = !any;
+  });
+  const empty = $("#empty");
+  if (empty) empty.classList.toggle("show", n === 0);
+  const cp = $("#count");
+  if (cp) cp.textContent = n + " / 30";
+}
+
 function initFilters() {
-  const btns = document.querySelectorAll(".filters [data-filter]");
-  btns.forEach(b => b.addEventListener("click", () => {
-    btns.forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
-    const f = b.dataset.filter;
-    document.querySelectorAll(".track").forEach(t => {
-      const show = f === "all" || t.dataset.model === f || t.dataset.lang === f || (t.dataset.tags || "").split(" ").includes(f);
-      t.hidden = !show;
-    });
+  $all(".filters [data-filter]").forEach(b => b.addEventListener("click", () => {
+    $all(".filters [data-filter]").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+    applyFilter();
   }));
+  const q = $("#q");
+  if (q) q.addEventListener("input", applyFilter);
+}
+
+function initNavStuck() {
+  const nav = $(".nav");
+  if (!nav) return;
+  const onScroll = () => nav.classList.toggle("stuck", window.scrollY > 8);
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   initPlayer();
   initFilters();
+  initNavStuck();
+  applyFilter();
 });
 
   </script>

@@ -6,8 +6,8 @@
       "id": "tts-gallery",
       "num": "TTS",
       "title": "TTS Signal Desk",
-      "subtitle": "025–034 全量 30 条 · 波形/成本可视化",
-      "blurb": "Kokoro → Higgs 十条模型。30 条 Modal 实测音频，带波形解码、成本/VRAM 条形图与实时频谱。",
+      "subtitle": "025–034 · 30 tracks · 波形/成本/频谱",
+      "blurb": "十条开源 TTS 全线 Listening Room：筛选、搜索、键盘控制、成本与 VRAM 对照。",
       "href": "tts-gallery/",
       "tags": [
         "audio",
