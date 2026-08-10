@@ -140,7 +140,7 @@ sim_image = (
         "accelerate",
         "safetensors",
         "huggingface_hub[hf_transfer]>=0.26.0",
-        "numpy<2.2",
+        "numpy==2.2.5",
         "scipy",
         "Pillow",
         "tqdm",
@@ -163,7 +163,7 @@ sim_image = (
         "git clone --depth 1 https://github.com/ARISE-Initiative/robosuite.git /opt/robosuite",
         # no-deps: avoid teleop extras (pynput/evdev) on headless Modal
         "cd /opt/robosuite && pip install -e . --no-deps --no-cache-dir",
-        "pip install --no-cache-dir 'mujoco==3.3.1' 'scipy' 'Pillow' 'opencv-python-headless' 'numba' 'termcolor' 'gymnasium'",
+        "pip install --no-cache-dir 'numpy==2.2.5' 'mujoco==3.3.1' 'scipy' 'Pillow' 'opencv-python-headless' 'numba' 'termcolor' 'gymnasium'",
         "git clone --depth 1 https://github.com/robocasa/robocasa.git /opt/robocasa",
         "cd /opt/robocasa && pip install -e . --no-deps --no-cache-dir",
         # non-interactive private macros
