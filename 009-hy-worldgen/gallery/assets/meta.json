@@ -1,80 +1,147 @@
 {
   "experiment": "009-hy-worldgen",
-  "title": "HY-World 2.0 full pipeline smoke",
+  "title": "HY-World 2.0 · Generated World",
+  "subtitle": "Panorama → trajectory → WorldStereo → WorldMirror → 3DGS",
   "scene": "scene_from_008",
   "from_008": "smoke_qwen",
   "gpu": "RTX-PRO-6000",
   "nframe": 21,
   "split_view_num": 1,
+  "wonder_topk": 1,
   "max_steps": 4000,
   "worldstereo": "worldstereo-memory-dmd",
+  "vlm": "Qwen3-VL-8B-Instruct (HF transformers)",
   "stages": {
     "1": {
       "ok": true,
       "seconds": 60.11,
       "est_cost_usd": 0.0506,
+      "label": "Trajectory generate",
+      "detail": "Qwen3-VL nav + captions",
       "ts": "2026-08-10T15:14:24.201433+00:00"
     },
     "2": {
       "ok": true,
       "seconds": 395.33,
       "est_cost_usd": 0.3329,
+      "label": "Trajectory render",
+      "detail": "MoGe depth + captioned flythroughs",
       "ts": "2026-08-10T15:15:35.304615+00:00"
     },
     "3": {
       "ok": true,
-      "seconds": 137.84,
-      "est_cost_usd": 0.1161,
-      "ts": "2026-08-10T16:25:17.148869+00:00"
+      "seconds": 93.19,
+      "est_cost_usd": 0.0785,
+      "label": "WorldStereo + WorldMirror",
+      "detail": "Expand frames · align geometry",
+      "ts": "2026-08-10T18:20:53.308235+00:00"
     },
     "4": {
       "ok": true,
-      "seconds": 57.86,
-      "est_cost_usd": 0.0487,
-      "ts": "2026-08-10T16:28:07.040822+00:00"
+      "seconds": 61.6,
+      "est_cost_usd": 0.0519,
+      "label": "GS data",
+      "detail": "Cameras · depths · normals",
+      "ts": "2026-08-10T18:23:02.780259+00:00"
     },
     "5": {
       "ok": true,
-      "seconds": 208.57,
-      "est_cost_usd": 0.1756,
-      "ts": "2026-08-10T16:48:50.758411+00:00"
+      "seconds": 348.41,
+      "est_cost_usd": 0.2934,
+      "label": "3DGS train",
+      "detail": "4000 steps · disable_viewer",
+      "ts": "2026-08-10T18:30:45.910234+00:00"
     }
   },
-  "total_seconds_logged": 859.71,
-  "total_est_cost_usd": 0.7239,
+  "total_seconds_logged": 958.64,
+  "total_est_cost_usd": 0.8073,
   "gs": {
-    "psnr": 19.964466094970703,
-    "ssim": 0.7283122539520264,
-    "lpips": 0.18627668917179108,
-    "num_GS": 1357841,
-    "eval_s_per_image": 0.04562711715698242
+    "psnr": 20.021,
+    "ssim": 0.7279,
+    "lpips": 0.185,
+    "num_GS": 1359785,
+    "eval_s_per_image": 0.094
   },
   "artifacts": {
     "panorama": "assets/panorama.png",
     "val_render": "assets/renders/val_step3999.png",
+    "start_frame": "assets/start_frame.png",
     "ply_gs": "assets/ply/point_cloud_3999.ply",
     "ply_aligned": "assets/ply/aligned_pcd.ply",
     "ply_global": "assets/ply/global_pcd.ply",
-    "videos": [
-      "assets/videos/traj0_worldstereo.mp4",
-      "assets/videos/traj1_worldstereo.mp4",
-      "assets/videos/traj2_worldstereo.mp4"
-    ],
-    "world_preview": "assets/ply/world_preview.ply"
+    "world_preview": "assets/ply/world_preview.ply",
+    "videos": {
+      "traj0": {
+        "render": "assets/videos/traj0_render.mp4",
+        "worldstereo": "assets/videos/traj0_worldstereo.mp4"
+      },
+      "traj1": {
+        "render": "assets/videos/traj1_render.mp4",
+        "worldstereo": "assets/videos/traj1_worldstereo.mp4"
+      },
+      "traj2": {
+        "render": "assets/videos/traj2_render.mp4",
+        "worldstereo": "assets/videos/traj2_worldstereo.mp4"
+      }
+    }
   },
-  "notes": [
-    "Stage3 WorldMirror uses SDPA (no flash_attn)",
-    "Stage5 --disable_viewer so job exits cleanly",
-    "Single RTX-PRO-6000 smoke: 1 view \u00d7 3 traj, nframe=21"
-  ],
-  "built_at": "2026-08-10T16:58:08.118426Z",
   "viewer": {
     "default": "assets/ply/world_preview.ply",
-    "note": "Interactive three.js PLY point-cloud viewer. world_preview = 400k colored points from 3DGS SH-DC.",
     "models": [
-      "assets/ply/world_preview.ply",
-      "assets/ply/global_pcd.ply",
-      "assets/ply/aligned_pcd.ply"
+      {
+        "id": "preview",
+        "path": "assets/ply/world_preview.ply",
+        "label": "3DGS preview",
+        "points": 350000,
+        "note": "Recommended · SH-DC colors"
+      },
+      {
+        "id": "global",
+        "path": "assets/ply/global_pcd.ply",
+        "label": "WorldMirror global",
+        "points": 180000,
+        "note": "Aligned reconstruction"
+      },
+      {
+        "id": "aligned",
+        "path": "assets/ply/aligned_pcd.ply",
+        "label": "Aligned dense",
+        "points": 2000000,
+        "note": "Heavier · more detail"
+      }
     ]
-  }
+  },
+  "downloads": [
+    {
+      "path": "assets/ply/world_preview.ply",
+      "name": "world_preview.ply",
+      "desc": "Web preview · 350k pts",
+      "bytes": 5250222
+    },
+    {
+      "path": "assets/ply/global_pcd.ply",
+      "name": "global_pcd.ply",
+      "desc": "WM global cloud",
+      "bytes": 2915907
+    },
+    {
+      "path": "assets/ply/aligned_pcd.ply",
+      "name": "aligned_pcd.ply",
+      "desc": "WM aligned dense",
+      "bytes": 32000244
+    },
+    {
+      "path": "assets/ply/point_cloud_3999.ply",
+      "name": "point_cloud_3999.ply",
+      "desc": "Full 3DGS · step 3999",
+      "bytes": 76039459
+    }
+  ],
+  "notes": [
+    "Single RTX-PRO-6000 smoke: 1 view × 3 traj, nframe=21",
+    "Stage3 WorldMirror uses SDPA (no flash_attn on Modal)",
+    "Stage5 --disable_viewer so jobs exit cleanly",
+    "VLM default: HF transformers server (vLLM engine core was unstable)"
+  ],
+  "built_at": "2026-08-10T18:39:13Z"
 }

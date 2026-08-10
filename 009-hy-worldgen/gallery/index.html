@@ -2,138 +2,689 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>009 · HY-Worldgen · 3D World Gallery</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="HY-World 2.0 generated 3D world — interactive point cloud, trajectories, and 3DGS metrics." />
+  <title>HY-World · Generated World</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0c0e12; --elev: #141820; --line: rgba(255,255,255,.08);
-      --fg: #eef1f6; --muted: #8b93a7; --accent: #3dd6c6; --accent2: #f0a46e;
-      --ok: #3dd68c; --font: "DM Sans", system-ui, sans-serif; --mono: "JetBrains Mono", monospace;
+      --bg: #09090b;
+      --bg-elevated: #111113;
+      --bg-subtle: #18181b;
+      --bg-hover: #1f1f23;
+      --fg: #f4f4f5;
+      --fg-muted: #a1a1aa;
+      --fg-subtle: #71717a;
+      --border: color-mix(in oklab, var(--fg) 10%, transparent);
+      --border-strong: color-mix(in oklab, var(--fg) 18%, transparent);
+      --accent: #e4e4e7;
+      --accent-fg: #09090b;
+      --ok: #86efac;
+      --warn: #fcd34d;
+      --shadow: 0 24px 64px rgba(0,0,0,.55);
+      --radius-xs: 4px;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 24px;
+      --space-6: 32px;
+      --space-7: 48px;
+      --space-8: 64px;
+      --font-display: "Instrument Serif", "Times New Roman", serif;
+      --font-body: "IBM Plex Sans", system-ui, sans-serif;
+      --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+      --text-xs: 0.75rem;
+      --text-sm: 0.875rem;
+      --text-base: 1rem;
+      --text-lg: 1.125rem;
+      --text-xl: clamp(1.35rem, 1.1rem + 1vw, 1.65rem);
+      --text-2xl: clamp(1.85rem, 1.3rem + 2vw, 2.75rem);
+      --text-3xl: clamp(2.4rem, 1.6rem + 3.5vw, 3.75rem);
+      --leading-tight: 1.12;
+      --leading-snug: 1.3;
+      --leading-normal: 1.55;
+      --tracking-display: -0.03em;
+      --nav-h: 56px;
+      --motion-quick: 150ms;
+      --motion-fast: 250ms;
+      --motion-slow: 400ms;
+      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+      --max: 1120px;
     }
-    * { box-sizing: border-box; }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
     body {
-      margin: 0; min-height: 100%; color: var(--fg); font-family: var(--font);
-      background:
-        radial-gradient(1000px 500px at 10% -10%, rgba(61,214,198,.12), transparent 55%),
-        radial-gradient(800px 400px at 100% 0%, rgba(240,164,110,.08), transparent 50%),
-        var(--bg);
+      margin: 0;
+      min-height: 100%;
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      line-height: var(--leading-normal);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
-    .wrap { width: min(1180px, calc(100% - 2rem)); margin: 0 auto; padding: 1.25rem 0 3rem; }
-    .eyebrow { color: var(--accent); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; }
-    h1 { margin: .35rem 0; font-size: clamp(1.45rem, 3vw, 2.1rem); letter-spacing: -.03em; }
-    .lede { color: var(--muted); max-width: 62ch; line-height: 1.55; margin: 0 0 1rem; }
 
-    /* rendered world preview strip */
-    .world-hero {
-      display: grid; gap: 0; margin: 0 0 1rem;
-      background: var(--elev); border: 1px solid var(--line); border-radius: 18px; overflow: hidden;
-      box-shadow: 0 18px 50px rgba(0,0,0,.4);
+    button, [role="button"], a.btn, select, input[type="range"] { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .5; }
+    a { color: inherit; }
+    img, video { max-width: 100%; display: block; }
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
     }
-    @media (min-width:900px){ .world-hero { grid-template-columns: 1.15fr 1fr; } }
-    .world-hero figure { margin: 0; background: #07090d; border-top: 1px solid var(--line); }
-    @media (min-width:900px){
-      .world-hero figure { border-top: 0; border-left: 1px solid var(--line); }
-      .world-hero figure:first-child { border-left: 0; }
-    }
-    .world-hero img { display: block; width: 100%; height: auto; max-height: 360px; object-fit: cover; }
-    .world-hero figcaption {
-      padding: .55rem .85rem .7rem; color: var(--muted); font-size: .78rem;
-      border-top: 1px solid var(--line);
-    }
-    .world-hero .cap-strong { color: var(--fg); font-weight: 600; }
 
-    /* ===== 3D World Viewer ===== */
-    .viewer-panel {
-      background: #07090d;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      overflow: hidden;
-      margin: 0 0 1.25rem;
-      box-shadow: 0 22px 60px rgba(0,0,0,.5);
+    
+    .lab-home {
+      position: fixed; top: calc(var(--nav-h) + 10px); right: 14px; z-index: 50;
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .5rem .85rem; border-radius: 999px;
+      background: color-mix(in oklab, var(--fg) 92%, transparent); color: var(--bg);
+      font-size: 12px; font-weight: 600; text-decoration: none;
+      box-shadow: 0 10px 28px rgba(0,0,0,.35);
+      transition: transform .2s cubic-bezier(.22,1,.36,1), background .2s;
+    }
+    .lab-home:hover { transform: translateY(-2px) scale(1.03); background: #fff; }
+    @media (max-width: 640px) {
+      .lab-home { top: auto; bottom: 16px; right: 12px; left: 12px; justify-content: center; }
+    }
+
+    /* —— Nav —— */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      height: var(--nav-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+      padding: 0 max(var(--space-4), env(safe-area-inset-right)) 0 max(var(--space-4), env(safe-area-inset-left));
+      background: color-mix(in oklab, var(--bg) 86%, transparent);
+      backdrop-filter: blur(14px) saturate(1.2);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-2);
+      text-decoration: none;
+      min-width: 0;
+    }
+    .nav-brand .mark {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      letter-spacing: var(--tracking-display);
+      font-style: italic;
+    }
+    .nav-brand .exp {
+      color: var(--fg-subtle);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      letter-spacing: .04em;
+    }
+    .nav-links {
+      display: none;
+      gap: var(--space-1);
+      align-items: center;
+    }
+    @media (min-width: 820px) {
+      .nav-links { display: flex; }
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--fg-muted);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      padding: .45rem .7rem;
+      border-radius: 999px;
+      transition: color var(--motion-quick) var(--ease-out), background var(--motion-quick) var(--ease-out);
+    }
+    .nav-links a:hover { color: var(--fg); background: var(--bg-subtle); }
+    .nav-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      flex-shrink: 0;
+    }
+    .chip {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: .02em;
+      color: var(--fg-muted);
+      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+      border-radius: 999px;
+      padding: .35rem .65rem;
+      white-space: nowrap;
+    }
+    .chip strong { color: var(--fg); font-weight: 500; }
+    .chip.ok { color: var(--ok); border-color: color-mix(in oklab, var(--ok) 30%, transparent); }
+
+    /* —— Layout —— */
+    .shell {
+      width: min(var(--max), calc(100% - 2rem));
+      margin: 0 auto;
+    }
+    section.block {
+      padding: var(--space-7) 0;
+    }
+    @media (min-width: 800px) {
+      section.block { padding: var(--space-8) 0; }
+    }
+    .section-kicker {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--fg-subtle);
+      margin: 0 0 var(--space-2);
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: var(--text-2xl);
+      font-weight: 400;
+      letter-spacing: var(--tracking-display);
+      line-height: var(--leading-tight);
+      margin: 0 0 var(--space-3);
+    }
+    .section-lede {
+      margin: 0 0 var(--space-5);
+      color: var(--fg-muted);
+      max-width: 58ch;
+      font-size: var(--text-sm);
+      line-height: var(--leading-normal);
+    }
+
+    /* —— Hero viewer —— */
+    .hero {
       position: relative;
+      margin: 0;
+      border-bottom: 1px solid var(--border);
+      background: #050506;
     }
-    .viewer-bar {
-      display: flex; flex-wrap: wrap; gap: .55rem .75rem; align-items: center;
-      padding: .7rem .9rem; border-bottom: 1px solid var(--line);
-      background: rgba(20,24,32,.95);
+    .hero-frame {
+      position: relative;
+      height: min(78vh, 820px);
+      min-height: 420px;
+      overflow: hidden;
     }
-    .viewer-bar .title { font-weight: 700; font-size: .95rem; }
-    .viewer-bar .hint { color: var(--muted); font-size: .78rem; flex: 1; min-width: 12ch; }
-    .viewer-bar select, .viewer-bar button, .viewer-bar label {
-      font: inherit; font-size: .8rem; color: var(--fg);
-      background: rgba(255,255,255,.05); border: 1px solid var(--line);
-      border-radius: 999px; padding: .35rem .7rem; cursor: pointer;
-    }
-    .viewer-bar select:focus, .viewer-bar button:hover { border-color: rgba(61,214,198,.5); outline: none; }
-    .viewer-bar label { display: inline-flex; align-items: center; gap: .4rem; cursor: default; }
-    .viewer-bar input[type=range] { width: 88px; accent-color: var(--accent); }
     #world-canvas {
-      width: 100%; height: min(72vh, 700px); display: block; touch-action: none;
-      background: radial-gradient(ellipse at 50% 60%, #101820 0%, #07090d 70%);
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
       cursor: grab;
+      background:
+        radial-gradient(ellipse 70% 55% at 50% 55%, #14161c 0%, #050506 72%);
     }
     #world-canvas:active { cursor: grabbing; }
-    .viewer-overlay {
-      position: absolute; left: 50%; top: 54%; transform: translate(-50%,-50%);
-      color: var(--muted); font-size: .9rem; pointer-events: none; text-align: center;
-      background: rgba(0,0,0,.5); padding: .75rem 1.1rem; border-radius: 12px;
-      border: 1px solid var(--line); max-width: 90%; z-index: 2;
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: max(var(--space-4), env(safe-area-inset-top)) var(--space-4) var(--space-4);
+      background:
+        linear-gradient(180deg, rgba(9,9,11,.72) 0%, transparent 28%),
+        linear-gradient(0deg, rgba(9,9,11,.85) 0%, transparent 38%);
     }
-    .viewer-overlay.error { color: #ff9b94; border-color: rgba(255,123,114,.35); }
-    .viewer-overlay.hidden { display: none; }
-    .viewer-foot {
-      display: flex; flex-wrap: wrap; gap: .5rem 1rem; justify-content: space-between;
-      padding: .55rem .9rem; border-top: 1px solid var(--line); color: var(--muted);
-      font-size: .75rem; font-family: var(--mono); background: rgba(10,13,18,.9);
+    .hero-copy { max-width: 36rem; pointer-events: none; }
+    .hero-copy h1 {
+      font-family: var(--font-display);
+      font-size: var(--text-3xl);
+      font-weight: 400;
+      letter-spacing: var(--tracking-display);
+      line-height: var(--leading-tight);
+      margin: 0 0 var(--space-3);
+      text-shadow: 0 2px 24px rgba(0,0,0,.5);
+    }
+    .hero-copy h1 em {
+      font-style: italic;
+      color: color-mix(in oklab, var(--fg) 88%, #aab4c4);
+    }
+    .hero-copy p {
+      margin: 0;
+      color: var(--fg-muted);
+      font-size: var(--text-sm);
+      max-width: 42ch;
+      text-shadow: 0 1px 12px rgba(0,0,0,.6);
     }
 
-    .stats { display: grid; grid-template-columns: repeat(2,1fr); gap: .75rem; margin: 0 0 1.1rem; }
-    @media (min-width:800px){ .stats { grid-template-columns: repeat(5,1fr); } }
-    .stat { background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 14px; padding: .9rem 1rem; }
-    .stat .l { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; }
-    .stat .v { font-size: 1.15rem; font-weight: 700; margin-top: .2rem; font-variant-numeric: tabular-nums; }
-    .stat .s { color: var(--muted); font-size: .75rem; font-family: var(--mono); margin-top: .15rem; }
-    .panel { background: var(--elev); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; margin-bottom: 1.1rem; box-shadow: 0 18px 50px rgba(0,0,0,.4); }
-    .panel-h { padding: .9rem 1.1rem; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: .5rem 1rem; justify-content: space-between; align-items: baseline; }
-    .panel-h h2 { margin: 0; font-size: 1rem; }
-    .panel-h p { margin: 0; color: var(--muted); font-size: .82rem; }
-    .grid2 { display: grid; gap: 0; }
-    @media (min-width:860px){ .grid2 { grid-template-columns: 1fr 1fr; } }
-    .grid3 { display: grid; gap: 0; }
-    @media (min-width:900px){ .grid3 { grid-template-columns: 1fr 1fr 1fr; } }
-    figure { margin: 0; border-top: 1px solid var(--line); background: #07090d; }
-    @media (min-width:860px){
-      .grid2 figure, .grid3 figure { border-top: 0; border-left: 1px solid var(--line); }
-      .grid2 figure:first-child, .grid3 figure:first-child { border-left: 0; }
+    .viewer-dock {
+      pointer-events: auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2);
+      background: color-mix(in oklab, var(--bg-elevated) 92%, transparent);
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius-md) + var(--space-2));
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+      max-width: 100%;
     }
-    figure img, figure video { display: block; width: 100%; height: auto; background: #05070b; }
-    figure video { max-height: 280px; object-fit: contain; }
-    figcaption { padding: .55rem .8rem .75rem; color: var(--muted); font-size: .75rem; letter-spacing: .03em; }
-    .pano-wrap { overflow-x: auto; background: #07090d; }
-    .pano-wrap img { min-width: 100%; height: auto; display: block; }
-    .stages { display: grid; gap: .55rem; padding: 1rem; }
-    .stage {
-      display: grid; grid-template-columns: 2.2rem 1fr auto auto; gap: .75rem; align-items: center;
-      padding: .65rem .8rem; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.02);
+    .dock-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-2);
     }
-    .stage .n { width: 1.7rem; height: 1.7rem; border-radius: 999px; display: grid; place-items: center; font-size: .78rem; font-weight: 700; background: rgba(61,214,198,.15); color: var(--accent); }
-    .stage .t { font-weight: 600; font-size: .92rem; }
-    .stage .d { color: var(--muted); font-size: .78rem; }
-    .stage .ok { color: var(--ok); font-family: var(--mono); font-size: .78rem; }
-    .stage .cost { color: var(--accent2); font-family: var(--mono); font-size: .78rem; text-align: right; }
-    .dl { display: flex; flex-wrap: wrap; gap: .6rem; padding: 1rem; }
-    .dl a {
-      display: inline-flex; align-items: center; gap: .4rem; padding: .55rem .85rem; border-radius: 999px;
-      border: 1px solid var(--line); background: rgba(255,255,255,.03); color: var(--fg); text-decoration: none; font-size: .85rem;
+    .dock-group + .dock-group {
+      padding-left: var(--space-2);
+      border-left: 1px solid var(--border);
     }
-    .dl a:hover { border-color: rgba(61,214,198,.45); color: var(--accent); }
-    .dl .sz { color: var(--muted); font-family: var(--mono); font-size: .72rem; }
-    pre { margin: 0; padding: 1rem; overflow: auto; max-height: 320px; font-family: var(--mono); font-size: .72rem; color: #c8d0e0; background: #0a0d12; }
-    footer { color: var(--muted); font-size: .82rem; display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; justify-content: space-between; margin-top: .5rem; }
-    a { color: var(--accent); }
-    .notes { padding: 0 1rem 1rem; color: var(--muted); font-size: .85rem; }
-    .notes li { margin: .25rem 0; }
+    @media (max-width: 640px) {
+      .dock-group + .dock-group {
+        border-left: 0;
+        padding-left: 0;
+        width: 100%;
+      }
+    }
+
+    .seg {
+      display: inline-flex;
+      padding: 3px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      gap: 2px;
+    }
+    .seg button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--fg-muted);
+      font: 500 var(--text-xs)/1 var(--font-body);
+      padding: .45rem .7rem;
+      border-radius: 999px;
+      transition: background var(--motion-quick) var(--ease-out), color var(--motion-quick) var(--ease-out);
+    }
+    .seg button[aria-pressed="true"] {
+      background: var(--accent);
+      color: var(--accent-fg);
+    }
+    .seg button:hover:not([aria-pressed="true"]) { color: var(--fg); }
+
+    .btn {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: var(--bg-subtle);
+      color: var(--fg);
+      font: 500 var(--text-xs)/1 var(--font-body);
+      padding: .55rem .8rem;
+      border-radius: 999px;
+      transition: background var(--motion-quick) var(--ease-out), border-color var(--motion-quick) var(--ease-out), transform var(--motion-quick) var(--ease-out);
+    }
+    .btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary {
+      background: var(--accent);
+      color: var(--accent-fg);
+      border-color: transparent;
+    }
+    .btn-primary:hover { background: #fff; }
+
+    .range-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      color: var(--fg-muted);
+      font-size: var(--text-xs);
+      font-family: var(--font-mono);
+    }
+    .range-wrap input[type="range"] {
+      width: 88px;
+      accent-color: var(--accent);
+    }
+
+    .viewer-status {
+      position: absolute;
+      left: 50%;
+      top: 48%;
+      transform: translate(-50%, -50%);
+      z-index: 3;
+      pointer-events: none;
+      text-align: center;
+      padding: var(--space-3) var(--space-5);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: color-mix(in oklab, var(--bg) 88%, transparent);
+      color: var(--fg-muted);
+      font-size: var(--text-sm);
+      backdrop-filter: blur(8px);
+      max-width: min(90%, 28rem);
+    }
+    .viewer-status.error { color: #fca5a5; border-color: color-mix(in oklab, #fca5a5 35%, transparent); }
+    .viewer-status.hidden { display: none; }
+
+    .viewer-foot {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: var(--space-2) var(--space-4);
+      padding: .65rem max(var(--space-4), env(safe-area-inset-left));
+      border-top: 1px solid var(--border);
+      background: var(--bg-elevated);
+      color: var(--fg-subtle);
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    /* —— Metrics —— */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-3);
+    }
+    @media (min-width: 720px) {
+      .metrics { grid-template-columns: repeat(4, 1fr); }
+    }
+    .metric {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      min-height: 104px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: border-color var(--motion-fast) var(--ease-out);
+    }
+    .metric:hover { border-color: var(--border-strong); }
+    .metric .label {
+      color: var(--fg-subtle);
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    .metric .value {
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 1.2rem + 1.2vw, 2.1rem);
+      letter-spacing: var(--tracking-display);
+      line-height: 1;
+      margin: var(--space-2) 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .metric .sub {
+      color: var(--fg-muted);
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    /* —— Pipeline —— */
+    .pipeline {
+      display: grid;
+      gap: var(--space-3);
+    }
+    @media (min-width: 900px) {
+      .pipeline {
+        grid-template-columns: repeat(5, 1fr);
+        gap: var(--space-3);
+      }
+    }
+    .stage-card {
+      position: relative;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      min-height: 160px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+    .stage-card .idx {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--accent-fg);
+      background: var(--accent);
+    }
+    .stage-card h3 {
+      margin: 0;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      letter-spacing: -.01em;
+    }
+    .stage-card p {
+      margin: 0;
+      color: var(--fg-muted);
+      font-size: var(--text-xs);
+      line-height: 1.45;
+      flex: 1;
+    }
+    .stage-card .meta-row {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-2);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--fg-subtle);
+      padding-top: var(--space-2);
+      border-top: 1px solid var(--border);
+    }
+    .stage-card .meta-row .ok { color: var(--ok); }
+
+    /* —— Compare / media —— */
+    .traj-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      margin-bottom: var(--space-4);
+    }
+    .traj-tabs button {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--fg-muted);
+      font: 500 var(--text-sm)/1 var(--font-body);
+      padding: .65rem 1rem;
+      border-radius: 999px;
+      min-height: 44px;
+      transition: background var(--motion-quick) var(--ease-out), color var(--motion-quick) var(--ease-out), border-color var(--motion-quick) var(--ease-out);
+    }
+    .traj-tabs button[aria-selected="true"] {
+      background: var(--accent);
+      color: var(--accent-fg);
+      border-color: transparent;
+    }
+    .traj-tabs button:hover:not([aria-selected="true"]) {
+      color: var(--fg);
+      border-color: var(--border-strong);
+    }
+
+    .compare {
+      display: grid;
+      gap: var(--space-3);
+    }
+    @media (min-width: 800px) {
+      .compare { grid-template-columns: 1fr 1fr; }
+    }
+    .media-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+    }
+    .media-card .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border);
+    }
+    .media-card .head h3 {
+      margin: 0;
+      font-size: var(--text-sm);
+      font-weight: 600;
+    }
+    .media-card .head span {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--fg-subtle);
+    }
+    .media-card video, .media-card img {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      object-fit: contain;
+      background: #050506;
+    }
+    .media-card .cap {
+      padding: var(--space-3) var(--space-4);
+      color: var(--fg-muted);
+      font-size: var(--text-xs);
+      border-top: 1px solid var(--border);
+    }
+
+    .still-grid {
+      display: grid;
+      gap: var(--space-3);
+    }
+    @media (min-width: 860px) {
+      .still-grid { grid-template-columns: 1.4fr 1fr; }
+    }
+    .still-grid .media-card img {
+      aspect-ratio: auto;
+      max-height: 340px;
+      object-fit: cover;
+      width: 100%;
+    }
+    .still-side {
+      display: grid;
+      gap: var(--space-3);
+    }
+    .still-side .media-card img {
+      max-height: 160px;
+    }
+
+    /* —— Downloads —— */
+    .dl-grid {
+      display: grid;
+      gap: var(--space-3);
+    }
+    @media (min-width: 700px) {
+      .dl-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .dl-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+      padding: var(--space-4);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      text-decoration: none;
+      transition: border-color var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out);
+    }
+    .dl-item:hover {
+      border-color: var(--border-strong);
+      background: var(--bg-subtle);
+    }
+    .dl-item .name {
+      font-weight: 600;
+      font-size: var(--text-sm);
+      margin: 0 0 4px;
+    }
+    .dl-item .desc {
+      margin: 0;
+      color: var(--fg-muted);
+      font-size: var(--text-xs);
+    }
+    .dl-item .size {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--fg-subtle);
+      white-space: nowrap;
+      padding: .4rem .65rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+    }
+
+    /* —— Notes / footer —— */
+    .notes {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: var(--space-2);
+    }
+    .notes li {
+      color: var(--fg-muted);
+      font-size: var(--text-sm);
+      padding: var(--space-3) var(--space-4);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-elevated);
+    }
+    .notes li::before {
+      content: "—";
+      color: var(--fg-subtle);
+      margin-right: var(--space-2);
+      font-family: var(--font-mono);
+    }
+
+    footer.site {
+      border-top: 1px solid var(--border);
+      padding: var(--space-6) 0 calc(var(--space-7) + env(safe-area-inset-bottom));
+      color: var(--fg-subtle);
+      font-size: var(--text-xs);
+    }
+    footer.site .shell {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3) var(--space-6);
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    footer.site a {
+      color: var(--fg-muted);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: color var(--motion-quick) var(--ease-out), border-color var(--motion-quick) var(--ease-out);
+    }
+    footer.site a:hover {
+      color: var(--fg);
+      border-color: var(--border-strong);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0);
+      white-space: nowrap; border: 0;
+    }
   </style>
   <script type="importmap">
   {
@@ -145,170 +696,205 @@
   </script>
 </head>
 <body>
-  <div class="wrap">
-    <div class="eyebrow">009 · HY-World 2.0 · 可交互 3D 世界</div>
-    <h1>这就是生成出的 3D 世界</h1>
-    <p class="lede">
-      上面是 3DGS 渲染出的房间画面；下面是可旋转的点云世界（从同一模型导出）。
-      <strong>拖拽旋转 · 滚轮缩放 · 右键平移</strong>。需要用本地 HTTP 打开（不能直接双击 file://）。
-    </p>
+  <a class="sr-only" href="#world">Skip to 3D world</a>
+  <a class="lab-home" href="../" id="lab-home">← modal-lab 小宇宙</a>
 
-    <!-- 清晰的「世界长什么样」 -->
-    <section class="world-hero">
-      <figure>
-        <img src="assets/renders/val_step3999.png" alt="3DGS rendered world" />
-        <figcaption><span class="cap-strong">渲染世界 · 3DGS val</span> · step 3999 · PSNR ~20</figcaption>
-      </figure>
-      <figure>
-        <img src="assets/panorama.png" alt="source panorama" style="object-fit: cover; object-position: center;" />
-        <figcaption><span class="cap-strong">输入全景</span> · 来自 008 HY-Pano</figcaption>
-      </figure>
+
+  <header class="nav">
+    <a class="nav-brand" href="#top" id="top">
+      <span class="mark">HY-World</span>
+      <span class="exp">009</span>
+    </a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#world">World</a>
+      <a href="#metrics">Metrics</a>
+      <a href="#pipeline">Pipeline</a>
+      <a href="#motion">Motion</a>
+      <a href="#stills">Stills</a>
+      <a href="#downloads">Downloads</a>
+    </nav>
+    <div class="nav-meta">
+      <span class="chip ok" id="nav-status">Pipeline OK</span>
+      <span class="chip" id="nav-cost"><strong>—</strong></span>
+    </div>
+  </header>
+
+  <!-- Immersive 3D hero -->
+  <section class="hero" id="world" aria-label="Interactive 3D world">
+    <div class="hero-frame">
+      <canvas id="world-canvas" aria-label="Point cloud of generated room"></canvas>
+      <div class="viewer-status" id="viewer-status">Loading world…</div>
+      <div class="hero-overlay">
+        <div class="hero-copy">
+          <h1>A room, grown from <em>one panorama</em></h1>
+          <p>Drag to orbit · scroll to zoom · right-drag to pan. This is the actual 3DGS reconstruction — not a mockup.</p>
+        </div>
+        <div class="viewer-dock" role="toolbar" aria-label="Viewer controls">
+          <div class="dock-group">
+            <div class="seg" id="model-seg" role="group" aria-label="Point cloud model"></div>
+          </div>
+          <div class="dock-group">
+            <label class="range-wrap" for="pt-size">
+              Size
+              <input id="pt-size" type="range" min="0.5" max="12" step="0.1" value="3.5" />
+            </label>
+            <button type="button" class="btn" id="btn-reset">Reset view</button>
+            <button type="button" class="btn" id="btn-auto">Auto-orbit</button>
+            <button type="button" class="btn btn-primary" id="btn-fs">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="viewer-foot">
+      <span id="viewer-info">—</span>
+      <span id="viewer-fps">—</span>
+    </div>
+  </section>
+
+  <main>
+    <section class="block shell" id="metrics">
+      <p class="section-kicker">Reconstruction quality</p>
+      <h2 class="section-title">How good is the world?</h2>
+      <p class="section-lede">Single-card smoke on RTX-PRO-6000. Metrics from the final 3DGS eval at step 3999.</p>
+      <div class="metrics" id="metrics-grid"></div>
     </section>
 
-    <!-- 可交互 3D -->
-    <section class="viewer-panel" id="viewer-panel">
-      <div class="viewer-bar">
-        <span class="title">交互 3D 点云世界</span>
-        <select id="model-select" title="选择点云">
-          <option value="assets/ply/world_preview.ply" selected>3DGS 彩色预览（35万点 · 推荐）</option>
-          <option value="assets/ply/global_pcd.ply">WorldMirror global（18万点）</option>
-          <option value="assets/ply/aligned_pcd.ply">aligned_pcd（200万点 · 较慢）</option>
-        </select>
-        <label>点大小 <input id="pt-size" type="range" min="0.5" max="12" step="0.1" value="3.5" /></label>
-        <button type="button" id="btn-reset">重置视角</button>
-        <button type="button" id="btn-fs">全屏</button>
-        <span class="hint">拖拽旋转 · 滚轮缩放</span>
-      </div>
-      <canvas id="world-canvas"></canvas>
-      <div class="viewer-overlay" id="viewer-status">加载 3D 世界…</div>
-      <div class="viewer-foot">
-        <span id="viewer-info">—</span>
-        <span id="viewer-fps">—</span>
+    <section class="block shell" id="pipeline">
+      <p class="section-kicker">End-to-end</p>
+      <h2 class="section-title">Five stages, one GPU</h2>
+      <p class="section-lede">From panorama understanding through stereo expansion to Gaussian training — timed and costed on Modal.</p>
+      <div class="pipeline" id="pipeline-grid"></div>
+    </section>
+
+    <section class="block shell" id="motion">
+      <p class="section-kicker">Camera paths</p>
+      <h2 class="section-title">Trajectory · before & after</h2>
+      <p class="section-lede">Left: Stage&nbsp;2 geometric render. Right: Stage&nbsp;3 WorldStereo expansion with temporal consistency.</p>
+      <div class="traj-tabs" id="traj-tabs" role="tablist" aria-label="Trajectory"></div>
+      <div class="compare" id="traj-compare"></div>
+    </section>
+
+    <section class="block shell" id="stills">
+      <p class="section-kicker">Frames</p>
+      <h2 class="section-title">Source and render</h2>
+      <p class="section-lede">Input panorama from HY-Pano, the view-0 start frame, and a novel view from the trained 3DGS.</p>
+      <div class="still-grid">
+        <article class="media-card">
+          <div class="head">
+            <h3>Input panorama</h3>
+            <span>HY-Pano · 008</span>
+          </div>
+          <img src="assets/panorama.png" alt="Source equirectangular panorama of the room" loading="lazy" />
+          <div class="cap">360° source that seeds trajectory generation and stereo expansion.</div>
+        </article>
+        <div class="still-side">
+          <article class="media-card">
+            <div class="head">
+              <h3>Start frame</h3>
+              <span>view0</span>
+            </div>
+            <img src="assets/start_frame.png" alt="Start frame for view 0" loading="lazy" />
+            <div class="cap">First perspective cut used by the trajectory planner.</div>
+          </article>
+          <article class="media-card">
+            <div class="head">
+              <h3>3DGS val render</h3>
+              <span>step 3999</span>
+            </div>
+            <img src="assets/renders/val_step3999.png" alt="Validation render from trained 3D Gaussian Splatting model" loading="lazy" />
+            <div class="cap">Novel view from the trained Gaussian field.</div>
+          </article>
+        </div>
       </div>
     </section>
 
-    <section class="stats" id="stats"></section>
-
-    <section class="panel">
-      <div class="panel-h">
-        <h2>Stage pipeline</h2>
-        <p>成功阶段耗时 / 估费</p>
-      </div>
-      <div class="stages" id="stages"></div>
-      <ul class="notes" id="notes"></ul>
+    <section class="block shell" id="downloads">
+      <p class="section-kicker">Assets</p>
+      <h2 class="section-title">Take the world with you</h2>
+      <p class="section-lede">Preview cloud for the browser, denser WorldMirror clouds, and the full trained 3DGS PLY.</p>
+      <div class="dl-grid" id="downloads-grid"></div>
     </section>
 
-    <section class="panel">
-      <div class="panel-h">
-        <h2>Trajectory render vs WorldStereo</h2>
-        <p>上：Stage2 轨迹渲染 · 下：Stage3 WorldStereo 扩帧</p>
-      </div>
-      <div class="grid3">
-        <figure>
-          <video controls playsinline muted loop src="assets/videos/traj0_render.mp4"></video>
-          <video controls playsinline muted loop src="assets/videos/traj0_worldstereo.mp4"></video>
-          <figcaption>traj0 · render → WorldStereo</figcaption>
-        </figure>
-        <figure>
-          <video controls playsinline muted loop src="assets/videos/traj1_render.mp4"></video>
-          <video controls playsinline muted loop src="assets/videos/traj1_worldstereo.mp4"></video>
-          <figcaption>traj1 · render → WorldStereo</figcaption>
-        </figure>
-        <figure>
-          <video controls playsinline muted loop src="assets/videos/traj2_render.mp4"></video>
-          <video controls playsinline muted loop src="assets/videos/traj2_worldstereo.mp4"></video>
-          <figcaption>traj2 · render → WorldStereo</figcaption>
-        </figure>
-      </div>
+    <section class="block shell" id="notes">
+      <p class="section-kicker">Run notes</p>
+      <h2 class="section-title">What to know</h2>
+      <ul class="notes" id="notes-list"></ul>
     </section>
+  </main>
 
-    <section class="panel">
-      <div class="panel-h">
-        <h2>Start frame</h2>
-        <p>view0 起点</p>
+  <footer class="site">
+    <div class="shell">
+      <div>
+        Upstream <a href="https://github.com/Tencent-Hunyuan/HY-World-2.0" target="_blank" rel="noopener">HY-World 2.0</a>
+        · experiment <span id="foot-exp">009</span>
       </div>
-      <div class="grid2">
-        <figure>
-          <img src="assets/start_frame.png" alt="start frame" />
-          <figcaption>Start frame (view0)</figcaption>
-        </figure>
-        <figure>
-          <img src="assets/renders/val_step3999.png" alt="val render" />
-          <figcaption>Val render · step 3999</figcaption>
-        </figure>
-      </div>
-    </section>
-
-    <section class="panel">
-      <div class="panel-h">
-        <h2>Download full models</h2>
-        <p>完整 ply（含原始 3DGS 高斯）</p>
-      </div>
-      <div class="dl" id="downloads"></div>
-    </section>
-
-    <section class="panel">
-      <div class="panel-h"><h2>meta.json</h2><p>阶段日志汇总</p></div>
-      <pre id="meta">loading…</pre>
-    </section>
-
-    <footer>
-      <div>Upstream <a href="https://github.com/Tencent-Hunyuan/HY-World-2.0">HY-World-2.0</a> · three.js PLY viewer</div>
-      <div id="foot">scene: scene_from_008</div>
-    </footer>
-  </div>
+      <div id="foot-scene">scene: —</div>
+    </div>
+  </footer>
 
   <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
 
+    /* ========== Viewer ========== */
     const canvas = document.getElementById('world-canvas');
     const statusEl = document.getElementById('viewer-status');
     const infoEl = document.getElementById('viewer-info');
     const fpsEl = document.getElementById('viewer-fps');
-    const modelSelect = document.getElementById('model-select');
     const ptSize = document.getElementById('pt-size');
+    const modelSeg = document.getElementById('model-seg');
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      alpha: false,
+      powerPreference: 'high-performance',
+    });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setClearColor(0x07090d, 1);
+    renderer.setClearColor(0x050506, 1);
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x07090d, 0.02);
+    scene.fog = new THREE.FogExp2(0x050506, 0.018);
 
-    const camera = new THREE.PerspectiveCamera(60, 1, 0.01, 200);
-    camera.position.set(1.2, 0.7, 1.8);
+    const camera = new THREE.PerspectiveCamera(55, 1, 0.01, 200);
+    camera.position.set(1.15, 0.65, 1.7);
 
     const controls = new OrbitControls(camera, canvas);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.07;
-    controls.rotateSpeed = 0.9;
-    controls.zoomSpeed = 1.15;
-    controls.panSpeed = 0.8;
+    controls.dampingFactor = 0.06;
+    controls.rotateSpeed = 0.85;
+    controls.zoomSpeed = 1.1;
+    controls.panSpeed = 0.75;
     controls.target.set(0, 0, 0);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-    const key = new THREE.DirectionalLight(0xffffff, 0.65);
-    key.position.set(2, 5, 3);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+    const key = new THREE.DirectionalLight(0xffffff, 0.55);
+    key.position.set(2.2, 4.5, 2.5);
     scene.add(key);
 
-    const grid = new THREE.GridHelper(6, 24, 0x2a3544, 0x151b24);
+    const grid = new THREE.GridHelper(8, 32, 0x2a2a32, 0x16161c);
     grid.position.y = -0.5;
     scene.add(grid);
 
     let pointsObj = null;
     let baseCamDist = 2;
     let modelMaxDim = 1;
+    let autoOrbit = false;
+    let currentUrl = '';
 
     function resize() {
-      const w = canvas.clientWidth || canvas.parentElement.clientWidth;
-      const h = canvas.clientHeight || Math.min(window.innerHeight * 0.72, 700);
+      const parent = canvas.parentElement;
+      const w = parent.clientWidth;
+      const h = parent.clientHeight;
       renderer.setSize(w, h, false);
       camera.aspect = w / Math.max(h, 1);
       camera.updateProjectionMatrix();
     }
     window.addEventListener('resize', resize);
+    if (window.ResizeObserver) {
+      new ResizeObserver(resize).observe(canvas.parentElement);
+    }
     resize();
 
     function setStatus(msg, isError = false) {
@@ -319,7 +905,6 @@
 
     function applyPointSize() {
       if (!pointsObj) return;
-      // larger default so room structure is visible
       pointsObj.material.size = parseFloat(ptSize.value) * 0.006 * modelMaxDim;
     }
 
@@ -332,25 +917,26 @@
       box.getSize(size);
       geometry.translate(-center.x, -center.y, -center.z);
       modelMaxDim = Math.max(size.x, size.y, size.z, 0.2);
-      const dist = modelMaxDim * 1.15;
+      const dist = modelMaxDim * 1.12;
       baseCamDist = dist;
-      // eye-level-ish look into the room
-      camera.position.set(dist * 0.15, dist * 0.22, dist * 0.85);
+      camera.position.set(dist * 0.18, dist * 0.24, dist * 0.88);
       controls.target.set(0, 0, 0);
-      controls.minDistance = modelMaxDim * 0.04;
-      controls.maxDistance = modelMaxDim * 10;
+      controls.minDistance = modelMaxDim * 0.05;
+      controls.maxDistance = modelMaxDim * 12;
       camera.near = modelMaxDim * 0.0005;
-      camera.far = modelMaxDim * 50;
+      camera.far = modelMaxDim * 60;
       camera.updateProjectionMatrix();
       controls.update();
-      scene.fog.density = 0.045 / modelMaxDim;
-      grid.scale.setScalar(modelMaxDim * 0.55);
+      scene.fog.density = 0.04 / modelMaxDim;
+      grid.scale.setScalar(modelMaxDim * 0.5);
       grid.position.y = -size.y * 0.42;
     }
 
     async function loadModel(url) {
-      setStatus('加载 3D 世界… ' + url.split('/').pop());
-      infoEl.textContent = 'loading ' + url;
+      if (!url) return;
+      currentUrl = url;
+      setStatus('Loading ' + url.split('/').pop() + '…');
+      infoEl.textContent = 'loading…';
       if (pointsObj) {
         scene.remove(pointsObj);
         pointsObj.geometry.dispose();
@@ -360,18 +946,26 @@
       const loader = new PLYLoader();
       try {
         const geometry = await new Promise((resolve, reject) => {
-          loader.load(url, resolve, (xhr) => {
-            if (xhr.total) {
-              const pct = Math.round((xhr.loaded / xhr.total) * 100);
-              setStatus(`加载中 ${pct}% · ${url.split('/').pop()}`);
-            }
-          }, reject);
+          loader.load(
+            url,
+            resolve,
+            (xhr) => {
+              if (xhr.total) {
+                const pct = Math.round((xhr.loaded / xhr.total) * 100);
+                setStatus(`Loading ${pct}% · ${url.split('/').pop()}`);
+              }
+            },
+            reject,
+          );
         });
+        if (url !== currentUrl) return;
         if (!geometry.getAttribute('color')) {
           const n = geometry.getAttribute('position').count;
           const cols = new Float32Array(n * 3);
           for (let i = 0; i < n; i++) {
-            cols[i*3] = 0.55; cols[i*3+1] = 0.75; cols[i*3+2] = 0.85;
+            cols[i * 3] = 0.62;
+            cols[i * 3 + 1] = 0.66;
+            cols[i * 3 + 2] = 0.72;
           }
           geometry.setAttribute('color', new THREE.BufferAttribute(cols, 3));
         }
@@ -381,7 +975,7 @@
           vertexColors: true,
           sizeAttenuation: true,
           transparent: true,
-          opacity: 0.92,
+          opacity: 0.94,
           depthWrite: true,
         });
         pointsObj = new THREE.Points(geometry, material);
@@ -389,81 +983,212 @@
         applyPointSize();
         const n = geometry.getAttribute('position').count;
         setStatus('');
-        infoEl.textContent = `${url.split('/').pop()} · ${n.toLocaleString()} pts · 拖拽旋转查看房间`;
+        infoEl.textContent = `${url.split('/').pop()} · ${n.toLocaleString()} points`;
       } catch (e) {
         console.error(e);
-        setStatus('加载失败：' + (e.message || e) + '。请在仓库目录运行：python -m http.server 8765 --directory 009-hy-worldgen/gallery', true);
+        setStatus('Failed to load PLY. Serve this folder over HTTP (not file://).', true);
         infoEl.textContent = 'error';
       }
     }
 
     ptSize.addEventListener('input', applyPointSize);
-    modelSelect.addEventListener('change', () => loadModel(modelSelect.value));
     document.getElementById('btn-reset').addEventListener('click', () => {
-      camera.position.set(baseCamDist * 0.15, baseCamDist * 0.22, baseCamDist * 0.85);
+      camera.position.set(baseCamDist * 0.18, baseCamDist * 0.24, baseCamDist * 0.88);
       controls.target.set(0, 0, 0);
       controls.update();
     });
+    document.getElementById('btn-auto').addEventListener('click', (e) => {
+      autoOrbit = !autoOrbit;
+      e.currentTarget.setAttribute('aria-pressed', String(autoOrbit));
+      e.currentTarget.textContent = autoOrbit ? 'Orbiting…' : 'Auto-orbit';
+    });
     document.getElementById('btn-fs').addEventListener('click', () => {
-      const el = document.getElementById('viewer-panel');
+      const el = document.querySelector('.hero');
       if (!document.fullscreenElement) el.requestFullscreen?.();
       else document.exitFullscreen?.();
     });
-    document.addEventListener('fullscreenchange', () => setTimeout(resize, 50));
+    document.addEventListener('fullscreenchange', () => setTimeout(resize, 40));
 
-    let frames = 0, lastT = performance.now();
+    let frames = 0;
+    let lastT = performance.now();
     function tick(t) {
       requestAnimationFrame(tick);
+      if (autoOrbit) {
+        const angle = (t * 0.00018) % (Math.PI * 2);
+        const r = baseCamDist * 0.9;
+        camera.position.x = Math.sin(angle) * r * 0.35 + r * 0.15;
+        camera.position.z = Math.cos(angle) * r * 0.75;
+        camera.position.y = baseCamDist * 0.22;
+        controls.target.set(0, 0, 0);
+      }
       controls.update();
       renderer.render(scene, camera);
       frames++;
       if (t - lastT > 500) {
         fpsEl.textContent = Math.round((frames * 1000) / (t - lastT)) + ' fps';
-        frames = 0; lastT = t;
+        frames = 0;
+        lastT = t;
       }
     }
     requestAnimationFrame(tick);
-    loadModel(modelSelect.value);
 
-    // meta
-    const STAGE_LABEL = {
-      1: ["traj_generate", "轨迹生成"],
-      2: ["traj_render", "轨迹渲染"],
-      3: ["video_gen + WorldMirror", "WorldStereo 扩帧 + 对齐"],
-      4: ["gen_gs_data", "GS 训练数据"],
-      5: ["world_gs_trainer", "3DGS 训练"],
-    };
-    const PLY = [
-      ["assets/ply/world_preview.ply", "world_preview.ply", "网页预览 35万点"],
-      ["assets/ply/global_pcd.ply", "global_pcd.ply", "WM global"],
-      ["assets/ply/aligned_pcd.ply", "aligned_pcd.ply", "WM aligned"],
-      ["assets/ply/point_cloud_3999.ply", "point_cloud_3999.ply", "完整 3DGS"],
+    /* ========== Meta / UI ========== */
+    function money(x) {
+      return x == null ? '—' : '$' + Number(x).toFixed(2);
+    }
+    function money4(x) {
+      return x == null ? '—' : '$' + Number(x).toFixed(4);
+    }
+    function num(x, d = 2) {
+      return x == null ? '—' : Number(x).toFixed(d);
+    }
+    function fmtBytes(n) {
+      if (n == null) return '—';
+      if (n < 1024) return n + ' B';
+      if (n < 1024 * 1024) return (n / 1024).toFixed(0) + ' KB';
+      return (n / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+    function fmtSec(s) {
+      if (s == null) return '—';
+      if (s < 90) return Math.round(s) + 's';
+      const m = Math.floor(s / 60);
+      const r = Math.round(s % 60);
+      return m + 'm ' + r + 's';
+    }
+
+    const DEFAULT_MODELS = [
+      { path: 'assets/ply/world_preview.ply', label: '3DGS', note: '350k' },
+      { path: 'assets/ply/global_pcd.ply', label: 'Global', note: 'WM' },
+      { path: 'assets/ply/aligned_pcd.ply', label: 'Dense', note: '2M' },
     ];
-    function money(x){ return x==null ? '—' : '$'+Number(x).toFixed(4); }
-    function num(x,d=2){ return x==null ? '—' : Number(x).toFixed(d); }
 
-    fetch('assets/meta.json').then(r=>r.json()).then(m=>{
-      const g = m.gs || {};
-      document.getElementById('stats').innerHTML = [
-        ['GPU', m.gpu || '—', m.worldstereo || ''],
-        ['Cost (ok stages)', money(m.total_est_cost_usd), num(m.total_seconds_logged,1)+'s'],
-        ['PSNR', num(g.psnr,2), 'SSIM '+num(g.ssim,3)],
-        ['Gaussians', g.num_GS!=null ? (g.num_GS/1e6).toFixed(2)+'M' : '—', 'LPIPS '+num(g.lpips,3)],
-        ['Steps', m.max_steps || 4000, 'nframe '+(m.nframe||'—')],
-      ].map(([l,v,s])=>`<div class="stat"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
-      const stages = m.stages || {};
-      document.getElementById('stages').innerHTML = Object.keys(stages).sort((a,b)=>a-b).map(k=>{
-        const s = stages[k];
-        const [en, zh] = STAGE_LABEL[k] || ['stage '+k, ''];
-        return `<div class="stage"><div class="n">${k}</div><div><div class="t">${zh||en}</div><div class="d">${en}</div></div><div class="ok">${s.ok===true?'ok':s.ok===false?'fail':'—'}</div><div class="cost">${num(s.seconds,1)}s · ${money(s.est_cost_usd)}</div></div>`;
-      }).join('');
-      document.getElementById('notes').innerHTML = (m.notes||[]).map(n=>`<li>${n}</li>`).join('');
-      document.getElementById('meta').textContent = JSON.stringify(m, null, 2);
-      document.getElementById('foot').textContent = `scene: ${m.scene||'—'} · from ${m.from_008||'—'}`;
-      document.getElementById('downloads').innerHTML = PLY.map(([href,name,desc]) =>
-        `<a href="${href}" download><span>${name}</span><span class="sz">${desc}</span></a>`
-      ).join('');
-    }).catch(e=>{ document.getElementById('meta').textContent = String(e); });
+    function buildModelSeg(models, defaultPath) {
+      modelSeg.innerHTML = '';
+      const list = models?.length ? models : DEFAULT_MODELS;
+      list.forEach((m, i) => {
+        const path = m.path || m;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = m.label || path.split('/').pop();
+        btn.title = m.note || path;
+        btn.setAttribute('aria-pressed', String(i === 0 || path === defaultPath));
+        btn.addEventListener('click', () => {
+          [...modelSeg.querySelectorAll('button')].forEach((b) => b.setAttribute('aria-pressed', 'false'));
+          btn.setAttribute('aria-pressed', 'true');
+          loadModel(path);
+        });
+        modelSeg.appendChild(btn);
+      });
+      const active = list.find((m) => (m.path || m) === defaultPath) || list[0];
+      loadModel(active.path || active);
+    }
+
+    const TRAJ = [
+      { id: 'traj0', label: 'Path 0' },
+      { id: 'traj1', label: 'Path 1' },
+      { id: 'traj2', label: 'Path 2' },
+    ];
+
+    function renderTraj(id) {
+      const tabs = document.getElementById('traj-tabs');
+      [...tabs.querySelectorAll('button')].forEach((b) => {
+        b.setAttribute('aria-selected', String(b.dataset.id === id));
+      });
+      const base = 'assets/videos/' + id;
+      document.getElementById('traj-compare').innerHTML = `
+        <article class="media-card">
+          <div class="head"><h3>Stage 2 · Render</h3><span>${id}</span></div>
+          <video controls playsinline muted loop autoplay src="${base}_render.mp4"></video>
+          <div class="cap">Geometric trajectory render with MoGe depth cues.</div>
+        </article>
+        <article class="media-card">
+          <div class="head"><h3>Stage 3 · WorldStereo</h3><span>memory-dmd</span></div>
+          <video controls playsinline muted loop autoplay src="${base}_worldstereo.mp4"></video>
+          <div class="cap">Stereo-expanded video with temporal memory.</div>
+        </article>`;
+    }
+
+    function buildTrajTabs() {
+      const tabs = document.getElementById('traj-tabs');
+      tabs.innerHTML = '';
+      TRAJ.forEach((t, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.role = 'tab';
+        b.dataset.id = t.id;
+        b.textContent = t.label;
+        b.setAttribute('aria-selected', String(i === 0));
+        b.addEventListener('click', () => renderTraj(t.id));
+        tabs.appendChild(b);
+      });
+      renderTraj(TRAJ[0].id);
+    }
+
+    fetch('assets/meta.json')
+      .then((r) => r.json())
+      .then((m) => {
+        const g = m.gs || {};
+        document.getElementById('nav-cost').innerHTML = `<strong>${money(m.total_est_cost_usd)}</strong> · ${fmtSec(m.total_seconds_logged)}`;
+        document.getElementById('foot-scene').textContent =
+          `scene: ${m.scene || '—'} · from ${m.from_008 || '—'} · ${m.gpu || ''}`;
+        document.getElementById('foot-exp').textContent = m.experiment || '009';
+
+        document.getElementById('metrics-grid').innerHTML = [
+          { label: 'PSNR', value: num(g.psnr, 2), sub: 'higher is better' },
+          { label: 'SSIM', value: num(g.ssim, 3), sub: 'LPIPS ' + num(g.lpips, 3) },
+          { label: 'Gaussians', value: g.num_GS != null ? (g.num_GS / 1e6).toFixed(2) + 'M' : '—', sub: (m.max_steps || 4000) + ' steps' },
+          { label: 'GPU cost', value: money(m.total_est_cost_usd), sub: (m.gpu || '') + ' · ' + fmtSec(m.total_seconds_logged) },
+        ]
+          .map(
+            (x) =>
+              `<div class="metric"><div class="label">${x.label}</div><div class="value">${x.value}</div><div class="sub">${x.sub}</div></div>`,
+          )
+          .join('');
+
+        const stages = m.stages || {};
+        document.getElementById('pipeline-grid').innerHTML = Object.keys(stages)
+          .sort((a, b) => a - b)
+          .map((k) => {
+            const s = stages[k];
+            return `<article class="stage-card">
+              <div class="idx">${k}</div>
+              <h3>${s.label || 'Stage ' + k}</h3>
+              <p>${s.detail || ''}</p>
+              <div class="meta-row">
+                <span class="ok">${s.ok === true ? 'OK' : s.ok === false ? 'FAIL' : '—'}</span>
+                <span>${fmtSec(s.seconds)} · ${money4(s.est_cost_usd)}</span>
+              </div>
+            </article>`;
+          })
+          .join('');
+
+        document.getElementById('notes-list').innerHTML = (m.notes || [])
+          .map((n) => `<li>${n}</li>`)
+          .join('');
+
+        const dls = m.downloads || [];
+        document.getElementById('downloads-grid').innerHTML = dls
+          .map(
+            (d) =>
+              `<a class="dl-item" href="${d.path}" download>
+                <div><p class="name">${d.name}</p><p class="desc">${d.desc || ''}</p></div>
+                <span class="size">${fmtBytes(d.bytes)}</span>
+              </a>`,
+          )
+          .join('');
+
+        const models = (m.viewer && m.viewer.models) || DEFAULT_MODELS;
+        const def = (m.viewer && m.viewer.default) || models[0].path || models[0];
+        buildModelSeg(models, def);
+      })
+      .catch((e) => {
+        console.error(e);
+        buildModelSeg(DEFAULT_MODELS, DEFAULT_MODELS[0].path);
+        setStatus('meta.json missing — viewer still works', false);
+        setTimeout(() => setStatus(''), 2000);
+      });
+
+    buildTrajTabs();
   </script>
 </body>
 </html>

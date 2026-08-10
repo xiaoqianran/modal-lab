@@ -1,29 +1,33 @@
-# 009 Gallery — 可交互 3D 世界
+# 009 Gallery — HY-World 2.0 Generated World
 
-页面顶部是 **3DGS 渲染的房间画面**，下方是 **可拖拽旋转的点云世界**（three.js）。
+Immersive single-page exhibition of the `scene_from_008` smoke run.
 
-## 打开方式（必须用 HTTP）
+## Open
+
+Serve this directory over HTTP (module imports + PLY fetch need it):
 
 ```bash
-# 仓库根目录
-python -m http.server 8765 --directory 009-hy-worldgen/gallery
-# 浏览器打开 http://127.0.0.1:8765/
+python3 -m http.server 8765 --directory 009-hy-worldgen/gallery
+# → http://127.0.0.1:8765/
 ```
 
-不要直接双击 `index.html`（`file://` 会拦 ES module / PLY 加载）。
+## What’s inside
 
-## 操作
+| Section | Content |
+| --- | --- |
+| **World** | Full-bleed three.js point-cloud viewer (`world_preview.ply` default) |
+| **Metrics** | PSNR / SSIM / Gaussians / GPU cost |
+| **Pipeline** | Stages 1–5 timing & cost |
+| **Motion** | traj0–2 render vs WorldStereo videos |
+| **Stills** | Panorama, start frame, 3DGS val render |
+| **Downloads** | Preview / global / aligned / full 3DGS PLY |
 
-- 左键拖拽：旋转
-- 滚轮：缩放
-- 右键拖拽：平移
-- 下拉框：切换 3DGS 预览 / WorldMirror 点云
+## Controls
 
-## 资产
+- Drag — orbit · scroll — zoom · right-drag — pan  
+- Model chips — 3DGS preview / WorldMirror global / dense aligned  
+- Point size slider · Reset view · Auto-orbit · Fullscreen  
 
-| 文件 | 说明 |
-|------|------|
-| `assets/renders/val_step3999.png` | 3DGS 渲染世界（最直观） |
-| `assets/ply/world_preview.ply` | 网页点云预览 ~35 万点 · 5MB |
-| `assets/ply/point_cloud_3999.ply` | 完整 3DGS 高斯 ~73MB |
-| `assets/videos/traj*_worldstereo.mp4` | WorldStereo 扩帧视频 |
+## Assets
+
+All paths are relative under `assets/` (see `assets/meta.json` for the machine-readable summary).

@@ -1,0 +1,253 @@
+{
+  "lab": "modal-lab",
+  "tagline": "Modal 实验小宇宙",
+  "experiments": [
+    {
+      "id": "009-hy-worldgen",
+      "num": "009",
+      "title": "HY-World",
+      "subtitle": "全景长成的可逛 3D 房间",
+      "blurb": "拖一拖，房间会转。轨迹视频 + 3DGS 点云，一次跑通五阶段。",
+      "href": "009-hy-worldgen/",
+      "tags": [
+        "3D",
+        "world",
+        "featured"
+      ],
+      "mood": "world",
+      "featured": true,
+      "thumb": "009-hy-worldgen/assets/renders/val_step3999.png",
+      "stats": {
+        "PSNR": "20.0",
+        "GS": "1.36M",
+        "GPU": "PRO 6000"
+      },
+      "accent": "#ff8fab",
+      "available": true
+    },
+    {
+      "id": "008-hy-pano",
+      "num": "008",
+      "title": "HY-Pano",
+      "subtitle": "一张图变 360° 全景",
+      "blurb": "Qwen 加持的全景生成，给 009 当种子。",
+      "href": "008-hy-pano/",
+      "tags": [
+        "3D",
+        "pano"
+      ],
+      "mood": "pano",
+      "featured": false,
+      "thumb": "008-hy-pano/assets/panorama.png",
+      "stats": {
+        "GPU": "PRO 6000"
+      },
+      "accent": "#7bdff2",
+      "available": true
+    },
+    {
+      "id": "007-worldmirror-2.0",
+      "num": "007",
+      "title": "WorldMirror 2.0",
+      "subtitle": "视频 / 图 → 几何对齐",
+      "blurb": "重建与对齐小站，HY-World 的 Stage3 好朋友。",
+      "href": "007-worldmirror-2.0/",
+      "tags": [
+        "3D",
+        "recon"
+      ],
+      "mood": "recon",
+      "featured": false,
+      "stats": {
+        "GPU": "T4+"
+      },
+      "accent": "#b8f2e6",
+      "available": true,
+      "thumb": "007-worldmirror-2.0/assets/depth/depth_0001.png"
+    },
+    {
+      "id": "006-hunyuanworld-mirror",
+      "num": "006",
+      "title": "HunyuanWorld-Mirror",
+      "subtitle": "镜像世界重建",
+      "blurb": "更早的 World-Mirror 实验回廊。",
+      "href": "006-hunyuanworld-mirror/",
+      "tags": [
+        "3D",
+        "recon"
+      ],
+      "mood": "recon",
+      "featured": false,
+      "stats": {
+        "GPU": "L4"
+      },
+      "accent": "#a0c4ff",
+      "available": true,
+      "thumb": "006-hunyuanworld-mirror/assets/depth/depth_0001.png"
+    },
+    {
+      "id": "gpu-gallery",
+      "num": "GPU",
+      "title": "Image→3D Lab",
+      "subtitle": "L40S × PRO 6000 对照",
+      "blurb": "TripoSR / TRELLIS / Pixal3D 同台亮相。",
+      "href": "gpu-gallery/",
+      "tags": [
+        "3D",
+        "mesh",
+        "bench"
+      ],
+      "mood": "mesh",
+      "featured": false,
+      "stats": {
+        "cards": "multi"
+      },
+      "accent": "#ffd6a5",
+      "available": true
+    },
+    {
+      "id": "010-ace-step-1.5",
+      "num": "010",
+      "title": "ACE-Step 1.5",
+      "subtitle": "音乐小试听",
+      "blurb": "Turbo DiT 音乐生成，戴上耳机点开。",
+      "href": "010-ace-step-1.5/",
+      "tags": [
+        "music"
+      ],
+      "mood": "music",
+      "featured": false,
+      "stats": {
+        "GPU": "L4"
+      },
+      "accent": "#cdb4db",
+      "available": true
+    },
+    {
+      "id": "011-stable-audio-3",
+      "num": "011",
+      "title": "Stable Audio 3",
+      "subtitle": "Medium 试听",
+      "blurb": "稳定的音频生成基线。",
+      "href": "011-stable-audio-3/",
+      "tags": [
+        "music"
+      ],
+      "mood": "music",
+      "featured": false,
+      "stats": {
+        "GPU": "L4"
+      },
+      "accent": "#ffc8dd",
+      "available": true
+    },
+    {
+      "id": "012-levo-2",
+      "num": "012",
+      "title": "LeVo 2",
+      "subtitle": "SongGeneration v2",
+      "blurb": "整首歌级别的生成小舞台。",
+      "href": "012-levo-2/",
+      "tags": [
+        "music"
+      ],
+      "mood": "music",
+      "featured": false,
+      "stats": {
+        "GPU": "L40S"
+      },
+      "accent": "#bde0fe",
+      "available": true
+    },
+    {
+      "id": "013-yue",
+      "num": "013",
+      "title": "YuE",
+      "subtitle": "歌词 → 全曲",
+      "blurb": "把歌词唱成歌。",
+      "href": "013-yue/",
+      "tags": [
+        "music"
+      ],
+      "mood": "music",
+      "featured": false,
+      "stats": {
+        "GPU": "L40S"
+      },
+      "accent": "#a2d2ff",
+      "available": true
+    },
+    {
+      "id": "014-diffrhythm-2",
+      "num": "014",
+      "title": "DiffRhythm 2",
+      "subtitle": "全曲扩散",
+      "blurb": "节奏与旋律的扩散实验。",
+      "href": "014-diffrhythm-2/",
+      "tags": [
+        "music"
+      ],
+      "mood": "music",
+      "featured": false,
+      "stats": {
+        "GPU": "L4"
+      },
+      "accent": "#ffafcc",
+      "available": true
+    },
+    {
+      "id": "016-musicgen",
+      "num": "016",
+      "title": "MusicGen",
+      "subtitle": "器乐基线",
+      "blurb": "小而稳的音乐生成对照。",
+      "href": "016-musicgen/",
+      "tags": [
+        "music"
+      ],
+      "mood": "music",
+      "featured": false,
+      "stats": {
+        "GPU": "T4"
+      },
+      "accent": "#cdeac0",
+      "available": true
+    },
+    {
+      "id": "015-xiaomi-robotics-1-robocasa365",
+      "num": "015",
+      "title": "Xiaomi Robotics-1",
+      "subtitle": "RoboCasa365 冒烟",
+      "blurb": "厨房仿真里的机器人小练习。",
+      "href": "015-xiaomi-robotics-1-robocasa365/",
+      "tags": [
+        "robot"
+      ],
+      "mood": "robot",
+      "featured": false,
+      "stats": {
+        "GPU": "A100"
+      },
+      "accent": "#fdffb6",
+      "available": true
+    },
+    {
+      "id": "017-xr1-robocasa365-sim",
+      "num": "017",
+      "title": "XR1 eval-mini",
+      "subtitle": "任务成功回放",
+      "blurb": "仿真任务成功片段，一键回看。",
+      "href": "017-xr1-robocasa365-sim/",
+      "tags": [
+        "robot"
+      ],
+      "mood": "robot",
+      "featured": false,
+      "stats": {
+        "tasks": "eval-mini"
+      },
+      "accent": "#caffbf",
+      "available": true
+    }
+  ]
+}

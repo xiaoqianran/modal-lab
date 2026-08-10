@@ -26,3 +26,6 @@ books/*.pdf
 !**/gallery/**/*.mp4
 !**/gallery/assets/*.mp4
 !**/gallery/data/*.mp4
+
+# GitHub Pages build output
+_site/
