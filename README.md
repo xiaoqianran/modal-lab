@@ -6,6 +6,8 @@ Modal 实验台：按 `NNN-topic` 编号做可复现实验。
 
 ```text
 main.py                 # 入口，调度到 001 / 002 / …
+gpu-gallery/            # L40S × PRO 6000 Image→3D 对照预览（020/021/005）
+I2V_GPU_ROADMAP.md      # image→3D 卡池约定与结论
 001-longcat-video/      # 美团 LongCat-Video 视频生成复现
 002-unlimited-ocr/      # 百度 Unlimited-OCR 文档解析
 003-mineru/             # OpenDataLab MinerU 文档解析
@@ -20,11 +22,13 @@ main.py                 # 入口，调度到 001 / 002 / …
 010-ace-step-1.5/       # ACE-Step 1.5 音乐生成（默认 L4 · turbo DiT）
 011-stable-audio-3/     # Stable Audio 3 Medium（默认 L4 · FlashAttn）
 012-levo-2/             # LeVo 2 / SongGeneration v2（默认 L40S · v2-medium）
-013-yue/                # YuE 歌词→全曲（默认 L40S · en-cot）
+013-yue/                # YuE 歌词→全曲（默认 L40S · en-cot · smoke OK）
 014-diffrhythm-2/       # DiffRhythm 2 全曲扩散（默认 L4）
 015-xiaomi-robotics-1-robocasa365/  # Xiaomi-Robotics-1 VLA · RoboCasa365 冒烟（默认 A100-40GB）
 016-musicgen/           # MusicGen small 器乐基线（默认 T4 · 占 016）
 017-xr1-robocasa365-sim/ # XR1 RoboCasa 仿真
+020-triposr/            # TripoSR image→mesh 速度基线（L40S+PRO6000 · 已出 GLB）
+021-trellis2/           # TRELLIS.2-4B 质量主线 MIT（L40S+PRO6000 · 已出 GLB）
 ```
 
 命名约定：`NNN-topic`（序号 + 主题）。`python main.py 001 …` 等短号在唯一时可解析到对应目录。
@@ -46,6 +50,8 @@ python main.py 005 i2v --image 005-pixal3d/inputs/sample.webp --gpu H100
 python main.py 005 build-natten --gpu A100-40GB   # A100 首次
 cd 005-v2-pixal3d-l40s && python run.py smoke --i-know-this-costs-money  # L40S
 cd 005-v3-pixal3d-pro6000 && python run.py smoke --i-know-this-costs-money  # PRO 6000
+cd 020-triposr && python run.py smoke --i-know-this-costs-money --gpu L40S
+cd 021-trellis2 && python run.py build --gpu L40S && python run.py smoke --i-know-this-costs-money --gpu L40S
 python main.py 006 smoke          # HunyuanWorld-Mirror 最低成本冒烟
 python main.py 007 smoke          # WorldMirror 2.0 recon（T4）
 python main.py 008 smoke          # HY-Pano 轻量 Qwen（PRO 6000）
@@ -64,6 +70,8 @@ cd 005-pixal3d && python run.py smoke
 cd 005-v2-pixal3d-l40s && python run.py status
 cd 005-v3-pixal3d-pro6000 && python run.py status
 cd 008-hy-pano && python run.py status
+cd 020-triposr && python run.py status
+cd 021-trellis2 && python run.py status
 ```
 
 ## 实验一览
@@ -88,11 +96,19 @@ cd 008-hy-pano && python run.py status
 | `014-diffrhythm-2` | [DiffRhythm 2](https://github.com/ASLP-lab/DiffRhythm2) 全曲扩散；**L4 · 60s ~$0.016** |
 | `015-xiaomi-robotics-1-robocasa365` | [Xiaomi-Robotics-1](https://github.com/XiaomiRobotics/Xiaomi-Robotics-1) RoboCasa365 VLA 冒烟；**默认 A100-40GB** |
 | `016-musicgen` | [MusicGen](https://huggingface.co/facebook/musicgen-small) 器乐基线；**默认 T4 · small**（CC-BY-NC） |
-| — | 音乐队列总览见 [MUSIC_ROADMAP.md](MUSIC_ROADMAP.md) |
+| `017-xr1-robocasa365-sim` | XR1 RoboCasa 仿真；**L40S 闭环 horizon=100** |
+| `020-triposr` | [TripoSR](https://github.com/VAST-AI-Research/TripoSR) **速度基线**；**L40S ~14s / PRO6000 ~10s · ~$0.01** |
+| `021-trellis2` | [TRELLIS.2](https://github.com/microsoft/TRELLIS.2) **质量主线 MIT**；**L40S ~215s / PRO6000 ~122s · 已出 GLB** |
+| `gpu-gallery` | **L40S × PRO 6000 对照预览**（020 / 021 / 005） |
+| — | 音乐队列总览见 [MUSIC_ROADMAP.md](MUSIC_ROADMAP.md) · image→3D 卡池见 [I2V_GPU_ROADMAP.md](I2V_GPU_ROADMAP.md) |
 
-Pixal3D：  
+统一预览（L40S × PRO 6000）：[`gpu-gallery/`](gpu-gallery/) · 路线图 [`I2V_GPU_ROADMAP.md`](I2V_GPU_ROADMAP.md)
+
+Pixal3D / 开源 I2V：  
 - [005 GPU_BENCHMARK](005-pixal3d/GPU_BENCHMARK.md)  
 - [005-v2 L40S](005-v2-pixal3d-l40s/GPU_BENCHMARK.md)  
-- [005-v3 PRO 6000](005-v3-pixal3d-pro6000/GPU_BENCHMARK.md)
+- [005-v3 PRO 6000](005-v3-pixal3d-pro6000/GPU_BENCHMARK.md)  
+- [020 TripoSR](020-triposr/GPU_BENCHMARK.md)  
+- [021 TRELLIS.2](021-trellis2/GPU_BENCHMARK.md)
 
 远程：https://github.com/xiaoqianran/modal-lab

@@ -1,0 +1,60 @@
+{
+  "model": "microsoft/TRELLIS.2-4B",
+  "upstream": "microsoft/TRELLIS.2",
+  "license": "MIT",
+  "gpu_request": "L40S",
+  "gpu_actual": "NVIDIA L40S",
+  "capability": [
+    8,
+    9
+  ],
+  "arch": "8.9",
+  "output_name": "smoke_l40s",
+  "pipeline_type": "512",
+  "seed": 42,
+  "texture_size": 2048,
+  "decimation_target": 500000,
+  "attn_backend": "xformers",
+  "dino_mirror": "camenduru/dinov3-vitl16-pretrain-lvd1689m",
+  "rembg_mirror": "ZhengPeng7/BiRefNet",
+  "seconds_load": 87.31,
+  "seconds_infer": 89.08,
+  "seconds_mesh": 38.11,
+  "seconds_total": 214.5,
+  "peak_vram_gb": 3.18,
+  "est_cost_usd": 0.1163,
+  "price_per_sec_usd": 0.000542,
+  "image_url": "https://raw.githubusercontent.com/VAST-AI-Research/TripoSR/main/examples/chair.png",
+  "wheels": [
+    "cumesh-0.0.1-cp310-cp310-linux_x86_64.whl",
+    "flex_gemm-1.0.0-cp310-cp310-linux_x86_64.whl",
+    "nvdiffrast-0.4.0-cp310-cp310-linux_x86_64.whl",
+    "nvdiffrec_render-0.0.0-cp310-cp310-linux_x86_64.whl",
+    "o_voxel-0.0.1-cp310-cp310-linux_x86_64.whl"
+  ],
+  "vram": {
+    "gpu_name_smi": "NVIDIA L40S",
+    "peak_mem_used_mib": 3257.0,
+    "peak_mem_used_gb": 3.18,
+    "mem_total_mib": 46068.0,
+    "peak_util_gpu_pct": 100.0,
+    "n_samples": 138
+  },
+  "smi_end": {
+    "name": "NVIDIA L40S",
+    "mem_used_mib": 2601.0,
+    "mem_total_mib": 46068.0,
+    "util_gpu_pct": 0.0
+  },
+  "stack": "021 TRELLIS.2 source wheels ARCH=8.9",
+  "input_volume_path": "inputs/smoke_l40s.png",
+  "volume_name": "modal-lab-trellis2-outputs",
+  "volume_paths": {
+    "mesh": "meshes/smoke_l40s.glb",
+    "latest": "meshes/latest.glb",
+    "meta": "meshes/smoke_l40s_meta.json",
+    "benchmark": "benchmarks/smoke_l40s.json"
+  },
+  "bytes": 16920428,
+  "cli_get": "modal volume get modal-lab-trellis2-outputs meshes/smoke_l40s.glb ./smoke_l40s.glb"
+}

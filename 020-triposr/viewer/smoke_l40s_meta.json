@@ -1,0 +1,37 @@
+{
+  "model": "stabilityai/TripoSR",
+  "upstream": "VAST-AI-Research/TripoSR",
+  "license": "MIT",
+  "gpu_request": "L40S",
+  "gpu_actual": "NVIDIA L40S",
+  "output_name": "smoke_l40s",
+  "bake_texture": false,
+  "vertex_colors": true,
+  "mc_resolution": 256,
+  "format": "glb",
+  "seconds_load": 6.0,
+  "seconds_preprocess": 4.47,
+  "seconds_infer": 1.48,
+  "seconds_mesh": 1.66,
+  "seconds_total": 13.69,
+  "peak_vram_gb": 4.98,
+  "est_cost_usd": 0.0074,
+  "price_per_sec_usd": 0.000542,
+  "image_url": "https://raw.githubusercontent.com/VAST-AI-Research/TripoSR/main/examples/chair.png",
+  "smi_end": {
+    "name": "NVIDIA L40S",
+    "mem_used_mib": 5099.0,
+    "mem_total_mib": 46068.0,
+    "util_gpu_pct": 34.0
+  },
+  "input_volume_path": "inputs/smoke_l40s.png",
+  "volume_name": "modal-lab-triposr-outputs",
+  "volume_paths": {
+    "mesh": "meshes/smoke_l40s.glb",
+    "latest": "meshes/latest.glb",
+    "meta": "meshes/smoke_l40s_meta.json",
+    "benchmark": "benchmarks/smoke_l40s.json"
+  },
+  "bytes": 1685320,
+  "cli_get": "modal volume get modal-lab-triposr-outputs meshes/smoke_l40s.glb ./smoke_l40s.glb"
+}

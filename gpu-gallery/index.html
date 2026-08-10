@@ -1,0 +1,878 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>L40S × PRO 6000 · Image→3D Lab</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0a0a0b;
+        --bg-elevated: #121214;
+        --bg-subtle: #1a1a1e;
+        --fg: #f4f4f5;
+        --fg-muted: #a1a1aa;
+        --fg-subtle: #71717a;
+        --border: color-mix(in oklab, var(--fg) 12%, transparent);
+        --border-strong: color-mix(in oklab, var(--fg) 22%, transparent);
+        --accent: #c8ccd4;
+        --accent-fg: #0a0a0b;
+        --ok: #6ee7a8;
+        --l40: #8ab4ff;
+        --pro: #9ad7c2;
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --radius-xl: 24px;
+        --space-1: 4px;
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+        --space-5: 24px;
+        --space-6: 32px;
+        --space-7: 48px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+        --motion-quick: 150ms;
+        --motion-fast: 250ms;
+        --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      * { box-sizing: border-box; }
+      html {
+        overflow-x: hidden;
+      }
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        max-width: 100%;
+        color: var(--fg);
+        font-family: var(--font);
+        background: var(--bg);
+        line-height: 1.5;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+      button:disabled { cursor: not-allowed; opacity: 0.5; }
+
+      .app {
+        min-height: 100dvh;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        border-bottom: 1px solid var(--border);
+        background: color-mix(in oklab, var(--bg) 88%, transparent);
+        backdrop-filter: blur(14px);
+        padding: var(--space-3) var(--space-4);
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-3);
+        align-items: center;
+        justify-content: space-between;
+      }
+      .brand { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+      .brand h1 {
+        margin: 0;
+        font-size: clamp(1rem, 0.9rem + 0.6vw, 1.2rem);
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      .brand p {
+        margin: 0;
+        color: var(--fg-muted);
+        font-size: 0.8125rem;
+      }
+      .hdr-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+        align-items: center;
+        max-width: 100%;
+      }
+
+      .seg {
+        display: inline-flex;
+        padding: 3px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--bg-elevated);
+        gap: 2px;
+        max-width: 100%;
+        overflow-x: auto;
+      }
+      .seg button {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--fg-muted);
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        min-height: 40px;
+        white-space: nowrap;
+        transition: background var(--motion-quick) var(--ease), color var(--motion-quick) var(--ease);
+      }
+      .seg button.active {
+        background: var(--accent);
+        color: var(--accent-fg);
+      }
+      .seg button:hover:not(.active) {
+        color: var(--fg);
+        background: color-mix(in oklab, var(--fg) 6%, transparent);
+      }
+
+      main {
+        width: min(1280px, 100%);
+        margin: 0 auto;
+        padding: var(--space-5) var(--space-4) var(--space-7);
+        display: grid;
+        gap: var(--space-5);
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+
+      .hero {
+        display: grid;
+        gap: var(--space-4);
+      }
+      .hero-top {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-4);
+        justify-content: space-between;
+        align-items: end;
+      }
+      .hero h2 {
+        margin: 0;
+        font-size: clamp(1.4rem, 1.05rem + 1.8vw, 2.15rem);
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+        max-width: 18ch;
+      }
+      .hero .lede {
+        margin: var(--space-2) 0 0;
+        color: var(--fg-muted);
+        max-width: 52ch;
+        font-size: 0.9375rem;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+      }
+      .chip {
+        border: 1px solid var(--border);
+        background: var(--bg-elevated);
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        color: var(--fg-muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .chip b { color: var(--fg); font-weight: 600; }
+      .chip.l40 { border-color: color-mix(in oklab, var(--l40) 35%, var(--border)); }
+      .chip.pro { border-color: color-mix(in oklab, var(--pro) 35%, var(--border)); }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-3);
+      }
+      @media (min-width: 720px) {
+        .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      }
+      .stat {
+        border: 1px solid var(--border);
+        background: var(--bg-elevated);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        min-width: 0;
+      }
+      .stat .k {
+        color: var(--fg-subtle);
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+      .stat .v {
+        margin-top: 6px;
+        font-size: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+        overflow-wrap: anywhere;
+      }
+      .stat .s {
+        margin-top: 4px;
+        color: var(--fg-muted);
+        font-size: 0.75rem;
+      }
+
+      .layout {
+        display: grid;
+        gap: var(--space-4);
+        min-width: 0;
+      }
+      @media (min-width: 960px) {
+        .layout.split {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .panel {
+        border: 1px solid var(--border);
+        background: var(--bg-elevated);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        min-height: 380px;
+        min-width: 0;
+      }
+      .panel-head {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-3);
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--space-3) var(--space-4);
+        border-bottom: 1px solid var(--border);
+      }
+      .panel-head h3 {
+        margin: 0;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+      }
+      .gpu-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        display: inline-block;
+        flex-shrink: 0;
+      }
+      .gpu-dot.l40 { background: var(--l40); }
+      .gpu-dot.pro { background: var(--pro); }
+
+      .stage {
+        position: relative;
+        min-height: 320px;
+        min-width: 0;
+        background:
+          radial-gradient(ellipse 70% 50% at 50% 70%, color-mix(in oklab, var(--fg) 5%, transparent), transparent 70%),
+          var(--bg);
+      }
+      model-viewer {
+        width: 100%;
+        height: 100%;
+        min-height: 320px;
+        max-width: 100%;
+        background: transparent;
+        --poster-color: transparent;
+      }
+      .stage-hint {
+        position: absolute;
+        left: var(--space-3);
+        bottom: var(--space-3);
+        z-index: 2;
+        pointer-events: none;
+        border: 1px solid var(--border);
+        background: color-mix(in oklab, var(--bg-elevated) 90%, transparent);
+        backdrop-filter: blur(8px);
+        border-radius: var(--radius-sm);
+        padding: 6px 10px;
+        color: var(--fg-muted);
+        font-size: 0.75rem;
+      }
+      .loading {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: var(--fg-muted);
+        font-size: 0.875rem;
+        background: color-mix(in oklab, var(--bg) 40%, transparent);
+        z-index: 1;
+        transition: opacity var(--motion-fast) var(--ease);
+      }
+      .loading.hidden { opacity: 0; pointer-events: none; }
+
+      .panel-meta {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1px;
+        background: var(--border);
+        border-top: 1px solid var(--border);
+      }
+      @media (min-width: 520px) {
+        .panel-meta { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      }
+      .panel-meta > div {
+        background: var(--bg-elevated);
+        padding: var(--space-3);
+        min-width: 0;
+      }
+      .panel-meta .k {
+        color: var(--fg-subtle);
+        font-size: 0.6875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .panel-meta .v {
+        margin-top: 4px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.01em;
+      }
+
+      .models {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--space-3);
+      }
+      @media (min-width: 640px) {
+        .models { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      }
+      .model-card {
+        appearance: none;
+        text-align: left;
+        border: 1px solid var(--border);
+        background: var(--bg-elevated);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        display: grid;
+        gap: var(--space-2);
+        min-width: 0;
+        min-height: 44px;
+        transition:
+          border-color var(--motion-quick) var(--ease),
+          background var(--motion-quick) var(--ease),
+          transform var(--motion-quick) var(--ease);
+      }
+      .model-card:hover {
+        border-color: var(--border-strong);
+        background: var(--bg-subtle);
+      }
+      .model-card.active {
+        border-color: color-mix(in oklab, var(--accent) 45%, var(--border));
+        background: color-mix(in oklab, var(--accent) 8%, var(--bg-elevated));
+      }
+      .model-card:active { transform: scale(0.99); }
+      .model-card .role {
+        font-size: 0.6875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--fg-subtle);
+        font-weight: 600;
+      }
+      .model-card .name {
+        font-size: 1.0625rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      .model-card .desc {
+        color: var(--fg-muted);
+        font-size: 0.8125rem;
+      }
+      .model-card .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+        margin-top: var(--space-1);
+      }
+      .tag {
+        font-size: 0.6875rem;
+        font-variant-numeric: tabular-nums;
+        border-radius: 999px;
+        padding: 3px 8px;
+        border: 1px solid var(--border);
+        color: var(--fg-muted);
+        background: var(--bg);
+      }
+
+      .table-wrap {
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xl);
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        background: var(--bg-elevated);
+        max-width: 100%;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 620px;
+        font-size: 0.875rem;
+        font-variant-numeric: tabular-nums;
+      }
+      th, td {
+        padding: 12px 14px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+      }
+      th {
+        color: var(--fg-subtle);
+        font-weight: 500;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        background: color-mix(in oklab, var(--bg) 40%, var(--bg-elevated));
+      }
+      tr:last-child td { border-bottom: 0; }
+      td.best { color: var(--ok); font-weight: 600; }
+      .bar-cell { min-width: 100px; max-width: 140px; }
+      .bar {
+        height: 6px;
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--fg) 8%, transparent);
+        overflow: hidden;
+        margin-top: 6px;
+      }
+      .bar > i {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: color-mix(in oklab, var(--accent) 70%, var(--fg-muted));
+      }
+      .bar.l40 > i { background: color-mix(in oklab, var(--l40) 80%, white); }
+      .bar.pro > i { background: color-mix(in oklab, var(--pro) 80%, white); }
+
+      .input-row {
+        display: grid;
+        grid-template-columns: 80px 1fr;
+        gap: var(--space-4);
+        align-items: center;
+        border: 1px solid var(--border);
+        background: var(--bg-elevated);
+        border-radius: var(--radius-xl);
+        padding: var(--space-4);
+        min-width: 0;
+      }
+      .input-row img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border);
+        background: var(--bg);
+      }
+      .input-row h4 {
+        margin: 0 0 4px;
+        font-size: 0.9375rem;
+        font-weight: 600;
+      }
+      .input-row p {
+        margin: 0;
+        color: var(--fg-muted);
+        font-size: 0.8125rem;
+      }
+
+      footer {
+        border-top: 1px solid var(--border);
+        padding: var(--space-4);
+        color: var(--fg-subtle);
+        font-size: 0.75rem;
+        text-align: center;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          transition: none !important;
+          animation: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <div class="brand">
+          <h1>Image→3D GPU Lab</h1>
+          <p>L40S · RTX PRO 6000 · Modal 实测对照</p>
+        </div>
+        <div class="hdr-actions">
+          <div class="seg" id="viewMode" role="tablist" aria-label="视图">
+            <button type="button" data-mode="compare" class="active">对照</button>
+            <button type="button" data-mode="l40s">L40S</button>
+            <button type="button" data-mode="pro6000">PRO 6000</button>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div class="hero-top">
+            <div>
+              <h2>同一条 image→mesh 线，两张卡的真实墙钟</h2>
+              <p class="lede">
+                020 TripoSR（速度）· 021 TRELLIS.2（质量 / MIT）· 005 Pixal3D（慢·对齐）。
+                默认卡池：<b style="color:var(--fg);font-weight:600">L40S</b> 与
+                <b style="color:var(--fg);font-weight:600">RTX PRO 6000</b>。
+              </p>
+            </div>
+            <div class="chips">
+              <span class="chip l40"><b>L40S</b> · sm_89 · $0.000542/s</span>
+              <span class="chip pro"><b>PRO 6000</b> · sm_120 · $0.000842/s</span>
+            </div>
+          </div>
+          <div class="stats" id="summaryStats"></div>
+        </section>
+
+        <section>
+          <div class="models" id="modelCards" role="tablist" aria-label="模型"></div>
+        </section>
+
+        <section class="input-row" id="inputRow">
+          <img id="inputImg" alt="输入图" width="80" height="80" />
+          <div>
+            <h4 id="inputTitle">输入</h4>
+            <p id="inputNote">同图对照时切换模型；Pixal3D 使用其官方 sample 图。</p>
+          </div>
+        </section>
+
+        <section class="layout split" id="viewers"></section>
+
+        <section>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>模型</th>
+                  <th>角色</th>
+                  <th>L40S 总时</th>
+                  <th>PRO 6000 总时</th>
+                  <th>加速</th>
+                  <th>L40S 估费</th>
+                  <th>PRO 估费</th>
+                  <th>纹理</th>
+                </tr>
+              </thead>
+              <tbody id="benchBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        modal-lab · 020 / 021 / 005-v2 / 005-v3 · 实测 smoke · 费用仅 GPU 单价 × 墙钟
+      </footer>
+    </div>
+
+    <script>
+      const MODELS = {
+        triposr: {
+          id: "triposr",
+          name: "TripoSR",
+          role: "速度基线",
+          desc: "单图 → mesh，~10–14s，vertex color。",
+          texture: "vertex",
+          exp: "020",
+          input: { src: "assets/chair.png", title: "chair.png · TripoSR / TRELLIS 同图", note: "官方示例椅 · 两卡同一输入。" },
+          runs: {
+            l40s: {
+              label: "L40S",
+              glb: "assets/triposr/l40s.glb",
+              total: 13.69,
+              infer: 1.48,
+              mesh: 1.66,
+              vram: 4.98,
+              cost: 0.0074,
+              price: 0.000542,
+              actual: "NVIDIA L40S",
+            },
+            pro6000: {
+              label: "PRO 6000",
+              glb: "assets/triposr/pro6000.glb",
+              total: 9.66,
+              infer: 1.56,
+              mesh: 0.74,
+              vram: 5.13,
+              cost: 0.0081,
+              price: 0.000842,
+              actual: "RTX PRO 6000 Blackwell SE",
+            },
+          },
+        },
+        trellis2: {
+          id: "trellis2",
+          name: "TRELLIS.2",
+          role: "质量 · MIT",
+          desc: "4B PBR GLB · pipeline 512 · 源码 sm_89 / sm_120。",
+          texture: "PBR",
+          exp: "021",
+          input: { src: "assets/chair.png", title: "chair.png · TripoSR / TRELLIS 同图", note: "与 020 同图对照质量差距。" },
+          runs: {
+            l40s: {
+              label: "L40S",
+              glb: "assets/trellis2/l40s.glb",
+              total: 214.5,
+              infer: 89.08,
+              mesh: 38.11,
+              vram: 3.18,
+              cost: 0.1163,
+              price: 0.000542,
+              actual: "NVIDIA L40S",
+            },
+            pro6000: {
+              label: "PRO 6000",
+              glb: "assets/trellis2/pro6000.glb",
+              total: 121.91,
+              infer: 50.92,
+              mesh: 18.04,
+              vram: 3.32,
+              cost: 0.1026,
+              price: 0.000842,
+              actual: "RTX PRO 6000 Blackwell SE",
+            },
+          },
+        },
+        pixal3d: {
+          id: "pixal3d",
+          name: "Pixal3D",
+          role: "慢 · 对齐",
+          desc: "1024 cascade · 高对齐 PBR · 首次含 autotune。",
+          texture: "PBR",
+          exp: "005",
+          input: {
+            src: "assets/pixal3d/input.webp",
+            title: "Pixal3D sample.webp",
+            note: "官方 sample（与 chair 不同图，仅同管线对照）。",
+          },
+          runs: {
+            l40s: {
+              label: "L40S",
+              glb: "assets/pixal3d/l40s.glb",
+              total: 310.7,
+              infer: 310.7,
+              mesh: null,
+              vram: 15.42,
+              cost: 0.1684,
+              price: 0.000542,
+              actual: "NVIDIA L40S",
+            },
+            pro6000: {
+              label: "PRO 6000",
+              glb: "assets/pixal3d/pro6000.glb",
+              total: 230.3,
+              infer: 230.3,
+              mesh: null,
+              vram: 15.58,
+              cost: 0.1939,
+              price: 0.000842,
+              actual: "RTX PRO 6000 Blackwell SE",
+            },
+          },
+        },
+      };
+
+      const ORDER = ["triposr", "trellis2", "pixal3d"];
+      let activeModel = "trellis2";
+      let viewMode = "compare";
+
+      const $ = (sel, root = document) => root.querySelector(sel);
+
+      function fmtSec(s) {
+        if (s == null) return "—";
+        if (s < 60) return `${s.toFixed(s < 20 ? 2 : 1)} s`;
+        const m = Math.floor(s / 60);
+        const r = s - m * 60;
+        return `${m}m ${r.toFixed(0)}s`;
+      }
+      function fmtUsd(n) {
+        if (n == null) return "—";
+        if (n < 0.01) return `$${n.toFixed(4)}`;
+        return `$${n.toFixed(2)}`;
+      }
+      function speedup(a, b) {
+        if (!a || !b) return "—";
+        const r = a / b;
+        if (r >= 1) return `${r.toFixed(2)}× 更快`;
+        return `${(1 / r).toFixed(2)}× 更慢`;
+      }
+
+      function renderModelCards() {
+        const host = $("#modelCards");
+        host.innerHTML = ORDER.map((id) => {
+          const m = MODELS[id];
+          const l = m.runs.l40s;
+          const p = m.runs.pro6000;
+          return `
+            <button type="button" class="model-card ${id === activeModel ? "active" : ""}" data-model="${id}" role="tab" aria-selected="${id === activeModel}">
+              <span class="role">${m.exp} · ${m.role}</span>
+              <span class="name">${m.name}</span>
+              <span class="desc">${m.desc}</span>
+              <span class="row">
+                <span class="tag">L40S ${fmtSec(l.total)}</span>
+                <span class="tag">PRO ${fmtSec(p.total)}</span>
+                <span class="tag">${m.texture}</span>
+              </span>
+            </button>`;
+        }).join("");
+        host.querySelectorAll("[data-model]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            activeModel = btn.getAttribute("data-model");
+            renderAll();
+          });
+        });
+      }
+
+      function renderSummary() {
+        const m = MODELS[activeModel];
+        const l = m.runs.l40s;
+        const p = m.runs.pro6000;
+        const gain = ((l.total - p.total) / l.total) * 100;
+        $("#summaryStats").innerHTML = `
+          <div class="stat"><div class="k">模型</div><div class="v">${m.name}</div><div class="s">${m.exp} · ${m.role}</div></div>
+          <div class="stat"><div class="k">L40S 墙钟</div><div class="v">${fmtSec(l.total)}</div><div class="s">${fmtUsd(l.cost)} · ${l.vram.toFixed(1)} GB</div></div>
+          <div class="stat"><div class="k">PRO 6000 墙钟</div><div class="v">${fmtSec(p.total)}</div><div class="s">${fmtUsd(p.cost)} · ${p.vram.toFixed(1)} GB</div></div>
+          <div class="stat"><div class="k">PRO 相对 L40S</div><div class="v">${gain > 0 ? "−" : "+"}${Math.abs(gain).toFixed(0)}%</div><div class="s">${speedup(l.total, p.total)}</div></div>
+        `;
+      }
+
+      function renderInput() {
+        const m = MODELS[activeModel];
+        $("#inputImg").src = m.input.src;
+        $("#inputTitle").textContent = m.input.title;
+        $("#inputNote").textContent = m.input.note;
+      }
+
+      function panelHTML(gpuKey, run) {
+        const isL40 = gpuKey === "l40s";
+        return `
+          <article class="panel" data-gpu="${gpuKey}">
+            <div class="panel-head">
+              <h3><span class="gpu-dot ${isL40 ? "l40" : "pro"}"></span>${run.label}</h3>
+              <span class="chip ${isL40 ? "l40" : "pro"}">${run.actual}</span>
+            </div>
+            <div class="stage">
+              <div class="loading" data-loading>加载 mesh…</div>
+              <model-viewer
+                src="${run.glb}"
+                alt="${run.label} mesh"
+                camera-controls
+                touch-action="pan-y"
+                shadow-intensity="0.6"
+                exposure="1.05"
+                environment-image="neutral"
+                auto-rotate
+                auto-rotate-delay="1200"
+                rotation-per-second="18deg"
+                interaction-prompt="none"
+              ></model-viewer>
+              <div class="stage-hint">拖动旋转 · 滚轮缩放</div>
+            </div>
+            <div class="panel-meta">
+              <div><div class="k">总时</div><div class="v">${fmtSec(run.total)}</div></div>
+              <div><div class="k">推理</div><div class="v">${fmtSec(run.infer)}</div></div>
+              <div><div class="k">Mesh</div><div class="v">${fmtSec(run.mesh)}</div></div>
+              <div><div class="k">峰值显存</div><div class="v">${run.vram.toFixed(1)} GB</div></div>
+              <div><div class="k">估费</div><div class="v">${fmtUsd(run.cost)}</div></div>
+            </div>
+          </article>`;
+      }
+
+      function wireViewers(root) {
+        root.querySelectorAll("model-viewer").forEach((mv) => {
+          const loading = mv.parentElement.querySelector("[data-loading]");
+          const hide = () => loading && loading.classList.add("hidden");
+          mv.addEventListener("load", hide);
+          mv.addEventListener("error", () => {
+            if (loading) loading.textContent = "GLB 加载失败";
+          });
+          if (mv.loaded) hide();
+        });
+      }
+
+      function renderViewers() {
+        const m = MODELS[activeModel];
+        const host = $("#viewers");
+        if (viewMode === "compare") {
+          host.classList.add("split");
+          host.innerHTML = panelHTML("l40s", m.runs.l40s) + panelHTML("pro6000", m.runs.pro6000);
+        } else if (viewMode === "l40s") {
+          host.classList.remove("split");
+          host.innerHTML = panelHTML("l40s", m.runs.l40s);
+        } else {
+          host.classList.remove("split");
+          host.innerHTML = panelHTML("pro6000", m.runs.pro6000);
+        }
+        wireViewers(host);
+      }
+
+      function renderTable() {
+        const maxT = Math.max(
+          ...ORDER.flatMap((id) => [MODELS[id].runs.l40s.total, MODELS[id].runs.pro6000.total]),
+        );
+        $("#benchBody").innerHTML = ORDER.map((id) => {
+          const m = MODELS[id];
+          const l = m.runs.l40s;
+          const p = m.runs.pro6000;
+          const bestL = l.total <= p.total;
+          const bestC = l.cost <= p.cost;
+          const sp = (l.total / p.total).toFixed(2);
+          return `
+            <tr data-row="${id}" style="${id === activeModel ? "background:color-mix(in oklab, var(--accent) 6%, transparent)" : ""}">
+              <td><b>${m.name}</b></td>
+              <td>${m.role}</td>
+              <td class="${bestL ? "best" : ""}">
+                ${fmtSec(l.total)}
+                <div class="bar-cell"><div class="bar l40"><i style="width:${(l.total / maxT) * 100}%"></i></div></div>
+              </td>
+              <td class="${!bestL ? "best" : ""}">
+                ${fmtSec(p.total)}
+                <div class="bar-cell"><div class="bar pro"><i style="width:${(p.total / maxT) * 100}%"></i></div></div>
+              </td>
+              <td>${sp}×</td>
+              <td class="${bestC ? "best" : ""}">${fmtUsd(l.cost)}</td>
+              <td class="${!bestC ? "best" : ""}">${fmtUsd(p.cost)}</td>
+              <td>${m.texture}</td>
+            </tr>`;
+        }).join("");
+        $("#benchBody").querySelectorAll("tr").forEach((tr) => {
+          tr.style.cursor = "pointer";
+          tr.addEventListener("click", () => {
+            activeModel = tr.getAttribute("data-row");
+            renderAll();
+          });
+        });
+      }
+
+      function renderAll() {
+        renderModelCards();
+        renderSummary();
+        renderInput();
+        renderViewers();
+        renderTable();
+      }
+
+      $("#viewMode").addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-mode]");
+        if (!btn) return;
+        viewMode = btn.getAttribute("data-mode");
+        $("#viewMode").querySelectorAll("button").forEach((b) => {
+          b.classList.toggle("active", b === btn);
+        });
+        renderViewers();
+      });
+
+      renderAll();
+    </script>
+  </body>
+</html>

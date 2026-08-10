@@ -1,0 +1,60 @@
+{
+  "model": "microsoft/TRELLIS.2-4B",
+  "upstream": "microsoft/TRELLIS.2",
+  "license": "MIT",
+  "gpu_request": "RTX-PRO-6000",
+  "gpu_actual": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "capability": [
+    12,
+    0
+  ],
+  "arch": "12.0",
+  "output_name": "smoke_pro6000",
+  "pipeline_type": "512",
+  "seed": 42,
+  "texture_size": 2048,
+  "decimation_target": 500000,
+  "attn_backend": "xformers",
+  "dino_mirror": "camenduru/dinov3-vitl16-pretrain-lvd1689m",
+  "rembg_mirror": "ZhengPeng7/BiRefNet",
+  "seconds_load": 52.95,
+  "seconds_infer": 50.92,
+  "seconds_mesh": 18.04,
+  "seconds_total": 121.91,
+  "peak_vram_gb": 3.32,
+  "est_cost_usd": 0.1026,
+  "price_per_sec_usd": 0.000842,
+  "image_url": "https://raw.githubusercontent.com/VAST-AI-Research/TripoSR/main/examples/chair.png",
+  "wheels": [
+    "cumesh-0.0.1-cp310-cp310-linux_x86_64.whl",
+    "flex_gemm-1.0.0-cp310-cp310-linux_x86_64.whl",
+    "nvdiffrast-0.4.0-cp310-cp310-linux_x86_64.whl",
+    "nvdiffrec_render-0.0.0-cp310-cp310-linux_x86_64.whl",
+    "o_voxel-0.0.1-cp310-cp310-linux_x86_64.whl"
+  ],
+  "vram": {
+    "gpu_name_smi": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "peak_mem_used_mib": 3403.0,
+    "peak_mem_used_gb": 3.32,
+    "mem_total_mib": 97887.0,
+    "peak_util_gpu_pct": 100.0,
+    "n_samples": 78
+  },
+  "smi_end": {
+    "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "mem_used_mib": 2603.0,
+    "mem_total_mib": 97887.0,
+    "util_gpu_pct": 0.0
+  },
+  "stack": "021 TRELLIS.2 source wheels ARCH=12.0",
+  "input_volume_path": "inputs/smoke_pro6000.png",
+  "volume_name": "modal-lab-trellis2-outputs",
+  "volume_paths": {
+    "mesh": "meshes/smoke_pro6000.glb",
+    "latest": "meshes/latest.glb",
+    "meta": "meshes/smoke_pro6000_meta.json",
+    "benchmark": "benchmarks/smoke_pro6000.json"
+  },
+  "bytes": 17133492,
+  "cli_get": "modal volume get modal-lab-trellis2-outputs meshes/smoke_pro6000.glb ./smoke_pro6000.glb"
+}

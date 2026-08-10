@@ -1,0 +1,37 @@
+{
+  "model": "stabilityai/TripoSR",
+  "upstream": "VAST-AI-Research/TripoSR",
+  "license": "MIT",
+  "gpu_request": "RTX-PRO-6000",
+  "gpu_actual": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "output_name": "smoke_pro6000",
+  "bake_texture": false,
+  "vertex_colors": true,
+  "mc_resolution": 256,
+  "format": "glb",
+  "seconds_load": 3.9,
+  "seconds_preprocess": 3.37,
+  "seconds_infer": 1.56,
+  "seconds_mesh": 0.74,
+  "seconds_total": 9.66,
+  "peak_vram_gb": 5.13,
+  "est_cost_usd": 0.0081,
+  "price_per_sec_usd": 0.000842,
+  "image_url": "https://raw.githubusercontent.com/VAST-AI-Research/TripoSR/main/examples/chair.png",
+  "smi_end": {
+    "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "mem_used_mib": 5251.0,
+    "mem_total_mib": 97887.0,
+    "util_gpu_pct": 27.0
+  },
+  "input_volume_path": "inputs/smoke_pro6000.png",
+  "volume_name": "modal-lab-triposr-outputs",
+  "volume_paths": {
+    "mesh": "meshes/smoke_pro6000.glb",
+    "latest": "meshes/latest.glb",
+    "meta": "meshes/smoke_pro6000_meta.json",
+    "benchmark": "benchmarks/smoke_pro6000.json"
+  },
+  "bytes": 1685484,
+  "cli_get": "modal volume get modal-lab-triposr-outputs meshes/smoke_pro6000.glb ./smoke_pro6000.glb"
+}
