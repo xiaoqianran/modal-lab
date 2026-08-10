@@ -20,6 +20,10 @@ main.py                 # 入口，调度到 001 / 002 / …
 010-ace-step-1.5/       # ACE-Step 1.5 音乐生成（默认 L4 · turbo DiT）
 011-stable-audio-3/     # Stable Audio 3 Medium（默认 L4 · FlashAttn）
 015-xiaomi-robotics-1-robocasa365/  # Xiaomi-Robotics-1 VLA · RoboCasa365 冒烟（默认 A100-40GB）
+012-levo-2/             # [PLAN] LeVo 2 全曲（听感 S · 先核 license）
+013-yue/                # [PLAN] YuE 全曲（结构 · A100）
+014-diffrhythm-2/       # [PLAN] DiffRhythm 2 全曲 diffusion（默认 L4）
+016-musicgen/           # [PLAN] MusicGen 器乐基线（T4/L4）· 跳过 015
 ```
 
 命名约定：`NNN-topic`（序号 + 主题）。`python main.py 001 …` 等短号在唯一时可解析到对应目录。
@@ -73,6 +77,11 @@ cd 008-hy-pano && python run.py status
 | `010-ace-step-1.5` | [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5) 开源音乐生成；**默认 L4**；主包 turbo + 可选 1.7B LM |
 | `011-stable-audio-3` | [Stable Audio 3 Medium](https://huggingface.co/stabilityai/stable-audio-3-medium)；**默认 L4**（T4 无 FlashAttn） |
 | `015-xiaomi-robotics-1-robocasa365` | [Xiaomi-Robotics-1](https://github.com/XiaomiRobotics/Xiaomi-Robotics-1) RoboCasa365 VLA 冒烟；**默认 A100-40GB** |
+| `012-levo-2` | **[PLAN](012-levo-2/PLAN.md)** LeVo 2 全曲音乐（待实现） |
+| `013-yue` | **[PLAN](013-yue/PLAN.md)** YuE 全曲（待实现） |
+| `014-diffrhythm-2` | **[PLAN](014-diffrhythm-2/PLAN.md)** DiffRhythm 2（待实现） |
+| `016-musicgen` | **[PLAN](016-musicgen/PLAN.md)** MusicGen 基线（待实现 · **跳过 015**） |
+| — | 音乐队列总览见 [MUSIC_ROADMAP.md](MUSIC_ROADMAP.md) |
 
 H100 / PRO 6000 / A100 对照（OCR 等）见 [GPU_COMPARISON.md](GPU_COMPARISON.md)。  
 Pixal3D 官版： [005-pixal3d/GPU_BENCHMARK.md](005-pixal3d/GPU_BENCHMARK.md)  
