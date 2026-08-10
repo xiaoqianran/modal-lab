@@ -1,10 +1,10 @@
 # 009 · World Generation 规划（**单卡 PRO 6000 优先**）
 
-> **实现状态（v8）**  
-> - ✅ Stage1 + Stage2：**官方 Qwen3-VL-8B（vLLM）** + `stage12` 一键  
-> - ✅ Stage3–5：WorldStereo-dmd / GS（既有）  
-> - 默认串行同卡 `vlm_mode=share`；多卡可 `split`  
-> - Stage3 前仍需预算确认（见下）
+> **实现状态（v8.2.2 · 单卡 PRO-6000 smoke 已跑通）**  
+> - ✅ Stage1 + Stage2：官方 Qwen3-VL-8B（HF OpenAI-compat server，非 vLLM）+ `stage12`；`nframe=21`  
+> - ✅ Stage3：WorldStereo-memory-dmd + WorldMirror + alignment（pure-torch splat HWC 修复）  
+> - ✅ Stage4 `gen_gs_data` → ✅ Stage5 3DGS `max_steps=4000` → `gs_result/ply/point_cloud_3999.ply`  
+> - 场景：`scene_from_008`（008 case000 pano）；默认串行同卡 `vlm_mode=share`
 
 ---
 
