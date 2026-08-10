@@ -4,10 +4,11 @@ __pycache__/
 weights/
 outputs/
 .cache/
-*.glb
 *.safetensors
 *.egg-info/
 .pytest_cache/
 .DS_Store
-viewer/*.glb
 *.log
+# Keep demo GLBs under viewer/ tracked for HTML showcase; ignore others
+*.glb
+!viewer/*.glb

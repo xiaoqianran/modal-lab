@@ -1,0 +1,52 @@
+{
+  "output_name": "demo_a100_40gb",
+  "seed": 42,
+  "low_vram": true,
+  "resolution": 1024,
+  "fov": -1.0,
+  "model_path": "/weights/Pixal3D",
+  "gpu_request": "A100-40GB",
+  "gpu_actual": "NVIDIA A100-SXM4-40GB",
+  "vram_total_gb": 39.5,
+  "sm": "sm_80",
+  "price_per_sec_usd": 0.000583,
+  "upstream": "TencentARC/Pixal3D",
+  "pipeline": "Pixal3DImageTo3DPipeline",
+  "container_memory_mb": 32768,
+  "container_cpu": 4.0,
+  "vram_idle": {
+    "name": "NVIDIA A100-SXM4-40GB",
+    "mem_used_mib": 4.0,
+    "mem_total_mib": 40960.0,
+    "util_gpu_pct": 0.0
+  },
+  "seconds_infer": 491.4,
+  "natten": {
+    "gpu": "NVIDIA A100-SXM4-40GB",
+    "sm": "sm_80",
+    "action": "reuse_installed"
+  },
+  "seconds_total": 505.3,
+  "est_cost_usd_total": 0.2946,
+  "vram": {
+    "gpu_name_smi": "NVIDIA A100-SXM4-40GB",
+    "peak_mem_used_mib": 15783.0,
+    "peak_mem_used_gb": 15.41,
+    "mem_total_mib": 40960.0,
+    "mem_total_gb": 40.0,
+    "peak_util_gpu_pct": 100.0,
+    "n_samples": 225
+  },
+  "input_volume_path": "inputs/demo_a100_40gb.webp",
+  "volume_name": "modal-lab-pixal3d-outputs",
+  "volume_paths": {
+    "named": "meshes/demo_a100_40gb.glb",
+    "latest": "meshes/latest.glb",
+    "meta": "meshes/demo_a100_40gb_meta.json",
+    "latest_meta": "meshes/latest_meta.json",
+    "benchmark": "benchmarks/demo_a100_40gb.json"
+  },
+  "bytes": 40709524,
+  "download_url_hint": "https://seachenxyt--modal-lab-pixal3d-download.modal.run?name=demo_a100_40gb",
+  "cli_get": "modal volume get modal-lab-pixal3d-outputs meshes/demo_a100_40gb.glb ./demo_a100_40gb.glb"
+}

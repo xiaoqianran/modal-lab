@@ -1,0 +1,47 @@
+{
+  "output_name": "demo_sample",
+  "seed": 42,
+  "low_vram": true,
+  "resolution": 1024,
+  "fov": -1.0,
+  "model_path": "/weights/Pixal3D",
+  "gpu_request": "H100",
+  "gpu_actual": "NVIDIA H100 80GB HBM3",
+  "vram_total_gb": 79.2,
+  "sm": "sm_90",
+  "price_per_sec_usd": 0.001097,
+  "upstream": "TencentARC/Pixal3D",
+  "pipeline": "Pixal3DImageTo3DPipeline",
+  "container_memory_mb": 24576,
+  "container_cpu": 4.0,
+  "vram_idle": {
+    "name": "NVIDIA H100 80GB HBM3",
+    "mem_used_mib": 4.0,
+    "mem_total_mib": 81559.0,
+    "util_gpu_pct": 0.0
+  },
+  "seconds_infer": 278.9,
+  "seconds_total": 284.7,
+  "est_cost_usd_total": 0.3123,
+  "vram": {
+    "gpu_name_smi": "NVIDIA H100 80GB HBM3",
+    "peak_mem_used_mib": 16247.0,
+    "peak_mem_used_gb": 15.87,
+    "mem_total_mib": 81559.0,
+    "mem_total_gb": 79.65,
+    "peak_util_gpu_pct": 100.0,
+    "n_samples": 132
+  },
+  "input_volume_path": "inputs/demo_sample.webp",
+  "volume_name": "modal-lab-pixal3d-outputs",
+  "volume_paths": {
+    "named": "meshes/demo_sample.glb",
+    "latest": "meshes/latest.glb",
+    "meta": "meshes/demo_sample_meta.json",
+    "latest_meta": "meshes/latest_meta.json",
+    "benchmark": "benchmarks/demo_sample.json"
+  },
+  "bytes": 39928020,
+  "download_url_hint": "https://seachenxyt--modal-lab-pixal3d-download.modal.run?name=demo_sample",
+  "cli_get": "modal volume get modal-lab-pixal3d-outputs meshes/demo_sample.glb ./demo_sample.glb"
+}

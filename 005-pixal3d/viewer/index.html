@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Pixal3D · demo_sample</title>
+    <title>Pixal3D · 005 demos</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
     <style>
       :root {
@@ -57,10 +57,7 @@
         font-weight: 650;
         letter-spacing: 0.02em;
       }
-      h1 span {
-        color: var(--muted);
-        font-weight: 500;
-      }
+      h1 span { color: var(--muted); font-weight: 500; }
       .meta {
         display: flex;
         gap: 8px;
@@ -76,10 +73,18 @@
         color: var(--muted);
       }
       .chip strong { color: var(--text); font-weight: 600; }
-      .stage {
-        position: relative;
-        min-height: 0;
+      .chip.active {
+        border-color: rgba(125, 211, 252, 0.45);
+        color: var(--text);
+        background: rgba(125, 211, 252, 0.1);
       }
+      button.chip {
+        cursor: pointer;
+        font: inherit;
+        color: inherit;
+      }
+      button.chip:hover { border-color: rgba(255,255,255,0.2); }
+      .stage { position: relative; min-height: 0; }
       model-viewer {
         width: 100%;
         height: 100%;
@@ -147,14 +152,17 @@
   <body>
     <div class="app">
       <header>
-        <h1>Pixal3D <span>· demo_sample.glb</span></h1>
+        <h1>Pixal3D <span id="title-sub">· demo_sample.glb</span></h1>
         <div class="meta">
-          <div class="chip">GPU <strong>H100</strong></div>
+          <button type="button" class="chip active" data-demo="h100" id="btn-h100">H100 demo</button>
+          <button type="button" class="chip" data-demo="a100" id="btn-a100">A100-40GB demo</button>
+          <div class="chip">GPU <strong id="chip-gpu">H100</strong></div>
           <div class="chip">mode <strong>low_vram · 1024</strong></div>
-          <div class="chip">time <strong>~285s</strong></div>
-          <div class="chip">peak VRAM <strong>~15.9 GB</strong></div>
-          <div class="chip">size <strong>39 MB</strong></div>
-          <a class="chip" href="./demo_sample.glb" download>⬇ download GLB</a>
+          <div class="chip">infer <strong id="chip-time">~279s</strong></div>
+          <div class="chip">peak VRAM <strong id="chip-vram">~15.9 GB</strong></div>
+          <div class="chip">est. cost <strong id="chip-cost">~$0.31</strong></div>
+          <div class="chip">size <strong id="chip-size">39 MB</strong></div>
+          <a class="chip" id="dl" href="./demo_sample.glb" download>⬇ download GLB</a>
         </div>
       </header>
 
@@ -162,7 +170,7 @@
         <div class="progress" id="progress">Loading 3D model…</div>
         <model-viewer
           id="mv"
-          src="./demo_sample.glb" id="mv-src-placeholder"
+          src="./demo_sample.glb"
           alt="Pixal3D generated mesh"
           camera-controls
           touch-action="pan-y"
@@ -182,7 +190,8 @@
           <img src="./input.webp" alt="Input image" />
           <div class="cap">
             <b>Input</b><br />
-            Official sample (`5_img.webp`) · seed 42
+            Official sample · seed 42<br />
+            <span id="cap-gpu">H100 · sm_90</span>
           </div>
         </div>
 
@@ -194,28 +203,79 @@
       <footer>
         Generated with
         <a href="https://github.com/TencentARC/Pixal3D" target="_blank" rel="noreferrer">TencentARC/Pixal3D</a>
-        on Modal · experiment
-        <code>005-pixal3d</code>
+        on Modal · experiment <code>005-pixal3d</code>
+        · meta:
+        <a href="./demo_sample_meta.json">H100</a> /
+        <a href="./demo_a100_40gb_meta.json">A100</a>
       </footer>
     </div>
 
     <script>
+      const DEMOS = {
+        h100: {
+          src: "./demo_sample.glb",
+          file: "demo_sample.glb",
+          gpu: "H100",
+          sm: "sm_90",
+          time: "~279s",
+          vram: "~15.9 GB",
+          cost: "~$0.31",
+          size: "39 MB",
+        },
+        a100: {
+          src: "./demo_a100_40gb.glb",
+          file: "demo_a100_40gb.glb",
+          gpu: "A100-40GB",
+          sm: "sm_80",
+          time: "~491s",
+          vram: "~15.4 GB",
+          cost: "~$0.29",
+          size: "40 MB",
+        },
+      };
+
       const mv = document.getElementById("mv");
       const progress = document.getElementById("progress");
+
+      function applyDemo(key) {
+        const d = DEMOS[key] || DEMOS.h100;
+        progress.classList.remove("hidden");
+        progress.textContent = "Loading 3D model…";
+        mv.setAttribute("src", d.src);
+        document.getElementById("title-sub").textContent = "· " + d.file;
+        document.getElementById("chip-gpu").textContent = d.gpu;
+        document.getElementById("chip-time").textContent = d.time;
+        document.getElementById("chip-vram").textContent = d.vram;
+        document.getElementById("chip-cost").textContent = d.cost;
+        document.getElementById("chip-size").textContent = d.size;
+        document.getElementById("cap-gpu").textContent = d.gpu + " · " + d.sm;
+        const dl = document.getElementById("dl");
+        dl.href = d.src;
+        dl.setAttribute("download", d.file);
+        document.querySelectorAll("button.chip[data-demo]").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.demo === key);
+        });
+        const url = new URL(location.href);
+        url.searchParams.set("demo", key);
+        history.replaceState(null, "", url);
+      }
+
       mv.addEventListener("load", () => progress.classList.add("hidden"));
       mv.addEventListener("error", (e) => {
         progress.textContent = "Failed to load GLB — open console for details.";
         console.error(e);
       });
+
+      document.querySelectorAll("button.chip[data-demo]").forEach((btn) => {
+        btn.addEventListener("click", () => applyDemo(btn.dataset.demo));
+      });
+
+      const params = new URLSearchParams(location.search);
+      const fromSrc = params.get("src");
+      let initial = params.get("demo") || "h100";
+      if (fromSrc && fromSrc.includes("a100")) initial = "a100";
+      if (fromSrc && fromSrc.includes("demo_sample")) initial = "h100";
+      applyDemo(initial);
     </script>
-  
-    <script>
-      (function(){
-        const p = new URLSearchParams(location.search);
-        const src = p.get('src') || './demo_sample.glb';
-        const mv = document.getElementById('mv');
-        if (mv && src) mv.setAttribute('src', src);
-      })();
-    </script>
-</body>
+  </body>
 </html>
