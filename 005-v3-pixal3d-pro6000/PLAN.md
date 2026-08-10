@@ -1,32 +1,30 @@
-# 005-v3 计划
+# 005-v3 计划（第二轮更新）
 
-## Phase 0 — 研究（✅）
+## ✅ 已完成
 
-- [x] 确认 PRO 6000 = Blackwell **sm_120**  
-- [x] 确认 torch2.6/cu124 不可用  
-- [x] 收集 PyTorch cu128、NATTEN、Windows 社区轮子信息  
-- [x] 写入 SOLUTION.md  
+- [x] 根因：sm_120 vs torch2.6/cu124  
+- [x] Windows 社区轮子旁证  
+- [x] **Linux 配方 α**：animede Pixal3D@PRO6000（torch2.11+cu128, arch=12.0, drtk, natten）  
+- [x] **Linux 配方 β**：TRELLIS.2#143 · 5090 · e2e GLB  
+- [x] 合并为 Plan A* + B0–B4 门禁  
 
-## Phase 1 — 仓库骨架（✅ 本提交）
+## 🔒 未做（等你下令）
 
-- [x] `005-v3-pixal3d-pro6000/` 文档  
-- [ ] **不**默认 `modal run`  
+- [ ] B0：Modal `RTX-PRO-6000` + cu128 认卡（几分钟）  
+- [ ] B1：编 o-voxel  
+- [ ] B2：drtk / nvdiffrast  
+- [ ] B3：natten smoke  
+- [ ] B4：smoke GLB  
 
-## Phase 2 — 探针（等你下令再烧钱）
+## 实现时注意
 
-1. 最小镜像：torch 2.7+/cu128 on `RTX-PRO-6000`  
-2. 打印 capability + arch_list（B0–B2）  
-3. 单扩展 `nvdiffrast` 或 `flex_gemm` wheel  
+1. 镜像 `cuda:12.8*-devel`，`g++-13`  
+2. `CUDA_HOME` 与 torch cu128 一致  
+3. 每步 Volume commit 轮子（抄 v2）  
+4. 默认 `ATTN_BACKEND=sdpa`  
+5. 与 L40S 比价后再决定是否默认  
 
-## Phase 3 — 全扩展 + verify
+## 决策
 
-同 v2 的 build/verify，但 arch=`12.0`
-
-## Phase 4 — smoke GLB
-
-仅当 Phase 3 全绿
-
-## 决策点
-
-- 是否值得相对 L40S 继续：看 B0–B2 与单价  
-- 若 L40S 更便宜且够用：**暂停 v3 实现**
+- 出片：**v2 L40S**  
+- 探索 PRO 6000：先 B0，再往下  

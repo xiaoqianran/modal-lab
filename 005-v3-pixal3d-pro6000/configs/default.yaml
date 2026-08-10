@@ -1,34 +1,51 @@
 experiment: 005-v3-pixal3d-pro6000
 status: RESEARCH_ONLY_NOT_RUN
+updated: "2026-08-10"
+research_round: 2
 
 gpu:
   default: RTX-PRO-6000
   compute_capability: "12.0"
   sm: sm_120
 
+# Plan A* — from animede/image-3d requirements-pixal3d + TRELLIS.2#143
 stack:
-  plan: A
-  # Must NOT reuse 005/v2 torch2.6+cu124
-  python: "3.12"          # preferred; 3.11 also ok
-  torch: ">=2.7+cu128"    # verify sm_120 in get_arch_list()
-  cuda_toolkit: ">=12.8"
+  plan: "A*"
+  python: "3.10"                 # or 3.11
+  torch: "2.11.0+cu128"          # preferred pin
+  torchvision: "0.26.0+cu128"
+  cuda_toolkit: "12.8"           # devel image; CUDA_HOME must match (not 13.x)
+  gcc_max: 13
   torch_cuda_arch_list: "12.0"
   natten_cuda_arch: "12.0"
+  natten: "0.21.0"
   attn_backend: sdpa
+  sparse_attn_backend: sdpa
+  flash_attn: false
+  rasterizer_preferred: drtk     # facebookresearch/drtk MIT; nvdiffrast fallback
+  o_voxel_source: "microsoft/TRELLIS.2/o-voxel"
   forbid_hfdemo_wheels: true
   forbid_windows_wheels: true
 
+evidence:
+  pixal3d_pro6000_linux: "https://github.com/animede/image-3d/blob/master/requirements-pixal3d.txt"
+  trellis2_5090_e2e: "https://github.com/microsoft/TRELLIS.2/issues/143"
+  windows_pro6000_wheels: "https://huggingface.co/PixWizardry/AI_Trellis2-WHLs-RTX-PRO-6000"
+
 gates:
-  require_sm120_in_torch_arch_list: true
-  require_capability_12_x: true
+  B0_torch_sm120: true
+  B1_o_voxel: true
+  B2_raster: true
+  B3_natten: true
+  B4_smoke_glb: true
   probe_before_full_build: true
 
 inference:
   low_vram: true
   resolution: 1024
-  # VRAM not the bottleneck (~16GB peak elsewhere); stack is
+  rembg: ZhengPeng7/BiRefNet
 
 related:
-  production_paths:
-    - 005-pixal3d   # H100
-    - 005-v2-pixal3d-l40s  # L40S proven
+  production:
+    - 005-v2-pixal3d-l40s
+    - 005-pixal3d
