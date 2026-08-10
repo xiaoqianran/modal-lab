@@ -51,6 +51,7 @@ python main.py 008 smoke          # HY-Pano 轻量 Qwen（PRO 6000）
 python main.py 009 status         # worldgen 全景→3D 世界（分 stage）
 python main.py 010 smoke          # ACE-Step 1.5 音乐（L4 · 20s 器乐）
 python main.py 011 smoke          # Stable Audio 3 Medium（L4 · 20s）
+python main.py 013 smoke          # YuE（L40S · 2 segments）
 python main.py 012 smoke          # LeVo 2（L40S · v2-medium）
 python main.py 016 smoke          # MusicGen small（T4 · 15s）
 python main.py 015 smoke          # Xiaomi-Robotics-1 RoboCasa365 动作冒烟（A100-40GB）
@@ -83,7 +84,6 @@ cd 008-hy-pano && python run.py status
 | `012-levo-2` | [LeVo 2](https://github.com/levo-demo/LeVo) SongGeneration v2；**默认 L40S · v2-medium**（研究许可） |
 | `015-xiaomi-robotics-1-robocasa365` | [Xiaomi-Robotics-1](https://github.com/XiaomiRobotics/Xiaomi-Robotics-1) RoboCasa365 VLA 冒烟；**默认 A100-40GB** |
 | `016-musicgen` | [MusicGen](https://huggingface.co/facebook/musicgen-small) 器乐基线；**默认 T4 · small**（CC-BY-NC） |
-| `013-yue` | **[PLAN](013-yue/PLAN.md)** YuE 全曲（待实现） |
 | — | 音乐队列总览见 [MUSIC_ROADMAP.md](MUSIC_ROADMAP.md) |
 
 Pixal3D：  

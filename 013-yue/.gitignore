@@ -1,0 +1,9 @@
+outputs/
+.cache/
+__pycache__/
+*.pyc
+*.wav
+*.mp3
+*.flac
+.venv/
+!gallery/assets/*

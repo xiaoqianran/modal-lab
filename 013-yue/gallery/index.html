@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>013 · YuE · 生成试听</title>
+  <style>
+    :root { --bg:#0b0d12; --elev:#131722; --line:rgba(255,255,255,.08); --fg:#eef1f6; --muted:#8b93a7; --accent:#c4a1ff; --ok:#3dd68c; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--fg); font-family:system-ui,sans-serif; background:radial-gradient(900px 480px at 80% -10%,rgba(196,161,255,.16),transparent 55%),var(--bg); line-height:1.5; }
+    a { color:#9ad4ff; }
+    .wrap { width:min(960px,calc(100% - 2rem)); margin:0 auto; padding:1.75rem 0 3rem; }
+    .eyebrow { font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); font-weight:600; }
+    h1 { margin:.4rem 0 .5rem; font-size:1.85rem; }
+    .lede { color:var(--muted); max-width:62ch; }
+    .card { margin-top:1.1rem; background:var(--elev); border:1px solid var(--line); border-radius:16px; padding:1.15rem 1.25rem; }
+    .chips { display:flex; flex-wrap:wrap; gap:.35rem; margin:.5rem 0 .85rem; }
+    .chip { border:1px solid rgba(255,255,255,.12); border-radius:999px; padding:.18rem .6rem; font-size:.76rem; color:var(--muted); }
+    .ok { border-color:rgba(61,214,140,.35); color:#b8f5d3; background:rgba(61,214,140,.1); }
+    .box { margin:0 0 .85rem; padding:.75rem .9rem; border-radius:12px; background:rgba(0,0,0,.28); border:1px solid var(--line); font-size:.9rem; white-space:pre-wrap; }
+    .k { display:block; font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:.2rem; }
+    audio { width:100%; margin:.35rem 0 .6rem; }
+    .metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:.5rem; margin-top:.8rem; }
+    .metric { background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:12px; padding:.65rem .75rem; }
+    .metric .k { margin:0; } .metric .v { font-weight:700; margin-top:.15rem; }
+    footer { margin-top:1.5rem; color:var(--muted); font-size:.82rem; }
+    code { background:rgba(255,255,255,.05); padding:.1rem .3rem; border-radius:6px; font-size:.85em; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">013 · YuE · Gallery</div>
+    <h1>歌词 → 全曲试听</h1>
+    <p class="lede">M-A-P YuE（en-cot · 7B stage1 + 1B stage2）。默认 <strong>L40S</strong>。Apache 2.0。</p>
+    <article class="card">
+      <h2 style="margin:0;font-size:1.15rem">smoke_en · 2 segments</h2>
+      <div class="chips">
+        <span class="chip">stage1 <strong>en-cot</strong></span>
+        <span class="chip">GPU <strong>L40S</strong></span>
+        <span class="chip">segments <strong>2</strong></span>
+        <span class="chip">seed <strong>42</strong></span>
+        <span class="chip ok">OK</span>
+      </div>
+      <div class="box"><span class="k">Genre</span>inspiring female uplifting pop airy vocal electronic bright vocal vocal</div>
+      <div class="box"><span class="k">Lyrics (verse + chorus)</span>[verse] Staring at the sunset… / [chorus] Every road you take…</div>
+      <div class="k">Mix (vocoder)</div>
+      <audio controls preload="metadata" src="assets/smoke_en_mix.mp3"></audio>
+      <div class="k">Vocal stem</div>
+      <audio controls preload="none" src="assets/smoke_en_vtrack.mp3"></audio>
+      <div class="k">Instrumental stem</div>
+      <audio controls preload="none" src="assets/smoke_en_itrack.mp3"></audio>
+      <div class="metrics">
+        <div class="metric"><div class="k">墙钟</div><div class="v">787 s</div></div>
+        <div class="metric"><div class="k">估费</div><div class="v">$0.43</div></div>
+        <div class="metric"><div class="k">tokens</div><div class="v">3000</div></div>
+        <div class="metric"><div class="k">stage2 bs</div><div class="v">2</div></div>
+      </div>
+    </article>
+    <p class="lede" style="margin-top:1rem">~13 分钟 / L40S / 2 段。全曲 4+ 段会更久，可加 PRO 6000 或 A100-80。</p>
+    <footer>实验 <code>013-yue</code> · YuE by HKUST/M-A-P</footer>
+  </div>
+</body>
+</html>

@@ -10,7 +10,7 @@
 | **010** | `010-ace-step-1.5` | ACE-Step 1.5 | L4 | ✅ |
 | **011** | `011-stable-audio-3` | Stable Audio 3 Medium | L4 | ✅ |
 | **012** | `012-levo-2` | LeVo 2 v2-medium | L40S | ✅ |
-| **013** | `013-yue` | YuE | L40S / PRO 6000 | 📋 planned |
+| **013** | `013-yue` | YuE en-cot | L40S | ✅ smoke ~13min / $0.43 |
 | **016** | `016-musicgen` | **MusicGen** small | **T4** | ✅ smoke OK · T4 ~$0.005 |
 | 014 | — | （原 MusicGen 计划作废） | — | free / unused |
 | 015 | robotics | Xiaomi | — | 非音乐 |

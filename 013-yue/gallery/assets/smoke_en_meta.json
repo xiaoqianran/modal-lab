@@ -1,0 +1,86 @@
+{
+  "run_name": "smoke_en",
+  "gpu_requested": "L40S",
+  "wall_s": 787.48,
+  "est_gpu_usd": 0.4268,
+  "payload": {
+    "genre": "inspiring female uplifting pop airy vocal electronic bright vocal vocal",
+    "lyrics": "[verse]\nStaring at the sunset, colors paint the sky\nThoughts of you keep swirling, can't deny\nI know I let you down, I made mistakes\nBut I'm here to mend the heart I didn't break\n\n[chorus]\nEvery road you take, I'll be one step behind\nEvery dream you chase, I'm reaching for the light\nYou can't fight this feeling now\nI won't back down\n",
+    "stage1": "en-cot",
+    "run_n_segments": 2,
+    "max_new_tokens": 3000,
+    "stage2_batch_size": 2,
+    "seed": 42,
+    "repetition_penalty": 1.1
+  },
+  "result": {
+    "success": true,
+    "error": null,
+    "returncode": 0,
+    "wall_s": 787.48,
+    "est_gpu_usd": 0.4268,
+    "gpu": "L40S",
+    "stage1": "m-a-p/YuE-s1-7B-anneal-en-cot",
+    "stage2": "m-a-p/YuE-s2-1B-general",
+    "run_n_segments": 2,
+    "max_new_tokens": 3000,
+    "stage2_batch_size": 2,
+    "seed": 42,
+    "vram_peak_gb": 0.0,
+    "primary_audio": {
+      "path": "/outputs/runs/smoke_en/output/vocoder/mix/inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_mixed.mp3",
+      "name": "inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_mixed.mp3",
+      "size_bytes": 234075,
+      "rel": "output/vocoder/mix/inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_mixed.mp3",
+      "promoted": "/outputs/runs/smoke_en/mix.mp3"
+    },
+    "audios": [
+      {
+        "path": "/outputs/runs/smoke_en/output/vocoder/mix/inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_mixed.mp3",
+        "name": "inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_mixed.mp3",
+        "size_bytes": 234075,
+        "rel": "output/vocoder/mix/inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_mixed.mp3"
+      },
+      {
+        "path": "/outputs/runs/smoke_en/output/recons/mix/inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_mixed.mp3",
+        "name": "inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_mixed.mp3",
+        "size_bytes": 103392,
+        "rel": "output/recons/mix/inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_mixed.mp3"
+      },
+      {
+        "path": "/outputs/runs/smoke_en/output/inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_mixed.mp3",
+        "name": "inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_mixed.mp3",
+        "size_bytes": 234075,
+        "rel": "output/inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_mixed.mp3"
+      },
+      {
+        "path": "/outputs/runs/smoke_en/output/recons/inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_itrack.mp3",
+        "name": "inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_itrack.mp3",
+        "size_bytes": 88029,
+        "rel": "output/recons/inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_itrack.mp3"
+      },
+      {
+        "path": "/outputs/runs/smoke_en/output/recons/inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_vtrack.mp3",
+        "name": "inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_vtrack.mp3",
+        "size_bytes": 88029,
+        "rel": "output/recons/inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_vtrack.mp3"
+      },
+      {
+        "path": "/outputs/runs/smoke_en/output/vocoder/stems/itrack.mp3",
+        "name": "itrack.mp3",
+        "size_bytes": 234075,
+        "rel": "output/vocoder/stems/itrack.mp3"
+      },
+      {
+        "path": "/outputs/runs/smoke_en/output/vocoder/stems/vtrack.mp3",
+        "name": "vtrack.mp3",
+        "size_bytes": 234075,
+        "rel": "output/vocoder/stems/vtrack.mp3"
+      }
+    ],
+    "stdout_tail": "Stage 2 inference...\n['/tmp/yue_work/smoke_en/output/stage2/inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_vtrack.npy', '/tmp/yue_work/smoke_en/output/stage2/inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_itrack.npy']\nStage 2 DONE.\n\nProcessing /tmp/yue_work/smoke_en/output/stage2/inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_vtrack.npy\nCompressed shape: (8, 1459)\nDecoded in 0.22s (131.46x RTF)\nSaved: /tmp/yue_work/smoke_en/output/vocoder/stems/vtrack.mp3\nProcessing /tmp/yue_work/smoke_en/output/stage2/inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_itrack.npy\nCompressed shape: (8, 1459)\nDecoded in 0.01s (2035.35x RTF)\nSaved: /tmp/yue_work/smoke_en/output/vocoder/stems/itrack.mp3\nCreated mix: /tmp/yue_work/smoke_en/output/vocoder/mix/inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_mixed.mp3\nSuccessfully created 'inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@1_maxtk3000_fcdb7ae5-f5b3-4356-a030-9b621cf290da_mixed.mp3' with matched low-frequency energy.\n",
+    "stderr_tail": "as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.\nWe detected that you are passing `past_key_values` as a tuple of tuples. This is deprecated and will be removed in v4.47. Please convert your cache or use an appropriate `Cache` class (https://huggingface.co/docs/transformers/kv_cache#legacy-cache-format)\n\nStage1 inference...: 100%|██████████| 2/2 [03:25<00:00, 102.54s/it]\nStage1 inference...: 100%|██████████| 2/2 [03:25<00:00, 102.54s/it]\n\n  0%|          | 0/2 [00:00<?, ?it/s]\n 50%|█████     | 1/2 [04:34<04:34, 274.42s/it]\n100%|██████████| 2/2 [09:07<00:00, 273.83s/it]\n100%|██████████| 2/2 [09:07<00:00, 273.92s/it]\n/opt/YuE/inference/xcodec_mini_infer/vocoder.py:21: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.\n  vocal_decoder.load_state_dict(torch.load(vocal_decoder_path))\n/opt/YuE/inference/xcodec_mini_infer/vocoder.py:23: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.\n  inst_decoder.load_state_dict(torch.load(inst_decoder_path))\n/opt/YuE/inference/xcodec_mini_infer/vocoder.py:45: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).\n  compressed = torch.tensor(compressed).to(f\"cuda:{args.cuda_idx}\")\n"
+  },
+  "created_utc": "2026-08-10T15:39:25.580974+00:00",
+  "license_note": "Apache 2.0 — YuE by HKUST/M-A-P"
+}
