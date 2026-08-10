@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-009-hy-worldgen — single-GPU (RTX-PRO-6000) World Generation pipeline. v8
+009-hy-worldgen — single-GPU (RTX-PRO-6000) World Generation pipeline. v8.1
 
 Stage 1–2 use official Qwen3-VL-8B via in-container vLLM (share-GPU or split).
 Stage 3–5 unchanged (WorldStereo-dmd → GS).
@@ -82,11 +82,8 @@ worldgen_image = (
         index_url="https://download.pytorch.org/whl/cu128",
     )
     .run_commands(
-        "pip install iopath && "
-        "export FORCE_CUDA=1 TORCH_CUDA_ARCH_LIST='8.0;8.9;9.0;12.0' "
-        "CUBLAS_WORKSPACE_CONFIG=:4096:8 CXX=g++ CC=gcc "
-        "CUB_HOME=/usr/local/cuda MAX_JOBS=8 && "
-        "pip install --no-build-isolation 'git+https://github.com/facebookresearch/pytorch3d.git@stable'",
+        # skip full pytorch3d CUDA compile (20–40min). Stage1/2 use pure-torch look_at stub.
+        "pip install iopath",
     )
     .pip_install(
         "numpy==1.26.4", "pillow", "opencv-python==4.10.0.84", "imageio[ffmpeg]",
@@ -1172,7 +1169,7 @@ def run_stage12(
 def status() -> dict[str, Any]:
     return {
         "app": APP_NAME,
-        "version": "v8",
+        "version": "v8.1",
         "default_gpu": DEFAULT_GPU,
         "vlm": {
             "model": VLM_MODEL,
