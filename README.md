@@ -2,16 +2,48 @@
 
 Modal 实验台：按 `NNN-topic` 编号做可复现实验。
 
-## Gallery (GitHub Pages)
+## Gallery (GitHub Pages) — 请把 HTML 结果挂上来
 
-可爱实验橱窗（Actions 自动部署）：
+线上橱窗：**https://xiaoqianran.github.io/modal-lab/**
 
-**https://xiaoqianran.github.io/modal-lab/**
+| 入口 | URL |
+|------|-----|
+| Lab 首页（筛选 / 收藏 / 随便逛逛） | https://xiaoqianran.github.io/modal-lab/ |
+| 009 HY-World 世界馆 | https://xiaoqianran.github.io/modal-lab/009-hy-worldgen/ |
+| 各实验 gallery | `https://xiaoqianran.github.io/modal-lab/<NNN-topic>/` |
 
-- 首页：筛选 / 收藏 / 随便逛逛
-- 009 主角馆：https://xiaoqianran.github.io/modal-lab/009-hy-worldgen/
+### 每位作者请记住：出了 HTML 结果 → 部署到 Pages
 
-推送到 `main` 且改动 `pages/**` 或 `**/gallery/**` 时，`.github/workflows/pages.yml` 会重新 build → Pages。
+不要只把结果丢在 Modal Volume 或本机。**把可展示的 HTML 放进仓库的 `gallery/`，推 `main`，Actions 会自动发到 Pages。**
+
+1. **写 gallery**  
+   在 `NNN-topic/gallery/index.html`（+ `assets/` 小体积媒体）。  
+   本地预览：`python3 -m http.server 8765 --directory NNN-topic/gallery`
+
+2. **媒体体积**  
+   只提交预览级文件（截图、短 mp4、小 ply/glb）。大权重 / 完整 outputs 仍走 Modal Volume，**不要**塞进 git。  
+   `.gitignore` 已允许 `gallery/**/*.mp4` 等小媒体。
+
+3. **登记到首页（推荐）**  
+   新实验在 `pages/data/experiments.json` 加一条（标题、简介、标签、accent）。  
+   不登记也能通过 `/NNN-topic/` 直达，但首页卡片不会出现。
+
+4. **推送即部署**  
+   ```bash
+   git add NNN-topic/gallery pages/data/experiments.json
+   git commit -m "gallery(NNN): …"
+   git push origin main
+   ```  
+   改动 `**/gallery/**`、`pages/**` 或 `gpu-gallery/**` 会触发  
+   `.github/workflows/pages.yml` → build `_site` → **GitHub Pages**。  
+   也可在 Actions 里手动 **Run workflow**。
+
+5. **自检**  
+   - Actions：`Deploy GitHub Pages` 绿勾  
+   - 打开 `https://xiaoqianran.github.io/modal-lab/NNN-topic/`  
+   - 资源用**相对路径**（`assets/...`），不要写死 `localhost`
+
+> 约定：**有可看结果 = 有 gallery HTML + 已上 Pages。** 写 README 时顺手贴上 Pages 链接。
 
 ## 结构
 
