@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-009-hy-worldgen — single-GPU (RTX-PRO-6000) World Generation pipeline. v8.1
+009-hy-worldgen — single-GPU (RTX-PRO-6000) World Generation pipeline. v8.2.1
 
 Stage 1–2 use official Qwen3-VL-8B via in-container vLLM (share-GPU or split).
 Stage 3–5 unchanged (WorldStereo-dmd → GS).
@@ -118,9 +118,12 @@ worldgen_image = (
         f"(pip install -e . --no-build-isolation || pip install gsplat || true)",
         "pip install zim_anything || true",
         "pip install 'transformers==5.2.0' 'huggingface_hub[hf_transfer]>=0.34.0' --upgrade",
-        # vLLM for official Qwen3-VL-8B (Stage1/2). Heavy; cached in image layer.
-        "pip install 'vllm>=0.8.0' || pip install vllm || true",
-        "pip install openai",
+        "pip install openai fastapi uvicorn pillow",
+        # Re-pin torch after any package that may have upgraded it (vLLM etc.)
+        "pip install --force-reinstall 'numpy==1.26.4' "
+        "'torch==2.7.1' 'torchvision==0.22.1' "
+        "--index-url https://download.pytorch.org/whl/cu128 "
+        "|| pip install 'numpy==1.26.4'",
     )
     .env(
         {
@@ -1562,7 +1565,7 @@ def run_stage12(
 def status() -> dict[str, Any]:
     return {
         "app": APP_NAME,
-        "version": "v8.1",
+        "version": "v8.2",
         "default_gpu": DEFAULT_GPU,
         "vlm": {
             "model": VLM_MODEL,
