@@ -21,3 +21,8 @@ books/*.pdf
 *.egg-info/
 .pytest_cache/
 .DS_Store
+
+# 小体积 gallery 媒体允许入库（完整 outputs 仍忽略）
+!**/gallery/**/*.mp4
+!**/gallery/assets/*.mp4
+!**/gallery/data/*.mp4
