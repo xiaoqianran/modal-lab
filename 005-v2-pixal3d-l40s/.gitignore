@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+outputs/
+.cache/
+*.log
+*.safetensors
+# demo GLB kept under viewer for showcase when you choose to commit
+*.glb
+!viewer/*.glb

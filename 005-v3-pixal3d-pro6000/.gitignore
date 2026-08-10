@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+*.glb
+.cache/
+*.log
+outputs/

@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Pixal3D · L40S (sm_89)</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b0d12;
+        --panel: rgba(18, 22, 32, 0.88);
+        --line: rgba(255, 255, 255, 0.08);
+        --text: #f3f5f9;
+        --muted: #9aa3b5;
+        --accent: #34d399;
+        --accent-2: #7dd3fc;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        height: 100%;
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        background:
+          radial-gradient(1100px 560px at 18% -12%, rgba(52, 211, 153, 0.14), transparent 55%),
+          radial-gradient(900px 480px at 92% 8%, rgba(125, 211, 252, 0.1), transparent 50%),
+          var(--bg);
+      }
+      .app {
+        min-height: 100%;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+      }
+      header, footer {
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+        background: var(--panel);
+      }
+      footer {
+        border-bottom: 0;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      header {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      h1 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 650;
+        letter-spacing: 0.02em;
+      }
+      h1 span { color: var(--muted); font-weight: 500; }
+      .badge {
+        display: inline-block;
+        margin-left: 8px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #052e1c;
+        background: linear-gradient(135deg, #34d399, #6ee7b7);
+        vertical-align: middle;
+      }
+      .meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .chip {
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 12px;
+        color: var(--muted);
+        text-decoration: none;
+      }
+      .chip strong { color: var(--text); font-weight: 600; }
+      a.chip:hover { border-color: rgba(52, 211, 153, 0.45); color: var(--text); }
+      .stage { position: relative; min-height: 0; }
+      model-viewer {
+        width: 100%;
+        height: 100%;
+        min-height: min(78vh, 840px);
+        --poster-color: transparent;
+        background: transparent;
+      }
+      .hint {
+        position: absolute;
+        left: 16px;
+        bottom: 16px;
+        z-index: 2;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        pointer-events: none;
+      }
+      .side {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: min(230px, calc(100vw - 32px));
+        z-index: 2;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        backdrop-filter: blur(12px);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+      }
+      .side img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+        background: #111;
+      }
+      .side .cap {
+        padding: 10px 12px 12px;
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .side .cap b { color: var(--text); }
+      .side .stats {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid var(--line);
+        display: grid;
+        gap: 4px;
+      }
+      .side .stats div { display: flex; justify-content: space-between; gap: 8px; }
+      .side .stats span:last-child { color: var(--text); font-variant-numeric: tabular-nums; }
+      a { color: var(--accent-2); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .progress {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        z-index: 1;
+        color: var(--muted);
+        font-size: 14px;
+        pointer-events: none;
+      }
+      .progress.hidden { display: none; }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      @media (max-width: 640px) {
+        .side {
+          top: auto;
+          bottom: 64px;
+          right: 12px;
+          left: 12px;
+          width: auto;
+        }
+        .side img { aspect-ratio: 16 / 7; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <h1>
+          Pixal3D
+          <span>· smoke_l40s.glb</span>
+          <span class="badge">L40S · sm_89</span>
+        </h1>
+        <div class="meta">
+          <div class="chip">GPU <strong id="chip-gpu">L40S</strong></div>
+          <div class="chip">SM <strong id="chip-sm">sm_89</strong></div>
+          <div class="chip">mode <strong>low_vram · 1024</strong></div>
+          <div class="chip">time <strong id="chip-time">~311s</strong></div>
+          <div class="chip">peak VRAM <strong id="chip-vram">~15.4 GB</strong></div>
+          <div class="chip">cost <strong id="chip-cost">~$0.17</strong></div>
+          <div class="chip">size <strong id="chip-size">38 MB</strong></div>
+          <a class="chip" id="dl" href="./smoke_l40s.glb" download="smoke_l40s.glb">⬇ download GLB</a>
+          <a class="chip" href="./smoke_l40s_meta.json" download>meta JSON</a>
+        </div>
+      </header>
+
+      <main class="stage">
+        <div class="progress" id="progress">Loading 3D model…</div>
+        <model-viewer
+          id="mv"
+          src="./smoke_l40s.glb"
+          alt="Pixal3D mesh generated on L40S"
+          camera-controls
+          touch-action="pan-y"
+          auto-rotate
+          auto-rotate-delay="0"
+          rotation-per-second="18deg"
+          shadow-intensity="0.9"
+          shadow-softness="0.85"
+          exposure="1.05"
+          environment-image="neutral"
+          interaction-prompt="auto"
+          ar
+          ar-modes="webxr scene-viewer quick-look"
+        ></model-viewer>
+
+        <div class="side">
+          <img src="./input.webp" alt="Input image" />
+          <div class="cap">
+            <b>Input</b><br />
+            Official sample · seed 42<br />
+            005-v2 Plan A (sm_89 wheels)
+            <div class="stats" id="side-stats">
+              <div><span>GPU</span><span>L40S</span></div>
+              <div><span>Infer</span><span id="s-time">310.7 s</span></div>
+              <div><span>VRAM</span><span id="s-vram">15.42 GB</span></div>
+              <div><span>Cost</span><span id="s-cost">$0.168</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hint">
+          <div class="chip">拖动旋转 · 滚轮缩放 · 双指平移</div>
+        </div>
+      </main>
+
+      <footer>
+        Generated with
+        <a href="https://github.com/TencentARC/Pixal3D" target="_blank" rel="noreferrer">TencentARC/Pixal3D</a>
+        on Modal · experiment <code>005-v2-pixal3d-l40s</code>
+        · stack: source-built Ada <code>sm_89</code> CUDA wheels (not HF demo)
+        · local file: <code>viewer/smoke_l40s.glb</code>
+      </footer>
+    </div>
+
+    <script>
+      const mv = document.getElementById("mv");
+      const progress = document.getElementById("progress");
+
+      mv.addEventListener("load", () => progress.classList.add("hidden"));
+      mv.addEventListener("error", (e) => {
+        progress.textContent = "Failed to load GLB — check that smoke_l40s.glb is next to this HTML.";
+        console.error(e);
+      });
+
+      // Enrich chips from meta JSON when served over http(s)
+      fetch("./smoke_l40s_meta.json")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((m) => {
+          if (!m) return;
+          const sec = m.seconds_total ?? m.seconds_infer;
+          const vram = m.vram?.peak_mem_used_gb;
+          const cost = m.est_cost_usd_total;
+          const bytes = m.bytes;
+          if (m.gpu_actual) document.getElementById("chip-gpu").textContent = "L40S";
+          if (m.sm) document.getElementById("chip-sm").textContent = m.sm;
+          if (sec != null) {
+            document.getElementById("chip-time").textContent = "~" + Math.round(sec) + "s";
+            document.getElementById("s-time").textContent = sec + " s";
+          }
+          if (vram != null) {
+            document.getElementById("chip-vram").textContent = "~" + vram + " GB";
+            document.getElementById("s-vram").textContent = vram + " GB";
+          }
+          if (cost != null) {
+            document.getElementById("chip-cost").textContent = "~$" + Number(cost).toFixed(2);
+            document.getElementById("s-cost").textContent = "$" + Number(cost).toFixed(3);
+          }
+          if (bytes) {
+            document.getElementById("chip-size").textContent =
+              (bytes / 1e6).toFixed(0) + " MB";
+          }
+        })
+        .catch(() => {});
+    </script>
+  </body>
+</html>

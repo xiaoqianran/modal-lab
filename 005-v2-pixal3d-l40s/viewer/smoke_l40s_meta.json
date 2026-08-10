@@ -1,0 +1,55 @@
+{
+  "output_name": "smoke_l40s",
+  "seed": 42,
+  "low_vram": true,
+  "resolution": 1024,
+  "fov": -1.0,
+  "model_path": "/weights/Pixal3D",
+  "gpu_request": "L40S",
+  "gpu_actual": "NVIDIA L40S",
+  "sm": "sm_89",
+  "capability": [
+    8,
+    9
+  ],
+  "vram_total_gb": 44.4,
+  "price_per_sec_usd": 0.000542,
+  "upstream": "TencentARC/Pixal3D",
+  "stack": "005-v2 Plan A sm_89 source wheels",
+  "wheels": [
+    "cumesh-0.0.1-cp310-cp310-linux_x86_64.whl",
+    "flex_gemm-1.0.0-cp310-cp310-linux_x86_64.whl",
+    "natten-0.21.0-cp310-cp310-linux_x86_64.whl",
+    "nvdiffrast-0.4.0-cp310-cp310-linux_x86_64.whl",
+    "nvdiffrec_render-0.0.0-cp310-cp310-linux_x86_64.whl",
+    "o_voxel-0.0.1-cp310-cp310-linux_x86_64.whl"
+  ],
+  "vram_idle": {
+    "name": "NVIDIA L40S",
+    "mem_used_mib": 439.0,
+    "mem_total_mib": 46068.0,
+    "util_gpu_pct": 0.0
+  },
+  "seconds_total": 310.7,
+  "seconds_infer": 310.7,
+  "est_cost_usd_total": 0.1684,
+  "vram": {
+    "gpu_name_smi": "NVIDIA L40S",
+    "peak_mem_used_mib": 15785.0,
+    "peak_mem_used_gb": 15.42,
+    "mem_total_mib": 46068.0,
+    "mem_total_gb": 44.99,
+    "peak_util_gpu_pct": 100.0,
+    "n_samples": 143
+  },
+  "input_volume_path": "inputs/smoke_l40s.webp",
+  "volume_name": "modal-lab-pixal3d-l40s-outputs",
+  "volume_paths": {
+    "named": "meshes/smoke_l40s.glb",
+    "latest": "meshes/latest.glb",
+    "meta": "meshes/smoke_l40s_meta.json",
+    "benchmark": "benchmarks/smoke_l40s.json"
+  },
+  "bytes": 38339872,
+  "cli_get": "modal volume get modal-lab-pixal3d-l40s-outputs meshes/smoke_l40s.glb ./smoke_l40s.glb"
+}
