@@ -29,7 +29,7 @@ QWEN_BASE = "Qwen/Qwen-Image-Edit-2509"
 LORA_WEIGHT_NAME = "pytorch_lora_weights.safetensors"
 
 DEFAULT_BACKEND = "qwen"
-DEFAULT_GPU_QWEN = "A100-80GB"
+DEFAULT_GPU_QWEN = "RTX-PRO-6000"
 DEFAULT_GPU_FULL = "H100:4"
 
 REPO_DIR = Path("/opt/HY-World-2.0")
