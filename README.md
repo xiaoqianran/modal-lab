@@ -24,6 +24,7 @@ main.py                 # 入口，调度到 001 / 002 / …
 013-yue/                # [PLAN] YuE 全曲（结构 · A100）
 014-diffrhythm-2/       # [PLAN] DiffRhythm 2 全曲 diffusion（默认 L4）
 016-musicgen/           # [PLAN] MusicGen 器乐基线（T4/L4）· 跳过 015
+017-xr1-robocasa365-sim/ # Xiaomi XR-1 · RoboCasa365 仿真 smoke + mp4（默认 A100）
 ```
 
 命名约定：`NNN-topic`（序号 + 主题）。`python main.py 001 …` 等短号在唯一时可解析到对应目录。
@@ -51,6 +52,8 @@ python main.py 009 status         # worldgen 全景→3D 世界（分 stage）
 python main.py 010 smoke          # ACE-Step 1.5 音乐（L4 · 20s 器乐）
 python main.py 011 smoke          # Stable Audio 3 Medium（L4 · 20s）
 python main.py 015 smoke          # Xiaomi-Robotics-1 RoboCasa365 动作冒烟（A100-40GB）
+python main.py 017 smoke-random   # RoboCasa365 仿真随机 1 局 → mp4
+python main.py 017 smoke-policy   # XR-1 闭环短 horizon → mp4
 
 # 也可直接进目录
 cd 001-longcat-video && python run.py status
@@ -77,6 +80,7 @@ cd 008-hy-pano && python run.py status
 | `010-ace-step-1.5` | [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5) 开源音乐生成；**默认 L4**；主包 turbo + 可选 1.7B LM |
 | `011-stable-audio-3` | [Stable Audio 3 Medium](https://huggingface.co/stabilityai/stable-audio-3-medium)；**默认 L4**（T4 无 FlashAttn） |
 | `015-xiaomi-robotics-1-robocasa365` | [Xiaomi-Robotics-1](https://github.com/XiaomiRobotics/Xiaomi-Robotics-1) RoboCasa365 VLA 冒烟；**默认 A100-40GB** |
+| `017-xr1-robocasa365-sim` | 同上 + **RoboCasa365 仿真 1 局** → **mp4**；默认 A100-40GB |
 | `012-levo-2` | **[PLAN](012-levo-2/PLAN.md)** LeVo 2 全曲音乐（待实现） |
 | `013-yue` | **[PLAN](013-yue/PLAN.md)** YuE 全曲（待实现） |
 | `014-diffrhythm-2` | **[PLAN](014-diffrhythm-2/PLAN.md)** DiffRhythm 2（待实现） |
