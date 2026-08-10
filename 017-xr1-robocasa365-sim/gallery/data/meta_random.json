@@ -1,0 +1,29 @@
+{
+  "success": true,
+  "mode": "random",
+  "task": "CloseBlenderLid",
+  "steps": 60,
+  "seed": 7,
+  "split": "pretrain",
+  "run_name": "smoke_random_v3",
+  "video": "runs/smoke_random_v3/CloseBlenderLid_random.mp4",
+  "video_bytes": 214507,
+  "info": {
+    "num_success_rollouts": 0,
+    "fallback": "manual",
+    "frames": 60,
+    "first_error": "AttributeError(\"'OrderEnforcing' object has no attribute 'sim'\")"
+  },
+  "error": null,
+  "gpu": "A100-40GB",
+  "vram": {
+    "name": "NVIDIA A100 80GB PCIe",
+    "mem_used_mib": 4.0,
+    "mem_total_mib": 81920.0,
+    "util_gpu_pct": 0.0
+  },
+  "wall_s": 1029.04,
+  "cost_est_usd": 0.5999,
+  "utc": "20260810T150011Z",
+  "note": "Random actions \u2014 not XR-1. Proves MuJoCo/RoboCasa can render a video on Modal."
+}
