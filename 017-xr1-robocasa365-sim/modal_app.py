@@ -29,7 +29,8 @@ ROBOSUITE = "https://github.com/ARISE-Initiative/robosuite"
 ROBOCASA = "https://github.com/robocasa/robocasa"
 XR1_CODE = "https://github.com/XiaomiRobotics/Xiaomi-Robotics-1"
 
-DEFAULT_GPU = "A100-40GB"
+# L40S: enough VRAM for XR-1 (~10GB), cheaper than A100-40 on Modal.
+DEFAULT_GPU = "L40S"
 DEFAULT_TASK = "CloseBlenderLid"
 ROBOT_TYPE = "robocasa365"
 STATE_DIM = 60
@@ -37,6 +38,8 @@ ACTION_DIM = 12
 OBS_HISTORY = 4
 OBS_INTERVAL = 2
 REPLAN_STEPS = 16
+# W,H — must be multiples of Qwen-VL patch*merge (=32). Same as 015 smoke.
+POLICY_IMAGE_SIZE = (320, 256)
 CAMERA_KEYS = (
     "video.robot0_agentview_left",
     "video.robot0_agentview_right",
@@ -66,6 +69,7 @@ GPU_PRICE_PER_SEC = {
     "A100-80GB": 0.000694,
     "H100": 0.001097,
     "H100!": 0.001097,
+    "RTX-PRO-6000": 0.000842,
 }
 
 EXP_DIR = Path(__file__).resolve().parent
@@ -201,7 +205,7 @@ def _dir_info(path: Path) -> dict[str, Any]:
         "exists": True,
         "path": str(path),
         "files": len(files),
-        "size_gb": round(total / 1e9, 3),
+        "size_gb": round(total / (1024**3), 3),
     }
 
 
@@ -220,7 +224,6 @@ def _model_ready(model_dir: Path) -> bool:
         return False
     return len(list(model_dir.glob("model-*.safetensors"))) >= 3
 
-
 def _assets_ready() -> bool:
     # Heuristic: textures + fixtures folders exist and are non-empty under robocasa package
     try:
@@ -236,7 +239,6 @@ def _assets_ready() -> bool:
     except Exception:
         return False
 
-
 def _nvidia_smi() -> dict[str, Any] | None:
     try:
         out = subprocess.check_output(
@@ -246,10 +248,12 @@ def _nvidia_smi() -> dict[str, Any] | None:
                 "--format=csv,noheader,nounits",
             ],
             text=True,
-            timeout=10,
+            timeout=15,
         ).strip()
     except Exception as e:  # noqa: BLE001
         return {"error": repr(e)}
+    if not out:
+        return None
     parts = [p.strip() for p in out.splitlines()[0].split(",")]
     if len(parts) < 4:
         return {"raw": out}
@@ -261,7 +265,6 @@ def _nvidia_smi() -> dict[str, Any] | None:
     }
 
 
-# ---------- remote helpers ----------
 def _download_assets_impl(force: bool = False) -> dict[str, Any]:
     t0 = time.time()
     import robocasa
@@ -326,7 +329,6 @@ def _download_assets_impl(force: bool = False) -> dict[str, Any]:
     }
     print(json.dumps(info, indent=2, default=str), flush=True)
     return info
-
 
 def _make_video_frame(observation: dict[str, Any]):
     import numpy as np
@@ -395,24 +397,39 @@ def _sample_history(history, length: int, interval: int):
     return np.ascontiguousarray(np.stack([items[i] for i in indices], axis=0))
 
 
-def _center_crop(image, crop_ratio: float):
+def _prepare_frame(image, crop_ratio: float = 1.0, size: tuple[int, int] = POLICY_IMAGE_SIZE):
+    """Center-crop then resize to a VL-safe size (W,H multiples of 32).
+
+    Previous bug: crop_ratio=0.95 on 256px → 243px → Qwen-VL reshape crash
+    (input size 2125764 vs grid product). 015 synthetic smoke used 320×256.
+    """
     from PIL import Image
     import numpy as np
 
-    pil = Image.fromarray(np.asarray(image, dtype=np.uint8))
-    if crop_ratio >= 1.0:
-        return pil
-    w, h = pil.size
-    cw = max(1, int(w * crop_ratio))
-    ch = max(1, int(h * crop_ratio))
-    left = (w - cw) // 2
-    top = (h - ch) // 2
-    return pil.crop((left, top, left + cw, top + ch))
+    arr = np.asarray(image)
+    if arr.ndim == 4 and arr.shape[0] == 1:
+        arr = arr[0]
+    if arr.ndim == 2:
+        arr = np.stack([arr] * 3, axis=-1)
+    if arr.shape[-1] == 4:
+        arr = arr[..., :3]
+    pil = Image.fromarray(arr.astype(np.uint8)).convert("RGB")
+    if crop_ratio < 1.0:
+        w, h = pil.size
+        cw = max(1, int(w * crop_ratio))
+        ch = max(1, int(h * crop_ratio))
+        left = (w - cw) // 2
+        top = (h - ch) // 2
+        pil = pil.crop((left, top, left + cw, top + ch))
+    tw, th = size
+    if pil.size != (tw, th):
+        pil = pil.resize((tw, th), Image.Resampling.BICUBIC)
+    return pil
 
 
 def _build_messages(image_history: dict, instruction: str, crop_ratio: float):
     videos = {
-        key: [_center_crop(frame, crop_ratio) for frame in image_history[key]]
+        key: [_prepare_frame(frame, crop_ratio) for frame in image_history[key]]
         for key in CAMERA_KEYS
     }
     return [
@@ -567,49 +584,34 @@ def status_fn() -> dict[str, Any]:
                         m = json.loads(meta.read_text())
                     except Exception:
                         m = None
-                vids = [f.name for f in p.rglob("*.mp4")]
-                runs.append(
-                    {
-                        "name": p.name,
-                        "success": (m or {}).get("success"),
-                        "mode": (m or {}).get("mode"),
-                        "videos": vids,
-                        "task": (m or {}).get("task"),
-                    }
-                )
-    marker = ASSETS_VOL_DIR / "ready.json"
-    assets_marker = None
-    if marker.is_file():
-        try:
-            assets_marker = json.loads(marker.read_text())
-        except Exception:
-            assets_marker = {"raw": marker.read_text()[:200]}
-    out = {
+                runs.append({"name": p.name, "meta": m})
+    info = {
         "app": APP_NAME,
-        "note": "016 is MusicGen; this sim experiment is 017",
-        "hf_repo": HF_REPO,
+        "model_ready": _model_ready(MODEL_DIR),
+        "weights": _dir_info(MODEL_DIR),
+        "assets_ready": _assets_ready(),
+        "assets": _dir_info(Path(ASSETS_MOUNT)),
+        "runs": runs[-20:],
         "default_gpu": DEFAULT_GPU,
         "default_task": DEFAULT_TASK,
-        "weights": _dir_info(MODEL_DIR),
-        "weights_ready": _model_ready(MODEL_DIR),
-        "assets_marker": assets_marker,
-        "outputs": _dir_info(Path(OUTPUTS_MOUNT)),
-        "runs": runs[-30:],
-        "cost_guide": {
-            "download_assets_cpu": "~$0.02–0.10 (one-time ~10GB)",
-            "smoke_random_1ep": "~$0.05–0.30 on L4/A100 (minutes)",
-            "smoke_policy_horizon20": "~$0.10–0.60 on A100-40GB",
-            "full_2500_eps": "hours–days, often $50–500+ (not this exp)",
+        "policy_image_size_wh": list(POLICY_IMAGE_SIZE),
+        "cost_notes": {
+            "smoke_random_1ep": "~$0.05–0.30 on L40S (minutes after assets)",
+            "smoke_policy_horizon20": "~$0.08–0.50 on L40S",
+            "full_2500": "hours–days, $50–500+ — not in scope",
         },
     }
-    print(json.dumps(out, indent=2, default=str), flush=True)
-    return out
+    print(json.dumps(info, indent=2, default=str), flush=True)
+    return info
 
 
 @app.function(
     image=sim_image,
     gpu=DEFAULT_GPU,
-    volumes={ASSETS_MOUNT: assets_vol, OUTPUTS_MOUNT: outputs_vol},
+    volumes={
+        ASSETS_MOUNT: assets_vol,
+        OUTPUTS_MOUNT: outputs_vol,
+    },
     timeout=SIM_TIMEOUT,
     memory=32768,
     cpu=4,
@@ -627,78 +629,69 @@ def smoke_random_fn(
     import imageio.v2 as imageio
     import gymnasium as gym
     import robocasa  # noqa: F401
-    from robocasa.utils.env_utils import run_random_rollouts
 
     t0 = time.time()
     if not _assets_ready():
-        print("assets missing — downloading first…", flush=True)
         _download_assets_impl(force=False)
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     name = run_name or f"random_{task}_{stamp}"
     out_dir = Path(OUTPUTS_MOUNT) / "runs" / name
     out_dir.mkdir(parents=True, exist_ok=True)
-    video_path = out_dir / f"{task}_random.mp4"
 
-    # Prefer EGL; fall back to osmesa if needed
     os.environ.setdefault("MUJOCO_GL", "egl")
-    smi = _nvidia_smi()
-
-    env = None
+    env = gym.make(f"robocasa/{task}", split=split, seed=seed)
+    obs, _ = env.reset(seed=seed)
+    video_path = out_dir / f"{task}_random.mp4"
+    info: dict[str, Any] = {"num_success_rollouts": 0}
     err = None
-    info: dict[str, Any] = {}
     try:
-        env = gym.make(f"robocasa/{task}", split=split, seed=seed)
-        info = run_random_rollouts(
-            env,
-            num_rollouts=1,
-            num_steps=steps,
-            video_path=str(video_path),
-            camera_name="robot0_agentview_left",
-        )
-    except Exception as e:  # noqa: BLE001
-        err = repr(e)
-        # fallback: manual loop with concatenated cameras if available
+        # Try robocasa helper if present
         try:
-            if env is None:
-                os.environ["MUJOCO_GL"] = "osmesa"
-                env = gym.make(f"robocasa/{task}", split=split, seed=seed)
-            obs, _ = env.reset(seed=seed)
+            from robocasa.utils.eval_utils import run_random_rollouts  # type: ignore
+
+            stats = run_random_rollouts(
+                env,
+                num_rollouts=1,
+                num_steps=steps,
+                video_path=str(video_path),
+            )
+            info.update(stats if isinstance(stats, dict) else {"stats": stats})
+        except Exception:
+            # fallback: manual loop
             frames = []
-            success = False
             for i in range(steps):
                 action = env.action_space.sample()
-                if "action.base_motion" in action:
-                    action["action.base_motion"][:] = 0.0
-                obs, reward, term, trunc, step_info = env.step(action)
+                obs, _, done, truncated, step_info = env.step(action)
                 try:
                     frames.append(_make_video_frame(obs))
                 except Exception:
-                    # render via sim if gym obs lacks cameras
-                    img = env.unwrapped.sim.render(
-                        height=256, width=256, camera_name="robot0_agentview_left"
-                    )[::-1]
-                    frames.append(np.asarray(img, dtype=np.uint8))
-                success = bool(step_info.get("success", False))
-                if success or term or trunc:
+                    try:
+                        img = env.unwrapped.sim.render(
+                            height=256, width=256, camera_name="robot0_agentview_left"
+                        )
+                        frames.append(np.asarray(img, dtype=np.uint8))
+                    except Exception:
+                        pass
+                if step_info.get("success"):
+                    info["num_success_rollouts"] = 1
+                if done or truncated:
                     break
             if frames:
                 imageio.mimsave(str(video_path), frames, fps=20)
-            info = {
-                "num_success_rollouts": int(success),
-                "fallback": "manual",
-                "frames": len(frames),
-                "first_error": err,
-            }
-            err = None
-        except Exception as e2:  # noqa: BLE001
-            err = f"{err} | fallback={e2!r}"
+            info.update(
+                {
+                    "fallback": "manual",
+                    "frames": len(frames),
+                }
+            )
+    except Exception as e:  # noqa: BLE001
+        err = repr(e)
     finally:
-        if env is not None:
-            try:
-                env.close()
-            except Exception:
-                pass
+        try:
+            env.close()
+        except Exception:
+            pass
 
     wall = round(time.time() - t0, 2)
     meta = {
@@ -714,7 +707,7 @@ def smoke_random_fn(
         "info": info,
         "error": err,
         "gpu": gpu_label,
-        "vram": smi,
+        "vram": _nvidia_smi(),
         "wall_s": wall,
         "cost_est_usd": _estimate_cost(gpu_label, wall),
         "utc": stamp,
@@ -787,6 +780,12 @@ def smoke_policy_fn(
         "annotation.human.task_description",
         f"perform the task {task}",
     )
+    # log first-frame camera shapes for debugging
+    cam_shapes = {
+        k: list(np.asarray(observation[k]).shape)
+        for k in CAMERA_KEYS
+        if k in observation
+    }
 
     queue_length = (OBS_HISTORY - 1) * OBS_INTERVAL + 1
     image_queues = {
@@ -807,6 +806,7 @@ def smoke_policy_fn(
     steps = 0
     infer_times = []
     err = None
+    first_action_preview = None
 
     try:
         while steps < horizon:
@@ -834,6 +834,8 @@ def smoke_policy_fn(
                     num_steps=num_denoise_steps,
                 )
                 infer_times.append(round(time.time() - it0, 3))
+                if first_action_preview is None:
+                    first_action_preview = chunk[0].tolist()
                 for a in chunk[:REPLAN_STEPS]:
                     action_plan.append(a)
 
@@ -884,8 +886,11 @@ def smoke_policy_fn(
     (task_dir / "stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
 
     wall = round(time.time() - t0, 2)
+    # success = ran without exception and produced a multi-frame video
+    # (episode task success is separate: episode_success)
+    ran_ok = err is None and video_path.is_file() and len(video_frames) > 1
     meta = {
-        "success": err is None and video_path.is_file(),
+        "success": ran_ok,
         "mode": "policy",
         "task": task,
         "instruction": instruction if isinstance(instruction, str) else str(instruction),
@@ -896,8 +901,11 @@ def smoke_policy_fn(
         "split": split,
         "run_name": name,
         "attn": attn_used,
+        "policy_image_size_wh": list(POLICY_IMAGE_SIZE),
+        "cam_shapes_raw": cam_shapes,
         "load_s": load_s,
         "infer_times_s": infer_times,
+        "first_action_preview": first_action_preview,
         "video": str(video_path.relative_to(OUTPUTS_MOUNT)) if video_path.is_file() else None,
         "video_frames": len(video_frames),
         "video_bytes": video_path.stat().st_size if video_path.is_file() else 0,
@@ -909,9 +917,9 @@ def smoke_policy_fn(
         "error": err,
         "utc": stamp,
         "note": (
-            "Single-episode closed-loop smoke with XR-1. "
-            "horizon=20 is official smoke length — may be too short to finish the task. "
-            "Video is the form of the result (plus stats.json)."
+            "Single-episode closed-loop smoke with XR-1 on L40S default. "
+            "Frames resized to 320×256 (multiples of 32) after crop. "
+            "horizon=20 is official smoke length — may be too short to finish the task."
         ),
     }
     (out_dir / "meta.json").write_text(json.dumps(meta, indent=2, default=str), encoding="utf-8")

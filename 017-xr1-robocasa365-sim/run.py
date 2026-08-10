@@ -12,7 +12,7 @@ from pathlib import Path
 EXP_DIR = Path(__file__).resolve().parent
 MODAL_APP = EXP_DIR / "modal_app.py"
 VOL_OUT = "modal-lab-xr1-robocasa365-sim-outputs"
-DEFAULT_GPU = "A100-40GB"
+DEFAULT_GPU = "L40S"
 DEFAULT_TASK = "CloseBlenderLid"
 
 

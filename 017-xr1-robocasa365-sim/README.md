@@ -13,6 +13,16 @@
 | 成功？ | 不知道 | `stats.json` |
 | 视频 | 无 | **`.mp4` 回放** |
 
+## 默认 GPU
+
+**L40S**（不是 A100-40GB）。
+
+| GPU | 对本任务 | 备注 |
+|-----|----------|------|
+| **L40S（默认）** | 推荐 | XR-1 峰值 ~10GB，L40S 够用且更便宜 |
+| A100-40GB | 可 | 和 015 对齐时用 `--gpu A100-40GB` |
+| RTX PRO 6000 | 不推荐默认 | 更贵、Blackwell 兼容坑，收益小 |
+
 ## 仿真结果是什么形式？
 
 不是「文生视频」，而是：
@@ -32,12 +42,17 @@ Modal 单价量级（2026 公开价，仅 GPU 秒费，不含镜像构建）：
 | 首次镜像构建 | CPU build | 15–40 min | 镜像构建另计/常有免费额度 |
 | `download-assets` | CPU · ~10GB | 10–30 min | **~$0.02–0.10**（一次） |
 | `download-weights` | CPU · ~10GB | ~1 min（若 015 已下过则 skip） | **~$0.01–0.05** |
-| **`smoke-random`** 1 局 80 步 | A100/L4 | **3–15 min** | **~$0.05–0.30** |
-| **`smoke-policy`** horizon=20 | A100-40GB | **5–20 min**（含加载） | **~$0.10–0.60** |
+| **`smoke-random`** 1 局 80 步 | L40S | **3–15 min** | **~$0.05–0.30** |
+| **`smoke-policy`** horizon=20 | **L40S** | **5–20 min**（含加载） | **~$0.08–0.50** |
 | 官方完整 2500 局 | 多卡长时间 | **数小时～数天** | **常 $50–500+**（不做） |
 
 > 第一次最贵的是 **镜像 + 资产下载**；之后 Volume 复用会便宜很多。  
 > `horizon=20` 官方 smoke 很短，**经常任务没做完**——但足够验证「有视频、链路通」。
+
+## 关键修复（policy shape）
+
+`crop_ratio=0.95` 把 256 裁成 **243**，不是 32 的倍数 → Qwen-VL reshape 崩溃。  
+现已：**中心裁剪后 resize 到 320×256**（与 015 一致，`do_resize=False`）。
 
 ## 用法
 
@@ -46,7 +61,7 @@ python main.py 017 status
 python main.py 017 download-weights   # 可与 015 共用 weights Volume
 python main.py 017 download-assets    # ~10GB 厨房资产
 python main.py 017 smoke-random       # 随机乱动 → mp4
-python main.py 017 smoke-policy       # XR-1 闭环 → mp4
+python main.py 017 smoke-policy       # XR-1 闭环 → mp4（默认 L40S）
 python main.py 017 pull --remote runs/<name>
 ```
 
