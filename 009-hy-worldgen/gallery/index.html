@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>009 · HY-Worldgen · Gallery</title>
+  <title>009 · HY-Worldgen · 3D World Gallery</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -19,11 +19,76 @@
         radial-gradient(800px 400px at 100% 0%, rgba(240,164,110,.08), transparent 50%),
         var(--bg);
     }
-    .wrap { width: min(1180px, calc(100% - 2rem)); margin: 0 auto; padding: 1.5rem 0 3rem; }
+    .wrap { width: min(1180px, calc(100% - 2rem)); margin: 0 auto; padding: 1.25rem 0 3rem; }
     .eyebrow { color: var(--accent); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; }
-    h1 { margin: .4rem 0; font-size: clamp(1.5rem, 3vw, 2.2rem); letter-spacing: -.03em; }
-    .lede { color: var(--muted); max-width: 58ch; line-height: 1.55; }
-    .stats { display: grid; grid-template-columns: repeat(2,1fr); gap: .75rem; margin: 1.25rem 0; }
+    h1 { margin: .35rem 0; font-size: clamp(1.45rem, 3vw, 2.1rem); letter-spacing: -.03em; }
+    .lede { color: var(--muted); max-width: 62ch; line-height: 1.55; margin: 0 0 1rem; }
+
+    /* rendered world preview strip */
+    .world-hero {
+      display: grid; gap: 0; margin: 0 0 1rem;
+      background: var(--elev); border: 1px solid var(--line); border-radius: 18px; overflow: hidden;
+      box-shadow: 0 18px 50px rgba(0,0,0,.4);
+    }
+    @media (min-width:900px){ .world-hero { grid-template-columns: 1.15fr 1fr; } }
+    .world-hero figure { margin: 0; background: #07090d; border-top: 1px solid var(--line); }
+    @media (min-width:900px){
+      .world-hero figure { border-top: 0; border-left: 1px solid var(--line); }
+      .world-hero figure:first-child { border-left: 0; }
+    }
+    .world-hero img { display: block; width: 100%; height: auto; max-height: 360px; object-fit: cover; }
+    .world-hero figcaption {
+      padding: .55rem .85rem .7rem; color: var(--muted); font-size: .78rem;
+      border-top: 1px solid var(--line);
+    }
+    .world-hero .cap-strong { color: var(--fg); font-weight: 600; }
+
+    /* ===== 3D World Viewer ===== */
+    .viewer-panel {
+      background: #07090d;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      margin: 0 0 1.25rem;
+      box-shadow: 0 22px 60px rgba(0,0,0,.5);
+      position: relative;
+    }
+    .viewer-bar {
+      display: flex; flex-wrap: wrap; gap: .55rem .75rem; align-items: center;
+      padding: .7rem .9rem; border-bottom: 1px solid var(--line);
+      background: rgba(20,24,32,.95);
+    }
+    .viewer-bar .title { font-weight: 700; font-size: .95rem; }
+    .viewer-bar .hint { color: var(--muted); font-size: .78rem; flex: 1; min-width: 12ch; }
+    .viewer-bar select, .viewer-bar button, .viewer-bar label {
+      font: inherit; font-size: .8rem; color: var(--fg);
+      background: rgba(255,255,255,.05); border: 1px solid var(--line);
+      border-radius: 999px; padding: .35rem .7rem; cursor: pointer;
+    }
+    .viewer-bar select:focus, .viewer-bar button:hover { border-color: rgba(61,214,198,.5); outline: none; }
+    .viewer-bar label { display: inline-flex; align-items: center; gap: .4rem; cursor: default; }
+    .viewer-bar input[type=range] { width: 88px; accent-color: var(--accent); }
+    #world-canvas {
+      width: 100%; height: min(72vh, 700px); display: block; touch-action: none;
+      background: radial-gradient(ellipse at 50% 60%, #101820 0%, #07090d 70%);
+      cursor: grab;
+    }
+    #world-canvas:active { cursor: grabbing; }
+    .viewer-overlay {
+      position: absolute; left: 50%; top: 54%; transform: translate(-50%,-50%);
+      color: var(--muted); font-size: .9rem; pointer-events: none; text-align: center;
+      background: rgba(0,0,0,.5); padding: .75rem 1.1rem; border-radius: 12px;
+      border: 1px solid var(--line); max-width: 90%; z-index: 2;
+    }
+    .viewer-overlay.error { color: #ff9b94; border-color: rgba(255,123,114,.35); }
+    .viewer-overlay.hidden { display: none; }
+    .viewer-foot {
+      display: flex; flex-wrap: wrap; gap: .5rem 1rem; justify-content: space-between;
+      padding: .55rem .9rem; border-top: 1px solid var(--line); color: var(--muted);
+      font-size: .75rem; font-family: var(--mono); background: rgba(10,13,18,.9);
+    }
+
+    .stats { display: grid; grid-template-columns: repeat(2,1fr); gap: .75rem; margin: 0 0 1.1rem; }
     @media (min-width:800px){ .stats { grid-template-columns: repeat(5,1fr); } }
     .stat { background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 14px; padding: .9rem 1rem; }
     .stat .l { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; }
@@ -43,7 +108,7 @@
       .grid2 figure:first-child, .grid3 figure:first-child { border-left: 0; }
     }
     figure img, figure video { display: block; width: 100%; height: auto; background: #05070b; }
-    figure video { max-height: 320px; object-fit: contain; }
+    figure video { max-height: 280px; object-fit: contain; }
     figcaption { padding: .55rem .8rem .75rem; color: var(--muted); font-size: .75rem; letter-spacing: .03em; }
     .pano-wrap { overflow-x: auto; background: #07090d; }
     .pano-wrap img { min-width: 100%; height: auto; display: block; }
@@ -64,28 +129,70 @@
     }
     .dl a:hover { border-color: rgba(61,214,198,.45); color: var(--accent); }
     .dl .sz { color: var(--muted); font-family: var(--mono); font-size: .72rem; }
-    pre { margin: 0; padding: 1rem; overflow: auto; max-height: 360px; font-family: var(--mono); font-size: .72rem; color: #c8d0e0; background: #0a0d12; }
+    pre { margin: 0; padding: 1rem; overflow: auto; max-height: 320px; font-family: var(--mono); font-size: .72rem; color: #c8d0e0; background: #0a0d12; }
     footer { color: var(--muted); font-size: .82rem; display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; justify-content: space-between; margin-top: .5rem; }
     a { color: var(--accent); }
     .notes { padding: 0 1rem 1rem; color: var(--muted); font-size: .85rem; }
     .notes li { margin: .25rem 0; }
   </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
 </head>
 <body>
   <div class="wrap">
-    <div class="eyebrow">009 · HY-World 2.0 · single RTX-PRO-6000</div>
-    <h1>全景 → 轨迹 → WorldStereo → WorldMirror → 3DGS</h1>
+    <div class="eyebrow">009 · HY-World 2.0 · 可交互 3D 世界</div>
+    <h1>这就是生成出的 3D 世界</h1>
     <p class="lede">
-      从 008 全景起步的完整 worldgen smoke：nframe=21、1 view × 3 traj、memory-dmd、
-      WorldMirror SDPA（无 flash_attn）、3DGS 4000 steps。
+      上面是 3DGS 渲染出的房间画面；下面是可旋转的点云世界（从同一模型导出）。
+      <strong>拖拽旋转 · 滚轮缩放 · 右键平移</strong>。需要用本地 HTTP 打开（不能直接双击 file://）。
     </p>
+
+    <!-- 清晰的「世界长什么样」 -->
+    <section class="world-hero">
+      <figure>
+        <img src="assets/renders/val_step3999.png" alt="3DGS rendered world" />
+        <figcaption><span class="cap-strong">渲染世界 · 3DGS val</span> · step 3999 · PSNR ~20</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/panorama.png" alt="source panorama" style="object-fit: cover; object-position: center;" />
+        <figcaption><span class="cap-strong">输入全景</span> · 来自 008 HY-Pano</figcaption>
+      </figure>
+    </section>
+
+    <!-- 可交互 3D -->
+    <section class="viewer-panel" id="viewer-panel">
+      <div class="viewer-bar">
+        <span class="title">交互 3D 点云世界</span>
+        <select id="model-select" title="选择点云">
+          <option value="assets/ply/world_preview.ply" selected>3DGS 彩色预览（35万点 · 推荐）</option>
+          <option value="assets/ply/global_pcd.ply">WorldMirror global（18万点）</option>
+          <option value="assets/ply/aligned_pcd.ply">aligned_pcd（200万点 · 较慢）</option>
+        </select>
+        <label>点大小 <input id="pt-size" type="range" min="0.5" max="12" step="0.1" value="3.5" /></label>
+        <button type="button" id="btn-reset">重置视角</button>
+        <button type="button" id="btn-fs">全屏</button>
+        <span class="hint">拖拽旋转 · 滚轮缩放</span>
+      </div>
+      <canvas id="world-canvas"></canvas>
+      <div class="viewer-overlay" id="viewer-status">加载 3D 世界…</div>
+      <div class="viewer-foot">
+        <span id="viewer-info">—</span>
+        <span id="viewer-fps">—</span>
+      </div>
+    </section>
 
     <section class="stats" id="stats"></section>
 
     <section class="panel">
       <div class="panel-h">
         <h2>Stage pipeline</h2>
-        <p>成功阶段耗时 / 估费（仅 ok 的 run）</p>
+        <p>成功阶段耗时 / 估费</p>
       </div>
       <div class="stages" id="stages"></div>
       <ul class="notes" id="notes"></ul>
@@ -93,20 +200,10 @@
 
     <section class="panel">
       <div class="panel-h">
-        <h2>Input panorama（008 → 009）</h2>
-        <p>smoke_qwen ERP · 可横向滚动</p>
-      </div>
-      <div class="pano-wrap">
-        <img src="assets/panorama.png" alt="panorama" />
-      </div>
-    </section>
-
-    <section class="panel">
-      <div class="panel-h">
         <h2>Trajectory render vs WorldStereo</h2>
-        <p>上：Stage2 render · 下：Stage3 worldstereo-memory-dmd 扩帧</p>
+        <p>上：Stage2 轨迹渲染 · 下：Stage3 WorldStereo 扩帧</p>
       </div>
-      <div class="grid3" id="traj-grid">
+      <div class="grid3">
         <figure>
           <video controls playsinline muted loop src="assets/videos/traj0_render.mp4"></video>
           <video controls playsinline muted loop src="assets/videos/traj0_worldstereo.mp4"></video>
@@ -127,8 +224,8 @@
 
     <section class="panel">
       <div class="panel-h">
-        <h2>3DGS validation render</h2>
-        <p>Stage5 · step 3999 · val view</p>
+        <h2>Start frame</h2>
+        <p>view0 起点</p>
       </div>
       <div class="grid2">
         <figure>
@@ -144,8 +241,8 @@
 
     <section class="panel">
       <div class="panel-h">
-        <h2>Download point clouds</h2>
-        <p>aligned_pcd（WM 对齐）· global_pcd · 3DGS ply</p>
+        <h2>Download full models</h2>
+        <p>完整 ply（含原始 3DGS 高斯）</p>
       </div>
       <div class="dl" id="downloads"></div>
     </section>
@@ -156,11 +253,179 @@
     </section>
 
     <footer>
-      <div>Upstream <a href="https://github.com/Tencent-Hunyuan/HY-World-2.0">HY-World-2.0</a> · Modal <code>modal-lab-hy-worldgen</code></div>
+      <div>Upstream <a href="https://github.com/Tencent-Hunyuan/HY-World-2.0">HY-World-2.0</a> · three.js PLY viewer</div>
       <div id="foot">scene: scene_from_008</div>
     </footer>
   </div>
-  <script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
+
+    const canvas = document.getElementById('world-canvas');
+    const statusEl = document.getElementById('viewer-status');
+    const infoEl = document.getElementById('viewer-info');
+    const fpsEl = document.getElementById('viewer-fps');
+    const modelSelect = document.getElementById('model-select');
+    const ptSize = document.getElementById('pt-size');
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setClearColor(0x07090d, 1);
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x07090d, 0.02);
+
+    const camera = new THREE.PerspectiveCamera(60, 1, 0.01, 200);
+    camera.position.set(1.2, 0.7, 1.8);
+
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.rotateSpeed = 0.9;
+    controls.zoomSpeed = 1.15;
+    controls.panSpeed = 0.8;
+    controls.target.set(0, 0, 0);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    const key = new THREE.DirectionalLight(0xffffff, 0.65);
+    key.position.set(2, 5, 3);
+    scene.add(key);
+
+    const grid = new THREE.GridHelper(6, 24, 0x2a3544, 0x151b24);
+    grid.position.y = -0.5;
+    scene.add(grid);
+
+    let pointsObj = null;
+    let baseCamDist = 2;
+    let modelMaxDim = 1;
+
+    function resize() {
+      const w = canvas.clientWidth || canvas.parentElement.clientWidth;
+      const h = canvas.clientHeight || Math.min(window.innerHeight * 0.72, 700);
+      renderer.setSize(w, h, false);
+      camera.aspect = w / Math.max(h, 1);
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function setStatus(msg, isError = false) {
+      statusEl.textContent = msg;
+      statusEl.classList.toggle('error', !!isError);
+      statusEl.classList.toggle('hidden', !msg);
+    }
+
+    function applyPointSize() {
+      if (!pointsObj) return;
+      // larger default so room structure is visible
+      pointsObj.material.size = parseFloat(ptSize.value) * 0.006 * modelMaxDim;
+    }
+
+    function fitCamera(geometry) {
+      geometry.computeBoundingBox();
+      const box = geometry.boundingBox;
+      const center = new THREE.Vector3();
+      box.getCenter(center);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      geometry.translate(-center.x, -center.y, -center.z);
+      modelMaxDim = Math.max(size.x, size.y, size.z, 0.2);
+      const dist = modelMaxDim * 1.15;
+      baseCamDist = dist;
+      // eye-level-ish look into the room
+      camera.position.set(dist * 0.15, dist * 0.22, dist * 0.85);
+      controls.target.set(0, 0, 0);
+      controls.minDistance = modelMaxDim * 0.04;
+      controls.maxDistance = modelMaxDim * 10;
+      camera.near = modelMaxDim * 0.0005;
+      camera.far = modelMaxDim * 50;
+      camera.updateProjectionMatrix();
+      controls.update();
+      scene.fog.density = 0.045 / modelMaxDim;
+      grid.scale.setScalar(modelMaxDim * 0.55);
+      grid.position.y = -size.y * 0.42;
+    }
+
+    async function loadModel(url) {
+      setStatus('加载 3D 世界… ' + url.split('/').pop());
+      infoEl.textContent = 'loading ' + url;
+      if (pointsObj) {
+        scene.remove(pointsObj);
+        pointsObj.geometry.dispose();
+        pointsObj.material.dispose();
+        pointsObj = null;
+      }
+      const loader = new PLYLoader();
+      try {
+        const geometry = await new Promise((resolve, reject) => {
+          loader.load(url, resolve, (xhr) => {
+            if (xhr.total) {
+              const pct = Math.round((xhr.loaded / xhr.total) * 100);
+              setStatus(`加载中 ${pct}% · ${url.split('/').pop()}`);
+            }
+          }, reject);
+        });
+        if (!geometry.getAttribute('color')) {
+          const n = geometry.getAttribute('position').count;
+          const cols = new Float32Array(n * 3);
+          for (let i = 0; i < n; i++) {
+            cols[i*3] = 0.55; cols[i*3+1] = 0.75; cols[i*3+2] = 0.85;
+          }
+          geometry.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+        }
+        fitCamera(geometry);
+        const material = new THREE.PointsMaterial({
+          size: 0.02,
+          vertexColors: true,
+          sizeAttenuation: true,
+          transparent: true,
+          opacity: 0.92,
+          depthWrite: true,
+        });
+        pointsObj = new THREE.Points(geometry, material);
+        scene.add(pointsObj);
+        applyPointSize();
+        const n = geometry.getAttribute('position').count;
+        setStatus('');
+        infoEl.textContent = `${url.split('/').pop()} · ${n.toLocaleString()} pts · 拖拽旋转查看房间`;
+      } catch (e) {
+        console.error(e);
+        setStatus('加载失败：' + (e.message || e) + '。请在仓库目录运行：python -m http.server 8765 --directory 009-hy-worldgen/gallery', true);
+        infoEl.textContent = 'error';
+      }
+    }
+
+    ptSize.addEventListener('input', applyPointSize);
+    modelSelect.addEventListener('change', () => loadModel(modelSelect.value));
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      camera.position.set(baseCamDist * 0.15, baseCamDist * 0.22, baseCamDist * 0.85);
+      controls.target.set(0, 0, 0);
+      controls.update();
+    });
+    document.getElementById('btn-fs').addEventListener('click', () => {
+      const el = document.getElementById('viewer-panel');
+      if (!document.fullscreenElement) el.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    });
+    document.addEventListener('fullscreenchange', () => setTimeout(resize, 50));
+
+    let frames = 0, lastT = performance.now();
+    function tick(t) {
+      requestAnimationFrame(tick);
+      controls.update();
+      renderer.render(scene, camera);
+      frames++;
+      if (t - lastT > 500) {
+        fpsEl.textContent = Math.round((frames * 1000) / (t - lastT)) + ' fps';
+        frames = 0; lastT = t;
+      }
+    }
+    requestAnimationFrame(tick);
+    loadModel(modelSelect.value);
+
+    // meta
     const STAGE_LABEL = {
       1: ["traj_generate", "轨迹生成"],
       2: ["traj_render", "轨迹渲染"],
@@ -169,55 +434,36 @@
       5: ["world_gs_trainer", "3DGS 训练"],
     };
     const PLY = [
-      ["assets/ply/aligned_pcd.ply", "aligned_pcd.ply", "WorldMirror 对齐点云"],
-      ["assets/ply/global_pcd.ply", "global_pcd.ply", "generation bank"],
-      ["assets/ply/point_cloud_3999.ply", "point_cloud_3999.ply", "3DGS 最终模型"],
+      ["assets/ply/world_preview.ply", "world_preview.ply", "网页预览 35万点"],
+      ["assets/ply/global_pcd.ply", "global_pcd.ply", "WM global"],
+      ["assets/ply/aligned_pcd.ply", "aligned_pcd.ply", "WM aligned"],
+      ["assets/ply/point_cloud_3999.ply", "point_cloud_3999.ply", "完整 3DGS"],
     ];
-    function fmtMB(n){ return n < 1024*1024 ? (n/1024).toFixed(0)+' KB' : (n/1024/1024).toFixed(1)+' MB'; }
     function money(x){ return x==null ? '—' : '$'+Number(x).toFixed(4); }
     function num(x,d=2){ return x==null ? '—' : Number(x).toFixed(d); }
 
-    fetch('assets/meta.json').then(r=>r.json()).then(async m=>{
+    fetch('assets/meta.json').then(r=>r.json()).then(m=>{
       const g = m.gs || {};
       document.getElementById('stats').innerHTML = [
         ['GPU', m.gpu || '—', m.worldstereo || ''],
-        ['Cost (ok stages)', money(m.total_est_cost_usd), num(m.total_seconds_logged,1)+'s logged'],
+        ['Cost (ok stages)', money(m.total_est_cost_usd), num(m.total_seconds_logged,1)+'s'],
         ['PSNR', num(g.psnr,2), 'SSIM '+num(g.ssim,3)],
         ['Gaussians', g.num_GS!=null ? (g.num_GS/1e6).toFixed(2)+'M' : '—', 'LPIPS '+num(g.lpips,3)],
-        ['Steps', m.max_steps || 4000, 'nframe '+ (m.nframe||'—')],
+        ['Steps', m.max_steps || 4000, 'nframe '+(m.nframe||'—')],
       ].map(([l,v,s])=>`<div class="stat"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
-
       const stages = m.stages || {};
       document.getElementById('stages').innerHTML = Object.keys(stages).sort((a,b)=>a-b).map(k=>{
         const s = stages[k];
         const [en, zh] = STAGE_LABEL[k] || ['stage '+k, ''];
-        return `<div class="stage">
-          <div class="n">${k}</div>
-          <div><div class="t">${zh || en}</div><div class="d">${en}</div></div>
-          <div class="ok">${s.ok===true?'ok':s.ok===false?'fail':'—'}</div>
-          <div class="cost">${num(s.seconds,1)}s · ${money(s.est_cost_usd)}</div>
-        </div>`;
+        return `<div class="stage"><div class="n">${k}</div><div><div class="t">${zh||en}</div><div class="d">${en}</div></div><div class="ok">${s.ok===true?'ok':s.ok===false?'fail':'—'}</div><div class="cost">${num(s.seconds,1)}s · ${money(s.est_cost_usd)}</div></div>`;
       }).join('');
-
       document.getElementById('notes').innerHTML = (m.notes||[]).map(n=>`<li>${n}</li>`).join('');
       document.getElementById('meta').textContent = JSON.stringify(m, null, 2);
       document.getElementById('foot').textContent = `scene: ${m.scene||'—'} · from ${m.from_008||'—'}`;
-
-      // sizes via HEAD not available on file:// — approximate from known sizes if fetch fails
-      const dl = document.getElementById('downloads');
-      const cards = await Promise.all(PLY.map(async ([href, name, desc])=>{
-        let sz = '';
-        try {
-          const res = await fetch(href, {method:'HEAD'});
-          const len = res.headers.get('content-length');
-          if (len) sz = fmtMB(+len);
-        } catch(_){}
-        return `<a href="${href}" download><span>${name}</span><span class="sz">${sz || desc}</span></a>`;
-      }));
-      dl.innerHTML = cards.join('');
-    }).catch(e=>{
-      document.getElementById('meta').textContent = String(e);
-    });
+      document.getElementById('downloads').innerHTML = PLY.map(([href,name,desc]) =>
+        `<a href="${href}" download><span>${name}</span><span class="sz">${desc}</span></a>`
+      ).join('');
+    }).catch(e=>{ document.getElementById('meta').textContent = String(e); });
   </script>
 </body>
 </html>

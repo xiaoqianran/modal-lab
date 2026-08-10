@@ -59,12 +59,22 @@
       "assets/videos/traj0_worldstereo.mp4",
       "assets/videos/traj1_worldstereo.mp4",
       "assets/videos/traj2_worldstereo.mp4"
-    ]
+    ],
+    "world_preview": "assets/ply/world_preview.ply"
   },
   "notes": [
     "Stage3 WorldMirror uses SDPA (no flash_attn)",
     "Stage5 --disable_viewer so job exits cleanly",
     "Single RTX-PRO-6000 smoke: 1 view \u00d7 3 traj, nframe=21"
   ],
-  "built_at": "2026-08-10T16:58:08.118426Z"
+  "built_at": "2026-08-10T16:58:08.118426Z",
+  "viewer": {
+    "default": "assets/ply/world_preview.ply",
+    "note": "Interactive three.js PLY point-cloud viewer. world_preview = 400k colored points from 3DGS SH-DC.",
+    "models": [
+      "assets/ply/world_preview.ply",
+      "assets/ply/global_pcd.ply",
+      "assets/ply/aligned_pcd.ply"
+    ]
+  }
 }
