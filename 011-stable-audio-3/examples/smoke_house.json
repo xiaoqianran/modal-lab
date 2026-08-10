@@ -1,0 +1,8 @@
+{
+  "prompt": "Uplifting house music instrumental, sunny festival energy, punchy four-on-the-floor kick, warm pads, 124 BPM",
+  "duration": 20,
+  "steps": 8,
+  "cfg_scale": 1.0,
+  "seed": 42,
+  "model": "medium"
+}

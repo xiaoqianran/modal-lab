@@ -16,6 +16,7 @@ main.py                 # 入口，调度到 001 / 002 / …
 008-hy-pano/            # HY-Pano 2.0 全景 · 默认 Qwen@PRO-6000（最省）
 009-hy-worldgen/        # HY-World 2.0 worldgen：全景→3D 世界（分 stage）
 010-ace-step-1.5/       # ACE-Step 1.5 音乐生成（默认 L4 · turbo DiT）
+011-stable-audio-3/     # Stable Audio 3 Medium（默认 L4 · FlashAttn）
 015-xiaomi-robotics-1-robocasa365/  # Xiaomi-Robotics-1 VLA · RoboCasa365 冒烟（默认 A100-40GB）
 ```
 
@@ -41,6 +42,7 @@ python main.py 007 smoke          # WorldMirror 2.0 recon（T4）
 python main.py 008 smoke          # HY-Pano 轻量 Qwen（PRO 6000）
 python main.py 009 status         # worldgen 全景→3D 世界（分 stage）
 python main.py 010 smoke          # ACE-Step 1.5 音乐（L4 · 20s 器乐）
+python main.py 011 smoke          # Stable Audio 3 Medium（L4 · 20s）
 python main.py 015 smoke          # Xiaomi-Robotics-1 RoboCasa365 动作冒烟（A100-40GB）
 
 # 也可直接进目录
@@ -63,6 +65,7 @@ cd 008-hy-pano && python run.py status
 | `008-hy-pano` | **HY-Pano 2.0 全景**；默认 **Qwen+LoRA @ RTX-PRO-6000**（~$0.11） |
 | `009-hy-worldgen` | **World Generation** 全景→轨迹→WorldStereo→3DGS；见 [PLAN](009-hy-worldgen/PLAN.md) |
 | `010-ace-step-1.5` | [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5) 开源音乐生成；**默认 L4**；主包 turbo + 可选 1.7B LM |
+| `011-stable-audio-3` | [Stable Audio 3 Medium](https://huggingface.co/stabilityai/stable-audio-3-medium)；**默认 L4**（T4 无 FlashAttn） |
 | `015-xiaomi-robotics-1-robocasa365` | [Xiaomi-Robotics-1](https://github.com/XiaomiRobotics/Xiaomi-Robotics-1) RoboCasa365 VLA 冒烟；**默认 A100-40GB** |
 
 H100 / PRO 6000 / A100 对照（OCR 等）见 [GPU_COMPARISON.md](GPU_COMPARISON.md)。  
@@ -72,7 +75,7 @@ HY-Pano 设备与成本规划见 [008-hy-pano/PLAN.md](008-hy-pano/PLAN.md)。
 ## 约定
 
 - 每个实验：`run.py` + `README.md`；权重 / 输出走 Modal Volume，不入库
-- GPU：`001` / `004` 默认 **RTX-PRO-6000**；`005` 默认 **H100**；`006` 默认 **L4**；`007` 默认 **T4**；`008` 默认 **RTX-PRO-6000**（Qwen）；`009` 分 stage；`010` 默认 **L4**；`015` 默认 **A100-40GB**
+- GPU：`001` / `004` 默认 **RTX-PRO-6000**；`005` 默认 **H100**；`006` 默认 **L4**；`007` 默认 **T4**；`008` 默认 **RTX-PRO-6000**（Qwen）；`009` 分 stage；`010` 默认 **L4**；`011` 默认 **L4**；`015` 默认 **A100-40GB**
 - 上游代码可 vendoring，或镜像 build 时 clone（005 / 008 采用后者）
 
 远程：https://github.com/xiaoqianran/modal-lab
