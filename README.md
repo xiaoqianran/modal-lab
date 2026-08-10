@@ -20,9 +20,10 @@ main.py                 # 入口，调度到 001 / 002 / …
 010-ace-step-1.5/       # ACE-Step 1.5 音乐生成（默认 L4 · turbo DiT）
 011-stable-audio-3/     # Stable Audio 3 Medium（默认 L4 · FlashAttn）
 015-xiaomi-robotics-1-robocasa365/  # Xiaomi-Robotics-1 VLA · RoboCasa365 冒烟（默认 A100-40GB）
+016-musicgen/           # MusicGen small 器乐基线（默认 T4 · 占 016）
+017-xr1-robocasa365-sim/ # XR1 RoboCasa 仿真
 012-levo-2/             # LeVo 2 / SongGeneration v2（默认 L40S · v2-medium）
 013-yue/                # [PLAN] YuE 全曲
-014-musicgen/           # [PLAN] MusicGen 基线（MusicGen=014）
 
 ```
 
@@ -51,6 +52,7 @@ python main.py 009 status         # worldgen 全景→3D 世界（分 stage）
 python main.py 010 smoke          # ACE-Step 1.5 音乐（L4 · 20s 器乐）
 python main.py 011 smoke          # Stable Audio 3 Medium（L4 · 20s）
 python main.py 012 smoke          # LeVo 2（L40S · v2-medium）
+python main.py 016 smoke          # MusicGen small（T4 · 15s）
 python main.py 015 smoke          # Xiaomi-Robotics-1 RoboCasa365 动作冒烟（A100-40GB）
 
 # 也可直接进目录
@@ -79,8 +81,8 @@ cd 008-hy-pano && python run.py status
 | `011-stable-audio-3` | [Stable Audio 3 Medium](https://huggingface.co/stabilityai/stable-audio-3-medium)；**默认 L4**（T4 无 FlashAttn） |
 | `015-xiaomi-robotics-1-robocasa365` | [Xiaomi-Robotics-1](https://github.com/XiaomiRobotics/Xiaomi-Robotics-1) RoboCasa365 VLA 冒烟；**默认 A100-40GB** |
 | `012-levo-2` | [LeVo 2](https://github.com/levo-demo/LeVo) SongGeneration v2；**默认 L40S · v2-medium**（研究许可） |
+| `016-musicgen` | [MusicGen](https://huggingface.co/facebook/musicgen-small) 器乐基线；**默认 T4 · small**（CC-BY-NC） |
 | `013-yue` | **[PLAN](013-yue/PLAN.md)** YuE 全曲（待实现） |
-| `014-musicgen` | **[PLAN](014-musicgen/PLAN.md)** MusicGen 基线（待实现） |
 | — | 音乐队列总览见 [MUSIC_ROADMAP.md](MUSIC_ROADMAP.md) |
 
 H100 / PRO 6000 / A100 对照（OCR 等）见 [GPU_COMPARISON.md](GPU_COMPARISON.md)。  

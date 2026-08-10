@@ -1,0 +1,42 @@
+{
+  "run_name": "smoke_lofi",
+  "gpu_requested": "T4",
+  "wall_s": 31.76,
+  "est_gpu_usd": 0.0052,
+  "payload": {
+    "prompt": "lo-fi hip hop instrumental, soft piano, dusty drums, warm vinyl crackle, chill study beat",
+    "duration": 15.0,
+    "seed": 42,
+    "model": "small",
+    "guidance_scale": 3.0,
+    "temperature": 1.0
+  },
+  "result": {
+    "success": true,
+    "error": null,
+    "wall_s": 31.76,
+    "load_s": 13.97,
+    "generate_s": 17.79,
+    "est_gpu_usd": 0.0052,
+    "gpu": "T4",
+    "model": "small",
+    "hf_repo": "facebook/musicgen-small",
+    "max_new_tokens": 750,
+    "vram_peak_gb": 2.974,
+    "audio": {
+      "path": "/outputs/runs/smoke_lofi/audio.wav",
+      "size_bytes": 956238,
+      "sample_rate": 32000,
+      "channels": 1,
+      "samples": 478080,
+      "duration_s": 14.94
+    },
+    "prompt": "lo-fi hip hop instrumental, soft piano, dusty drums, warm vinyl crackle, chill study beat",
+    "seed": 42,
+    "duration_requested": 15.0,
+    "guidance_scale": 3.0,
+    "temperature": 1.0
+  },
+  "created_utc": "2026-08-10T14:58:20.361034+00:00",
+  "license_note": "CC-BY-NC 4.0 — non-commercial"
+}

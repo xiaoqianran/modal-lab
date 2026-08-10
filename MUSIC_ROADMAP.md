@@ -1,8 +1,7 @@
 # 音乐实验路线图
 
-> 更新：2026-08-10 — 用户确认 **MusicGen = 014**；**两个 012 起连续音乐号到 014**。  
-> DiffRhythm 2 **延后**（不占号）。  
-> GPU：优先 **L40S / PRO 6000** 性价比，不默认 A100。
+> 更新：2026-08-10 — **MusicGen 占 016**（用户确认；014 计划废弃）。  
+> 017 为仿真线，不占用音乐号。
 
 ## 编号
 
@@ -10,26 +9,22 @@
 |----|------|------|----------|------|
 | **010** | `010-ace-step-1.5` | ACE-Step 1.5 | L4 | ✅ |
 | **011** | `011-stable-audio-3` | Stable Audio 3 Medium | L4 | ✅ |
-| **012** | `012-levo-2` | **LeVo 2** v2-medium | **L40S** | ✅ smoke OK · $0.086 |
+| **012** | `012-levo-2` | LeVo 2 v2-medium | L40S | ✅ |
 | **013** | `013-yue` | YuE | L40S / PRO 6000 | 📋 planned |
-| **014** | `014-musicgen` | MusicGen | T4 / L4 | 📋 planned |
-| 015 | `015-xiaomi-robotics-1-…` | robotics | — | 非音乐 · 已占用 |
-| — | DiffRhythm 2 | 延后 | — | 不占 012–014 |
+| **016** | `016-musicgen` | **MusicGen** small | **T4** | ✅ smoke OK · T4 ~$0.005 |
+| 014 | — | （原 MusicGen 计划作废） | — | free / unused |
+| 015 | robotics | Xiaomi | — | 非音乐 |
+| 017 | sim | XR1 RoboCasa | — | 非音乐 |
 
 ```text
-010 ACE → 011 SA3 → 012 LeVo2 → 013 YuE → 014 MusicGen
+010 ACE → 011 SA3 → 012 LeVo2 → 013 YuE → … → 016 MusicGen
 ```
 
 ## GPU 原则
 
 | GPU | $/s | 用法 |
 |-----|-----|------|
-| L4 | 0.000222 | 轻量（SA3 / ACE turbo / MusicGen） |
-| **L40S** | **0.000542** | **全曲大模型默认**（比 A100-40 便宜，48GB） |
-| A100-40GB | 0.000583 | 一般不优先 |
-| PRO 6000 | 0.000842 | 大显存/更快备选 |
-| A100-80GB | 0.000694 | 仅 OOM 升级 |
-
-## 约定
-
-每号：`modal_app.py` + `run.py` + volumes + smoke + `gallery/index.html`
+| **T4** | **0.000164** | MusicGen small 默认 |
+| L4 | 0.000222 | SA3 / ACE / MusicGen medium |
+| **L40S** | **0.000542** | 全曲大模型（LeVo / YuE） |
+| PRO 6000 | 0.000842 | 大显存备选 |

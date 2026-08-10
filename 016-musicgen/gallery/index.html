@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>016 · MusicGen · 生成试听</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#0a0c10; --elev:#12161f; --line:rgba(255,255,255,.08); --fg:#eef1f6; --muted:#8b93a7; --accent:#6ea8fe; --ok:#3dd68c; --font:"DM Sans",system-ui,sans-serif; --mono:"JetBrains Mono",monospace; --radius:16px; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--fg); font-family:var(--font); background:radial-gradient(900px 480px at 10% -10%,rgba(110,168,254,.14),transparent 55%),var(--bg); line-height:1.5; }
+    a { color:#3dd6c6; text-decoration:none; }
+    .wrap { width:min(960px,calc(100% - 2rem)); margin:0 auto; padding:1.75rem 0 3rem; }
+    .eyebrow { font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); font-weight:600; }
+    h1 { margin:.4rem 0 .5rem; font-size:clamp(1.6rem,3.5vw,2.2rem); letter-spacing:-.03em; }
+    .lede { color:var(--muted); max-width:60ch; }
+    .card { margin-top:1.2rem; background:linear-gradient(160deg,rgba(110,168,254,.1),transparent 50%),var(--elev); border:1px solid var(--line); border-radius:calc(var(--radius)+4px); padding:1.25rem 1.35rem; box-shadow:0 20px 50px rgba(0,0,0,.4); }
+    .chips { display:flex; flex-wrap:wrap; gap:.4rem; margin:.55rem 0 1rem; }
+    .chip { border:1px solid rgba(255,255,255,.12); border-radius:999px; padding:.22rem .65rem; font-size:.78rem; color:var(--muted); }
+    .chip strong { color:var(--fg); }
+    .ok { border-color:rgba(61,214,140,.35); color:#b8f5d3; background:rgba(61,214,140,.1); }
+    .box { margin:0 0 1rem; padding:.85rem 1rem; border-radius:12px; background:rgba(0,0,0,.28); border:1px solid var(--line); color:#d7dbe6; font-size:.92rem; }
+    .box .k { display:block; font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:.25rem; }
+    audio { width:100%; height:42px; }
+    .metrics { display:grid; grid-template-columns:repeat(2,1fr); gap:.55rem; margin-top:1rem; }
+    @media(min-width:640px){ .metrics{ grid-template-columns:repeat(4,1fr);} }
+    .metric { background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:12px; padding:.7rem .8rem; }
+    .metric .k { font-size:.72rem; color:var(--muted); text-transform:uppercase; }
+    .metric .v { margin-top:.15rem; font-weight:700; font-variant-numeric:tabular-nums; }
+    .notes { margin-top:1.25rem; padding:1rem 1.1rem; border-radius:var(--radius); border:1px solid var(--line); background:var(--elev); color:var(--muted); font-size:.9rem; }
+    .notes strong { color:var(--fg); }
+    footer { margin-top:1.75rem; color:var(--muted); font-size:.82rem; display:flex; justify-content:space-between; flex-wrap:wrap; gap:.75rem; }
+    code { font-family:var(--mono); font-size:.84em; background:rgba(255,255,255,.05); padding:.1rem .35rem; border-radius:6px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">016 · MusicGen · Gallery</div>
+    <h1>生成试听</h1>
+    <p class="lede">Meta MusicGen <strong>small</strong> 器乐基线。默认 <strong>T4</strong>（全音乐线最便宜）。许可 CC-BY-NC 4.0。</p>
+    <article class="card">
+      <h2 style="margin:0;font-size:1.2rem">smoke_lofi</h2>
+      <div class="chips">
+        <span class="chip">模型 <strong>small</strong></span>
+        <span class="chip">GPU <strong>T4</strong></span>
+        <span class="chip">时长 <strong>~15s</strong></span>
+        <span class="chip">seed <strong>42</strong></span>
+        <span class="chip ok">OK</span>
+      </div>
+      <div class="box"><span class="k">Prompt</span>lo-fi hip hop instrumental, soft piano, dusty drums, warm vinyl crackle, chill study beat</div>
+      <audio controls preload="metadata" src="assets/smoke_lofi.wav"></audio>
+      <div class="metrics">
+        <div class="metric"><div class="k">墙钟</div><div class="v">31.8 s</div></div>
+        <div class="metric"><div class="k">加载 / 生成</div><div class="v">14.0 / 17.8 s</div></div>
+        <div class="metric"><div class="k">估费</div><div class="v">$0.0052</div></div>
+        <div class="metric"><div class="k">峰值 VRAM</div><div class="v">3.0 GB</div></div>
+      </div>
+    </article>
+    <div class="notes"><strong>说明</strong> · HF <code>facebook/musicgen-small</code> · transformers · 32 kHz mono · 槽位 <strong>016</strong>（014 计划已废）</div>
+    <footer><div>实验 <code>016-musicgen</code> · <a href="../README.md">README</a></div><div>modal-lab</div></footer>
+  </div>
+</body>
+</html>
