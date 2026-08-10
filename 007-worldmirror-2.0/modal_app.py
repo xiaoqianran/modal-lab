@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-007-hy-world-2.0 — HY-World 2.0 / WorldMirror 2.0 最低成本 Modal 复现。
+007-worldmirror-2.0 — HY-World 2.0 / WorldMirror 2.0 最低成本 Modal 复现。
 
 成本策略（只跑 worldrecon，不跑 80B panogen / 17B worldstereo）：
   - 默认 GPU: T4（16GB · ~$0.000164/s）— smoke 实测 peak ~5GB 够用
@@ -25,7 +25,7 @@ from typing import Any
 
 import modal
 
-APP_NAME = "modal-lab-hy-world-2"
+APP_NAME = "modal-lab-worldmirror-2"
 HF_REPO = "tencent/HY-World-2.0"
 HF_SUBFOLDER = "HY-WorldMirror-2.0"
 UPSTREAM = "https://github.com/Tencent-Hunyuan/HY-World-2.0"

@@ -1,4 +1,4 @@
-# 007-hy-world-2.0
+# 007-worldmirror-2.0
 
 在 Modal 上以**最低成本**跑通 [HY-World 2.0](https://github.com/Tencent-Hunyuan/HY-World-2.0) 的
 **World Reconstruction（WorldMirror 2.0）** 路径。

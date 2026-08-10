@@ -12,7 +12,7 @@
 - `assets/bench.json` — 四卡 bench 汇总（源 meta 在 `bench/*.json`）
 
 ```bash
-cd 007-hy-world-2.0/gallery
+cd 007-worldmirror-2.0/gallery
 python3 -m http.server 8080 --bind 0.0.0.0
 ```
 

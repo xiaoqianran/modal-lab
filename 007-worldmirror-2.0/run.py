@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""007-hy-world-2.0 本地入口 — WorldMirror 2.0 on Modal (cheapest T4)."""
+"""007-worldmirror-2.0 本地入口 — WorldMirror 2.0 on Modal (cheapest T4)."""
 
 from __future__ import annotations
 
@@ -61,7 +61,7 @@ def main(argv: list[str] | None = None) -> int:
     m = _modal()
 
     if ns.cmd == "status":
-        print("experiment: 007-hy-world-2.0")
+        print("experiment: 007-worldmirror-2.0")
         print("component: WorldMirror-2.0 (worldrecon only)")
         print(f"default_gpu: {DEFAULT_GPU}")
         print(f"weights_volume: {VOL_W}")

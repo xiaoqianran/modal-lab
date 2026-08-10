@@ -1,0 +1,45 @@
+{
+  "ok": true,
+  "app": "modal-lab-hy-pano",
+  "upstream": "https://github.com/Tencent-Hunyuan/HY-World-2.0",
+  "component": "HY-Pano 2.0",
+  "backend": "qwen",
+  "image": "/root/examples/desk.jpg",
+  "image_name": "desk.jpg",
+  "prompt": "Expand this image to a 360-degree equirectangular panorama. Maintain realistic style.",
+  "seed": 42,
+  "height": 960,
+  "width": 1952,
+  "num_inference_steps": 40,
+  "load_mode": "gpu",
+  "use_taylor_cache": null,
+  "gpu_request": "A100-80GB",
+  "seconds": {
+    "total": 207.91,
+    "load": 49.17,
+    "forward": 137.57
+  },
+  "est_cost_usd": 0.1443,
+  "price_per_sec": 0.000694,
+  "vram": {
+    "per_gpu": [
+      {
+        "gpu_index": 0,
+        "name": "NVIDIA A100-SXM4-80GB",
+        "peak_mem_used_mib": 64637.0,
+        "peak_mem_used_gb": 63.12,
+        "mem_total_mib": 81920.0
+      }
+    ],
+    "peak_mem_used_gb_max": 63.12,
+    "n_samples": 373
+  },
+  "volume": "modal-lab-hy-pano-outputs",
+  "run_dir": "runs/smoke_qwen",
+  "outputs": [
+    "panorama.png",
+    "input.jpg",
+    "meta.json"
+  ],
+  "cost_note": "Lightweight path = Qwen+LoRA only. Full 80B disabled unless --backend full."
+}
