@@ -1,0 +1,62 @@
+[
+  {
+    "run": "bench_l4_15s",
+    "gpu": "L4",
+    "wall_s": 35.31,
+    "load_s": 12.41,
+    "gen_s": 22.89,
+    "usd": 0.0078,
+    "dur": 14.94,
+    "vram": 2.972,
+    "prompt": "lo-fi hip hop instrumental, soft piano, dusty drums, chill study beat",
+    "model": "small"
+  },
+  {
+    "run": "bench_t4_8s",
+    "gpu": "T4",
+    "wall_s": 22.85,
+    "load_s": 12.38,
+    "gen_s": 10.47,
+    "usd": 0.0037,
+    "dur": 7.94,
+    "vram": 2.702,
+    "prompt": "lo-fi hip hop instrumental, soft piano, dusty drums, chill study beat",
+    "model": "small"
+  },
+  {
+    "run": "bench_t4_edm",
+    "gpu": "T4",
+    "wall_s": 31.35,
+    "load_s": 15.96,
+    "gen_s": 15.37,
+    "usd": 0.0051,
+    "dur": 11.94,
+    "vram": 2.854,
+    "prompt": "energetic electronic dance music, four on the floor kick, bright synth stabs, festival energy",
+    "model": "small"
+  },
+  {
+    "run": "bench_t4_jazz",
+    "gpu": "T4",
+    "wall_s": 27.09,
+    "load_s": 12.2,
+    "gen_s": 14.88,
+    "usd": 0.0044,
+    "dur": 11.94,
+    "vram": 2.853,
+    "prompt": "upbeat jazz piano trio, walking bass, brushes on drums, swing feel",
+    "model": "small"
+  },
+  {
+    "run": "smoke_lofi",
+    "gpu": "T4",
+    "wall_s": 31.76,
+    "load_s": 13.97,
+    "gen_s": 17.79,
+    "usd": 0.0052,
+    "dur": 14.94,
+    "vram": 2.974,
+    "prompt": "lo-fi hip hop instrumental, soft piano, dusty drums, warm vinyl crackle, chill study beat",
+    "model": "small"
+  }
+]

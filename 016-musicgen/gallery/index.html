@@ -3,61 +3,84 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>016 · MusicGen · 生成试听</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <title>016 · MusicGen · 成本试听</title>
   <style>
-    :root { --bg:#0a0c10; --elev:#12161f; --line:rgba(255,255,255,.08); --fg:#eef1f6; --muted:#8b93a7; --accent:#6ea8fe; --ok:#3dd68c; --font:"DM Sans",system-ui,sans-serif; --mono:"JetBrains Mono",monospace; --radius:16px; }
-    * { box-sizing:border-box; }
-    body { margin:0; color:var(--fg); font-family:var(--font); background:radial-gradient(900px 480px at 10% -10%,rgba(110,168,254,.14),transparent 55%),var(--bg); line-height:1.5; }
-    a { color:#3dd6c6; text-decoration:none; }
+    :root { --bg:#0a0c10; --elev:#12161f; --line:rgba(255,255,255,.08); --fg:#eef1f6; --muted:#8b93a7; --accent:#6ea8fe; --ok:#3dd68c; }
+    * { box-sizing: border-box; }
+    body { margin:0; color:var(--fg); font-family:system-ui,sans-serif; background:radial-gradient(900px 480px at 10% -10%,rgba(110,168,254,.14),transparent 55%),var(--bg); line-height:1.5; }
+    a { color:#3dd6c6; }
     .wrap { width:min(960px,calc(100% - 2rem)); margin:0 auto; padding:1.75rem 0 3rem; }
     .eyebrow { font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); font-weight:600; }
-    h1 { margin:.4rem 0 .5rem; font-size:clamp(1.6rem,3.5vw,2.2rem); letter-spacing:-.03em; }
-    .lede { color:var(--muted); max-width:60ch; }
-    .card { margin-top:1.2rem; background:linear-gradient(160deg,rgba(110,168,254,.1),transparent 50%),var(--elev); border:1px solid var(--line); border-radius:calc(var(--radius)+4px); padding:1.25rem 1.35rem; box-shadow:0 20px 50px rgba(0,0,0,.4); }
-    .chips { display:flex; flex-wrap:wrap; gap:.4rem; margin:.55rem 0 1rem; }
-    .chip { border:1px solid rgba(255,255,255,.12); border-radius:999px; padding:.22rem .65rem; font-size:.78rem; color:var(--muted); }
-    .chip strong { color:var(--fg); }
+    h1 { margin:.4rem 0 .5rem; font-size:1.8rem; }
+    .lede { color:var(--muted); max-width:62ch; }
+    .card { margin-top:1rem; background:var(--elev); border:1px solid var(--line); border-radius:16px; padding:1rem 1.15rem; }
+    .row { display:flex; flex-wrap:wrap; justify-content:space-between; gap:.5rem; align-items:baseline; }
+    .chip { display:inline-block; border:1px solid rgba(255,255,255,.12); border-radius:999px; padding:.15rem .55rem; font-size:.75rem; color:var(--muted); margin-right:.25rem; }
     .ok { border-color:rgba(61,214,140,.35); color:#b8f5d3; background:rgba(61,214,140,.1); }
-    .box { margin:0 0 1rem; padding:.85rem 1rem; border-radius:12px; background:rgba(0,0,0,.28); border:1px solid var(--line); color:#d7dbe6; font-size:.92rem; }
-    .box .k { display:block; font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:.25rem; }
-    audio { width:100%; height:42px; }
-    .metrics { display:grid; grid-template-columns:repeat(2,1fr); gap:.55rem; margin-top:1rem; }
-    @media(min-width:640px){ .metrics{ grid-template-columns:repeat(4,1fr);} }
-    .metric { background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:12px; padding:.7rem .8rem; }
-    .metric .k { font-size:.72rem; color:var(--muted); text-transform:uppercase; }
-    .metric .v { margin-top:.15rem; font-weight:700; font-variant-numeric:tabular-nums; }
-    .notes { margin-top:1.25rem; padding:1rem 1.1rem; border-radius:var(--radius); border:1px solid var(--line); background:var(--elev); color:var(--muted); font-size:.9rem; }
-    .notes strong { color:var(--fg); }
-    footer { margin-top:1.75rem; color:var(--muted); font-size:.82rem; display:flex; justify-content:space-between; flex-wrap:wrap; gap:.75rem; }
-    code { font-family:var(--mono); font-size:.84em; background:rgba(255,255,255,.05); padding:.1rem .35rem; border-radius:6px; }
+    .cheap { border-color:rgba(110,168,254,.4); color:#cfe2ff; background:rgba(110,168,254,.12); }
+    .box { margin:.65rem 0; padding:.7rem .85rem; border-radius:10px; background:rgba(0,0,0,.28); border:1px solid var(--line); font-size:.9rem; color:#d7dbe6; }
+    audio { width:100%; }
+    table { width:100%; border-collapse:collapse; margin-top:1.2rem; font-size:.88rem; }
+    th, td { border-bottom:1px solid var(--line); padding:.45rem .35rem; text-align:left; }
+    th { color:var(--muted); font-weight:600; }
+    footer { margin-top:1.5rem; color:var(--muted); font-size:.82rem; }
+    code { background:rgba(255,255,255,.05); padding:.1rem .3rem; border-radius:6px; font-size:.85em; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="eyebrow">016 · MusicGen · Gallery</div>
-    <h1>生成试听</h1>
-    <p class="lede">Meta MusicGen <strong>small</strong> 器乐基线。默认 <strong>T4</strong>（全音乐线最便宜）。许可 CC-BY-NC 4.0。</p>
+    <div class="eyebrow">016 · MusicGen · Cost bench</div>
+    <h1>更便宜吗？其它任务？</h1>
+    <p class="lede">对照 T4 vs L4、短时长、jazz/EDM 任务。结论：<strong>T4 + small</strong> 已是最低价档；L4 更贵；最短实用冒烟约 <strong>8s / $0.0037</strong>。</p>
+
+    <table>
+      <thead><tr><th>run</th><th>GPU</th><th>墙钟</th><th>生成</th><th>估费</th><th>音频</th></tr></thead>
+      <tbody>
+        <tr><td>smoke_lofi</td><td>T4</td><td>31.8s</td><td>17.8s</td><td>$0.0052</td><td>15s</td></tr>
+        <tr><td><strong>bench_t4_8s</strong></td><td>T4</td><td>22.9s</td><td>10.5s</td><td><strong>$0.0037</strong></td><td>8s</td></tr>
+        <tr><td>bench_l4_15s</td><td>L4</td><td>35.3s</td><td>22.9s</td><td>$0.0078</td><td>15s</td></tr>
+        <tr><td>bench_t4_jazz</td><td>T4</td><td>27.1s</td><td>14.9s</td><td>$0.0044</td><td>12s</td></tr>
+        <tr><td>bench_t4_edm</td><td>T4</td><td>31.4s</td><td>15.4s</td><td>$0.0051</td><td>12s</td></tr>
+      </tbody>
+    </table>
+
     <article class="card">
-      <h2 style="margin:0;font-size:1.2rem">smoke_lofi</h2>
-      <div class="chips">
-        <span class="chip">模型 <strong>small</strong></span>
-        <span class="chip">GPU <strong>T4</strong></span>
-        <span class="chip">时长 <strong>~15s</strong></span>
-        <span class="chip">seed <strong>42</strong></span>
-        <span class="chip ok">OK</span>
-      </div>
-      <div class="box"><span class="k">Prompt</span>lo-fi hip hop instrumental, soft piano, dusty drums, warm vinyl crackle, chill study beat</div>
-      <audio controls preload="metadata" src="assets/smoke_lofi.wav"></audio>
-      <div class="metrics">
-        <div class="metric"><div class="k">墙钟</div><div class="v">31.8 s</div></div>
-        <div class="metric"><div class="k">加载 / 生成</div><div class="v">14.0 / 17.8 s</div></div>
-        <div class="metric"><div class="k">估费</div><div class="v">$0.0052</div></div>
-        <div class="metric"><div class="k">峰值 VRAM</div><div class="v">3.0 GB</div></div>
-      </div>
+      <div class="row"><h3 style="margin:0;font-size:1.05rem">默认 smoke · lo-fi 15s · T4</h3>
+      <div><span class="chip">$0.0052</span><span class="chip ok">OK</span></div></div>
+      <div class="box"><code>smoke_lofi</code></div>
+      <audio controls preload="none" src="assets/smoke_lofi.wav"></audio>
     </article>
-    <div class="notes"><strong>说明</strong> · HF <code>facebook/musicgen-small</code> · transformers · 32 kHz mono · 槽位 <strong>016</strong>（014 计划已废）</div>
-    <footer><div>实验 <code>016-musicgen</code> · <a href="../README.md">README</a></div><div>modal-lab</div></footer>
+
+    <article class="card">
+      <div class="row"><h3 style="margin:0;font-size:1.05rem">最便宜冒烟 · lo-fi 8s · T4</h3>
+      <div><span class="chip">$0.0037</span><span class="chip cheap">cheapest</span><span class="chip ok">OK</span></div></div>
+      <div class="box"><code>bench_t4_8s</code></div>
+      <audio controls preload="none" src="assets/bench_t4_8s.wav"></audio>
+    </article>
+
+    <article class="card">
+      <div class="row"><h3 style="margin:0;font-size:1.05rem">对照 · lo-fi 15s · L4（更贵）</h3>
+      <div><span class="chip">$0.0078</span><span class="chip ok">OK</span></div></div>
+      <div class="box"><code>bench_l4_15s</code></div>
+      <audio controls preload="none" src="assets/bench_l4_15s.wav"></audio>
+    </article>
+
+    <article class="card">
+      <div class="row"><h3 style="margin:0;font-size:1.05rem">其它任务 · jazz trio 12s · T4</h3>
+      <div><span class="chip">$0.0044</span><span class="chip ok">OK</span></div></div>
+      <div class="box"><code>bench_t4_jazz</code></div>
+      <audio controls preload="none" src="assets/bench_t4_jazz.wav"></audio>
+    </article>
+
+    <article class="card">
+      <div class="row"><h3 style="margin:0;font-size:1.05rem">其它任务 · EDM 12s · T4</h3>
+      <div><span class="chip">$0.0051</span><span class="chip ok">OK</span></div></div>
+      <div class="box"><code>bench_t4_edm</code></div>
+      <audio controls preload="none" src="assets/bench_t4_edm.wav"></audio>
+    </article>
+
+    <p class="lede" style="margin-top:1.25rem">完整表见 <a href="../COST_BENCHMARK.md">COST_BENCHMARK.md</a>。命令：<code>python run.py smoke --duration 8</code></p>
+    <footer>016-musicgen · modal-lab</footer>
   </div>
 </body>
 </html>

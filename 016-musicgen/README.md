@@ -18,6 +18,10 @@ python run.py smoke                 # 15s lo-fi · T4
 python run.py t2a --prompt "jazz piano trio, swinging" --duration 20
 ```
 
+## 成本对照
+
+见 [COST_BENCHMARK.md](COST_BENCHMARK.md) · 试听 [`gallery/index.html`](gallery/index.html)。
+
 ## Gallery
 
 打开 [](gallery/index.html)。

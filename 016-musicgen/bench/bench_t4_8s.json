@@ -1,0 +1,42 @@
+{
+  "run_name": "bench_t4_8s",
+  "gpu_requested": "T4",
+  "wall_s": 22.85,
+  "est_gpu_usd": 0.0037,
+  "payload": {
+    "prompt": "lo-fi hip hop instrumental, soft piano, dusty drums, chill study beat",
+    "duration": 8.0,
+    "seed": 42,
+    "model": "small",
+    "guidance_scale": 3.0,
+    "temperature": 1.0
+  },
+  "result": {
+    "success": true,
+    "error": null,
+    "wall_s": 22.85,
+    "load_s": 12.38,
+    "generate_s": 10.47,
+    "est_gpu_usd": 0.0037,
+    "gpu": "T4",
+    "model": "small",
+    "hf_repo": "facebook/musicgen-small",
+    "max_new_tokens": 400,
+    "vram_peak_gb": 2.702,
+    "audio": {
+      "path": "/outputs/runs/bench_t4_8s/audio.wav",
+      "size_bytes": 508238,
+      "sample_rate": 32000,
+      "channels": 1,
+      "samples": 254080,
+      "duration_s": 7.94
+    },
+    "prompt": "lo-fi hip hop instrumental, soft piano, dusty drums, chill study beat",
+    "seed": 42,
+    "duration_requested": 8.0,
+    "guidance_scale": 3.0,
+    "temperature": 1.0
+  },
+  "created_utc": "2026-08-10T15:04:14.292086+00:00",
+  "license_note": "CC-BY-NC 4.0 — non-commercial"
+}

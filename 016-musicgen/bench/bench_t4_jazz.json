@@ -1,0 +1,42 @@
+{
+  "run_name": "bench_t4_jazz",
+  "gpu_requested": "T4",
+  "wall_s": 27.09,
+  "est_gpu_usd": 0.0044,
+  "payload": {
+    "prompt": "upbeat jazz piano trio, walking bass, brushes on drums, swing feel",
+    "duration": 12.0,
+    "seed": 42,
+    "model": "small",
+    "guidance_scale": 3.0,
+    "temperature": 1.0
+  },
+  "result": {
+    "success": true,
+    "error": null,
+    "wall_s": 27.09,
+    "load_s": 12.2,
+    "generate_s": 14.88,
+    "est_gpu_usd": 0.0044,
+    "gpu": "T4",
+    "model": "small",
+    "hf_repo": "facebook/musicgen-small",
+    "max_new_tokens": 600,
+    "vram_peak_gb": 2.853,
+    "audio": {
+      "path": "/outputs/runs/bench_t4_jazz/audio.wav",
+      "size_bytes": 764238,
+      "sample_rate": 32000,
+      "channels": 1,
+      "samples": 382080,
+      "duration_s": 11.94
+    },
+    "prompt": "upbeat jazz piano trio, walking bass, brushes on drums, swing feel",
+    "seed": 42,
+    "duration_requested": 12.0,
+    "guidance_scale": 3.0,
+    "temperature": 1.0
+  },
+  "created_utc": "2026-08-10T15:06:17.968506+00:00",
+  "license_note": "CC-BY-NC 4.0 — non-commercial"
+}
