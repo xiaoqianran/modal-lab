@@ -682,9 +682,44 @@
       font-size: 0.78em;
       color: var(--fg-dim);
     }
+
+    .back-lab {
+      position: fixed;
+      left: max(0.75rem, env(safe-area-inset-left));
+      bottom: max(0.85rem, env(safe-area-inset-bottom));
+      z-index: 50;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      min-height: 44px;
+      padding: 0.55rem 0.95rem;
+      border-radius: 999px;
+      border: 1px solid var(--line-strong);
+      background: rgba(21, 25, 32, 0.88);
+      color: var(--fg);
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 0.88rem;
+      text-decoration: none;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      transition: transform .2s ease, border-color .2s ease, background .2s ease;
+    }
+    .back-lab:hover {
+      transform: translateY(-2px);
+      border-color: var(--copper-line);
+      background: rgba(30, 24, 18, 0.95);
+      text-decoration: none;
+      color: #f0c9a0;
+    }
+    .back-lab:active { transform: scale(0.96); }
+    .back-lab span { opacity: 0.7; font-size: 0.95rem; }
   </style>
 </head>
 <body>
+  <a class="back-lab" href="../" title="返回 modal-lab 小宇宙">
+    <span aria-hidden="true">✦</span> 实验小宇宙
+  </a>
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">

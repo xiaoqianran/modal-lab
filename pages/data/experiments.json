@@ -1,6 +1,6 @@
 {
   "lab": "modal-lab",
-  "tagline": "Modal 实验小宇宙",
+  "tagline": "Modal 实验小宇宙 · 点卡片进 gallery",
   "experiments": [
     {
       "id": "009-hy-worldgen",
@@ -24,6 +24,29 @@
       },
       "accent": "#ff8fab",
       "available": true
+    },
+    {
+      "id": "017-xr1-robocasa365-sim",
+      "num": "017",
+      "title": "XR-1 厨房仿真",
+      "subtitle": "闭环策略 · 真的会成功",
+      "blurb": "Xiaomi Robotics-1 在 RoboCasa365 里关冰箱、开水龙头、掀搅拌机——有成功率表，也有成功回放。",
+      "href": "017-xr1-robocasa365-sim/",
+      "tags": [
+        "robot",
+        "sim",
+        "featured"
+      ],
+      "mood": "robot",
+      "featured": true,
+      "stats": {
+        "SR": "40%",
+        "GPU": "L40S",
+        "succ": "10/25"
+      },
+      "accent": "#c9854a",
+      "available": true,
+      "badge": "NEW"
     },
     {
       "id": "008-hy-pano",
@@ -218,7 +241,7 @@
       "num": "015",
       "title": "Xiaomi Robotics-1",
       "subtitle": "RoboCasa365 冒烟",
-      "blurb": "厨房仿真里的机器人小练习。",
+      "blurb": "动作数字冒烟（015）→ 真仿真闭环看 017。",
       "href": "015-xiaomi-robotics-1-robocasa365/",
       "tags": [
         "robot"
@@ -226,27 +249,10 @@
       "mood": "robot",
       "featured": false,
       "stats": {
-        "GPU": "A100"
+        "GPU": "A100",
+        "mode": "action-only"
       },
       "accent": "#fdffb6",
-      "available": true
-    },
-    {
-      "id": "017-xr1-robocasa365-sim",
-      "num": "017",
-      "title": "XR1 eval-mini",
-      "subtitle": "任务成功回放",
-      "blurb": "仿真任务成功片段，一键回看。",
-      "href": "017-xr1-robocasa365-sim/",
-      "tags": [
-        "robot"
-      ],
-      "mood": "robot",
-      "featured": false,
-      "stats": {
-        "tasks": "eval-mini"
-      },
-      "accent": "#caffbf",
       "available": true
     }
   ]
