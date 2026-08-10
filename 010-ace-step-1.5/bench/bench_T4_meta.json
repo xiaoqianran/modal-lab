@@ -1,0 +1,58 @@
+{
+  "run_name": "bench_T4",
+  "gpu_requested": "T4",
+  "wall_s": 34.43,
+  "est_gpu_usd": 0.0056,
+  "payload": {
+    "caption": "",
+    "lyrics": "",
+    "duration": 20.0,
+    "bpm": null,
+    "seed": 42,
+    "thinking": false,
+    "init_lm": false,
+    "instrumental": true,
+    "inference_steps": 8,
+    "dit_model": "acestep-v15-turbo",
+    "lm_model": "acestep-5Hz-lm-1.7B",
+    "audio_format": "flac"
+  },
+  "result": {
+    "success": true,
+    "status_message": "Generation completed successfully!",
+    "error": null,
+    "audios": [
+      {
+        "path": "/outputs/runs/bench_T4/fc050033-bc6b-33b3-a0f6-a855a8e4d5e2.flac",
+        "key": "fc050033-bc6b-33b3-a0f6-a855a8e4d5e2",
+        "sample_rate": 48000,
+        "size_bytes": 2966395
+      }
+    ],
+    "save_dir": "/outputs/runs/bench_T4",
+    "dit_model": "acestep-v15-turbo",
+    "lm_model": null,
+    "lm_backend": null,
+    "thinking": false,
+    "duration_req": 20.0,
+    "seed": 42,
+    "inference_steps": 8,
+    "dit_init_s": 11.66,
+    "lm_init_s": 0.0,
+    "lm_status": "skipped",
+    "generate_s": 5.59,
+    "time_costs": {
+      "dit_encoder_time_cost": 0.05659985542297363,
+      "dit_diffusion_time_cost": 1.7925105094909668,
+      "dit_diffusion_per_step_time_cost": 0.22406381368637085,
+      "dit_total_time_cost": 3.0524325370788574,
+      "dit_offload_time_cost": 0.0,
+      "dit_vae_decode_time_cost": 1.203322172164917,
+      "pipeline_total_time": 3.0524325370788574
+    },
+    "caption": "A short chill lo-fi hip hop instrumental beat with soft piano, warm vinyl crackle, mellow bass, and gentle drums. Relaxed late-night study vibe.",
+    "remote_exit_code": 0
+  },
+  "created_utc": "20260810T125748Z",
+  "upstream_commit": "6d467e4b5081ccb0abf1ec1bf4fdf9051a2d34b0"
+}
