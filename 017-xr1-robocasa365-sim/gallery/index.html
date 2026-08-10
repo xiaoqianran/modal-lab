@@ -3,194 +3,1069 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>017 · eval-mini · 任务成功回放</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <title>XR-1 · RoboCasa365 · Closed-loop Results</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg:#0b0d12; --elev:#131821; --line:rgba(255,255,255,.08);
-      --fg:#eef1f6; --muted:#8b93a7; --ok:#3dd68c; --accent:#5b8cff; --warm:#f0a46e; --bad:#ff6b7a;
-      --font:"DM Sans",system-ui,sans-serif; --mono:"JetBrains Mono",monospace;
+      --bg: #0e1014;
+      --bg-elev: #151920;
+      --bg-soft: #1b2029;
+      --line: rgba(232, 226, 214, 0.09);
+      --line-strong: rgba(232, 226, 214, 0.16);
+      --fg: #ebe6dc;
+      --fg-dim: #9a958a;
+      --fg-faint: #6b675f;
+      --copper: #c9854a;
+      --copper-soft: rgba(201, 133, 74, 0.14);
+      --copper-line: rgba(201, 133, 74, 0.35);
+      --ok: #6fbf8c;
+      --ok-soft: rgba(111, 191, 140, 0.12);
+      --warn: #c9a227;
+      --bad: #b86b6b;
+      --font-serif: "Instrument Serif", Georgia, serif;
+      --font-sans: "Source Sans 3", system-ui, sans-serif;
+      --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+      --max: 1120px;
+      --pad: clamp(1rem, 3vw, 1.75rem);
     }
-    * { box-sizing:border-box }
+
+    *, *::before, *::after { box-sizing: border-box }
+    html { scroll-behavior: smooth }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
     body {
-      margin:0; min-height:100%; color:var(--fg); font-family:var(--font);
+      margin: 0;
+      min-height: 100%;
+      color: var(--fg);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.55;
       background:
-        radial-gradient(1000px 500px at 10% -10%, rgba(91,140,255,.16), transparent 55%),
-        radial-gradient(800px 400px at 100% 0%, rgba(61,214,140,.1), transparent 50%),
+        radial-gradient(900px 480px at 12% -8%, rgba(201, 133, 74, 0.08), transparent 55%),
+        radial-gradient(700px 400px at 100% 0%, rgba(111, 191, 140, 0.05), transparent 50%),
         var(--bg);
-      line-height:1.5;
+      -webkit-font-smoothing: antialiased;
     }
-    .wrap { width:min(1000px, calc(100% - 2rem)); margin:0 auto; padding:1.5rem 0 3rem }
-    .eyebrow { color:var(--ok); font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; font-weight:600 }
-    h1 { margin:.3rem 0 .5rem; font-size:clamp(1.5rem,3vw,2.1rem); letter-spacing:-.03em }
-    .lede { color:var(--muted); max-width:68ch }
-    .pills { display:flex; flex-wrap:wrap; gap:.4rem; margin:1rem 0 1.25rem }
-    .pill { font-family:var(--mono); font-size:.74rem; padding:.28rem .6rem; border-radius:999px; border:1px solid var(--line); color:var(--muted) }
-    .pill strong { color:var(--fg); font-weight:500 }
-    .pill.ok { border-color:rgba(61,214,140,.35); color:var(--ok) }
-    .pill.bad { border-color:rgba(255,107,122,.35); color:var(--bad) }
+
+    a { color: var(--copper); text-decoration: none }
+    a:hover { text-decoration: underline; text-underline-offset: 3px }
+
+    .shell {
+      width: min(var(--max), calc(100% - 2 * var(--pad)));
+      margin: 0 auto;
+      padding: 0 0 4rem;
+    }
+
+    /* ── top bar ── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      backdrop-filter: blur(14px);
+      background: rgba(14, 16, 20, 0.78);
+      border-bottom: 1px solid var(--line);
+    }
+    .topbar-inner {
+      width: min(var(--max), calc(100% - 2 * var(--pad)));
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      min-height: 56px;
+      padding: 0.55rem 0;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      min-width: 0;
+    }
+    .brand-mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background:
+        linear-gradient(145deg, rgba(201,133,74,.9), rgba(201,133,74,.35)),
+        var(--bg-soft);
+      border: 1px solid var(--copper-line);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+      flex-shrink: 0;
+    }
+    .brand-text { min-width: 0 }
+    .brand-kicker {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--fg-faint);
+    }
+    .brand-name {
+      font-size: 0.92rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.2rem;
+      justify-content: flex-end;
+    }
+    .nav a {
+      color: var(--fg-dim);
+      font-size: 0.84rem;
+      font-weight: 500;
+      padding: 0.45rem 0.7rem;
+      border-radius: 999px;
+      text-decoration: none;
+      transition: color .15s ease, background .15s ease;
+    }
+    .nav a:hover {
+      color: var(--fg);
+      background: rgba(255,255,255,.04);
+      text-decoration: none;
+    }
+
+    /* ── hero ── */
+    .hero {
+      display: grid;
+      grid-template-columns: 1.35fr 0.9fr;
+      gap: clamp(1.25rem, 3vw, 2.5rem);
+      align-items: stretch;
+      padding: clamp(1.75rem, 4vw, 3rem) 0 1.25rem;
+    }
+    @media (max-width: 860px) {
+      .hero { grid-template-columns: 1fr; }
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--copper);
+      margin-bottom: 0.85rem;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--ok);
+      box-shadow: 0 0 0 4px var(--ok-soft);
+    }
+    h1 {
+      margin: 0 0 0.85rem;
+      font-family: var(--font-serif);
+      font-weight: 400;
+      font-size: clamp(2.2rem, 5.2vw, 3.45rem);
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+    }
+    h1 em {
+      font-style: italic;
+      color: #f0c9a0;
+    }
+    .lede {
+      margin: 0;
+      max-width: 42ch;
+      color: var(--fg-dim);
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      margin-top: 1.4rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      min-height: 44px;
+      padding: 0.55rem 1rem;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+    .btn:hover { text-decoration: none; transform: translateY(-1px) }
+    .btn-primary {
+      background: var(--copper);
+      color: #1a120a;
+    }
+    .btn-primary:hover { background: #d9995a; color: #1a120a }
+    .btn-ghost {
+      background: transparent;
+      color: var(--fg);
+      border-color: var(--line-strong);
+    }
+    .btn-ghost:hover { border-color: var(--fg-dim); color: var(--fg) }
+
+    .hero-card {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.03), transparent 40%),
+        var(--bg-elev);
+      border: 1px solid var(--line);
+      border-radius: calc(var(--radius) + 4px);
+      padding: 1.25rem 1.2rem 1.15rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .metric-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .ring {
+      --p: 40;
+      width: 108px;
+      height: 108px;
+      border-radius: 50%;
+      background:
+        radial-gradient(closest-side, var(--bg-elev) 74%, transparent 75% 100%),
+        conic-gradient(var(--ok) calc(var(--p) * 1%), rgba(255,255,255,.08) 0);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .ring strong {
+      font-family: var(--font-serif);
+      font-size: 1.85rem;
+      font-weight: 400;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .ring span {
+      display: block;
+      margin-top: 0.15rem;
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--fg-faint);
+      text-align: center;
+    }
+    .metric-copy h2 {
+      margin: 0 0 0.25rem;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .metric-copy p {
+      margin: 0;
+      color: var(--fg-dim);
+      font-size: 0.88rem;
+    }
+    .mini-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.55rem;
+    }
+    .mini-stat {
+      background: rgba(255,255,255,.025);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 0.6rem 0.7rem;
+    }
+    .mini-stat .k {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--fg-faint);
+    }
+    .mini-stat .v {
+      margin-top: 0.15rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .mini-stat .v.ok { color: var(--ok) }
+
+    /* ── sections ── */
+    section { padding: 1.75rem 0 0.25rem }
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .section-head h2 {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-weight: 400;
+      font-size: clamp(1.55rem, 2.6vw, 1.95rem);
+      letter-spacing: -0.02em;
+    }
+    .section-head p {
+      margin: 0.2rem 0 0;
+      color: var(--fg-dim);
+      font-size: 0.92rem;
+    }
+
     .card {
-      background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 40%), var(--elev);
-      border:1px solid var(--line); border-radius:14px; padding:1rem; margin-bottom:1rem;
-      box-shadow:0 18px 50px rgba(0,0,0,.4);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.025), transparent 36%),
+        var(--bg-elev);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 1rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,.22);
     }
-    .card h2 { margin:0 0 .6rem; font-size:1rem }
-    video { width:100%; border-radius:10px; background:#000; border:1px solid var(--line) }
-    .note { margin-top:.75rem; padding:.7rem .8rem; border-radius:10px; background:rgba(240,164,110,.08); border:1px solid rgba(240,164,110,.22); color:#f3d2b0; font-size:.84rem }
-    .grid { display:grid; gap:.55rem; grid-template-columns:1fr 1fr }
-    @media (min-width:720px) { .grid.four { grid-template-columns:repeat(4,1fr) } }
-    .stat { background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:10px; padding:.65rem .75rem }
-    .stat .k { font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.06em }
-    .stat .v { font-family:var(--mono); margin-top:.15rem }
-    .stat .v.ok { color:var(--ok) }
-    table { width:100%; border-collapse:collapse; font-size:.88rem }
-    th, td { text-align:left; padding:.45rem .4rem; border-bottom:1px solid var(--line) }
-    th { color:var(--muted); font-weight:500; font-size:.72rem; text-transform:uppercase; letter-spacing:.05em }
-    td.mono { font-family:var(--mono); font-size:.82rem }
-    td.ok { color:var(--ok); font-weight:600 }
-    td.zero { color:var(--muted) }
-    a { color:#3dd6c6 }
-    footer { margin-top:1.5rem; color:var(--muted); font-size:.8rem; border-top:1px solid var(--line); padding-top:1rem }
-    code { font-family:var(--mono); font-size:.85em; color:#c9d4ff }
+
+    /* ── findings ── */
+    .findings {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.7rem;
+    }
+    @media (max-width: 900px) {
+      .findings { grid-template-columns: 1fr 1fr }
+    }
+    @media (max-width: 520px) {
+      .findings { grid-template-columns: 1fr }
+    }
+    .finding {
+      padding: 1rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: var(--bg-elev);
+      min-height: 100%;
+    }
+    .finding .n {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--copper);
+      letter-spacing: 0.08em;
+    }
+    .finding h3 {
+      margin: 0.4rem 0 0.35rem;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .finding p {
+      margin: 0;
+      color: var(--fg-dim);
+      font-size: 0.88rem;
+    }
+
+    /* ── SR bars ── */
+    .sr-list { display: grid; gap: 0.75rem }
+    .sr-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr) auto;
+      gap: 0.75rem 1rem;
+      align-items: center;
+      padding: 0.75rem 0.85rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,.02);
+      border: 1px solid var(--line);
+    }
+    @media (max-width: 700px) {
+      .sr-row {
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+          "name pct"
+          "bar bar";
+      }
+      .sr-name { grid-area: name }
+      .sr-bar-wrap { grid-area: bar }
+      .sr-pct { grid-area: pct }
+    }
+    .sr-name {
+      font-weight: 600;
+      font-size: 0.92rem;
+    }
+    .sr-name small {
+      display: block;
+      margin-top: 0.15rem;
+      font-weight: 400;
+      color: var(--fg-faint);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+    }
+    .sr-bar-wrap {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      overflow: hidden;
+    }
+    .sr-bar {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #8f5a2f, var(--copper));
+      width: 0;
+      transition: width .8s cubic-bezier(.2,.8,.2,1);
+    }
+    .sr-bar.ok {
+      background: linear-gradient(90deg, #3f8f62, var(--ok));
+    }
+    .sr-bar.mid {
+      background: linear-gradient(90deg, #8a7428, var(--warn));
+    }
+    .sr-bar.zero {
+      background: rgba(255,255,255,.12);
+      width: 2px !important;
+      min-width: 2px;
+    }
+    .sr-pct {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 500;
+      min-width: 4.5rem;
+      text-align: right;
+    }
+    .sr-pct.ok { color: var(--ok) }
+    .sr-pct.mid { color: #d4b45a }
+    .sr-pct.zero { color: var(--fg-faint) }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.1rem;
+      margin-top: 0.9rem;
+      color: var(--fg-faint);
+      font-size: 0.8rem;
+    }
+    .legend i {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      margin-right: 0.35rem;
+      vertical-align: -1px;
+    }
+
+    /* ── theater ── */
+    .theater {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 0.85rem;
+    }
+    @media (max-width: 800px) {
+      .theater { grid-template-columns: 1fr }
+    }
+    .playlist {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    @media (max-width: 800px) {
+      .playlist {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+        -webkit-overflow-scrolling: touch;
+      }
+    }
+    .clip-btn {
+      appearance: none;
+      text-align: left;
+      border: 1px solid var(--line);
+      background: var(--bg-elev);
+      color: var(--fg);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 0.8rem;
+      cursor: pointer;
+      min-height: 44px;
+      transition: border-color .15s ease, background .15s ease;
+      font: inherit;
+    }
+    @media (max-width: 800px) {
+      .clip-btn { min-width: 180px; flex-shrink: 0 }
+    }
+    .clip-btn:hover { border-color: var(--line-strong) }
+    .clip-btn[aria-selected="true"] {
+      border-color: var(--copper-line);
+      background: var(--copper-soft);
+    }
+    .clip-btn .t {
+      display: block;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .clip-btn .m {
+      display: block;
+      margin-top: 0.2rem;
+      color: var(--fg-faint);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+    }
+    .player {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #000;
+      box-shadow: var(--shadow);
+    }
+    .player video {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      background: #000;
+      object-fit: contain;
+    }
+    .player-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem 0.6rem;
+      align-items: center;
+      padding: 0.85rem 1rem;
+      background: var(--bg-elev);
+      border-top: 1px solid var(--line);
+    }
+    .chip {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 0.28rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--fg-dim);
+    }
+    .chip.ok {
+      color: var(--ok);
+      border-color: rgba(111,191,140,.3);
+      background: var(--ok-soft);
+    }
+    .chip.copper {
+      color: #e0b07a;
+      border-color: var(--copper-line);
+      background: var(--copper-soft);
+    }
+    .player-note {
+      flex: 1 1 100%;
+      margin: 0.15rem 0 0;
+      color: var(--fg-dim);
+      font-size: 0.88rem;
+    }
+
+    /* ── story ── */
+    .story {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--bg-elev);
+    }
+    @media (max-width: 860px) {
+      .story { grid-template-columns: 1fr 1fr }
+    }
+    @media (max-width: 480px) {
+      .story { grid-template-columns: 1fr }
+    }
+    .step {
+      padding: 1.05rem 1rem 1.15rem;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      position: relative;
+    }
+    @media (min-width: 861px) {
+      .step:last-child { border-right: 0 }
+      .step { border-bottom: 0 }
+    }
+    .step .idx {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--copper);
+      letter-spacing: 0.08em;
+    }
+    .step h3 {
+      margin: 0.4rem 0 0.35rem;
+      font-size: 0.98rem;
+      font-weight: 600;
+    }
+    .step p {
+      margin: 0;
+      color: var(--fg-dim);
+      font-size: 0.86rem;
+    }
+
+    /* ── details table ── */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      min-width: 560px;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.7rem 0.65rem;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    th {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--fg-faint);
+    }
+    td.mono { font-family: var(--font-mono); font-size: 0.84rem }
+    td.ok { color: var(--ok); font-weight: 600 }
+    td.mid { color: #d4b45a; font-weight: 600 }
+    td.zero { color: var(--fg-faint) }
+    tr:last-child td { border-bottom: 0 }
+
+    /* ── tech grid ── */
+    .tech {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.7rem;
+    }
+    @media (max-width: 800px) {
+      .tech { grid-template-columns: 1fr }
+    }
+    .tech article {
+      padding: 1rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: var(--bg-elev);
+    }
+    .tech h3 {
+      margin: 0 0 0.45rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+    .tech p {
+      margin: 0;
+      color: var(--fg-dim);
+      font-size: 0.88rem;
+    }
+    .tech code {
+      font-family: var(--font-mono);
+      font-size: 0.8em;
+      color: #e0d2ba;
+    }
+
+    footer.page-foot {
+      margin-top: 2.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--line);
+      color: var(--fg-faint);
+      font-size: 0.82rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.25rem;
+      justify-content: space-between;
+    }
+    footer.page-foot code {
+      font-family: var(--font-mono);
+      font-size: 0.78em;
+      color: var(--fg-dim);
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="eyebrow">modal-lab · 017 · 1+2 完成</div>
-    <h1>eval-mini：多 seed + 长 horizon</h1>
-    <p class="lede">
-      <strong>① 5×5 多 seed 成功率表</strong>（h=200）+
-      <strong>② CBL 长轨道</strong>（h=500×5）。
-      L40S · 29 min · <strong>~$0.94</strong> · 首次任务成功。
-    </p>
-
-    <div class="pills">
-      <span class="pill ok">合成 5 任务: <strong>40%</strong> (10/25)</span>
-      <span class="pill ok">Mixer: <strong>5/5</strong></span>
-      <span class="pill ok">Kettle: <strong>3/5</strong></span>
-      <span class="pill ok">Fridge: <strong>1/5</strong></span>
-      <span class="pill ok">Sink: <strong>1/5</strong></span>
-      <span class="pill bad">CBL: <strong>0/5</strong></span>
-    </div>
-
-    <div class="card" id="success">
-      <h2>任务成功回放 · OpenStandMixerHead · seed7</h2>
-      <div class="pills">
-        <span class="pill ok">episode_success: <strong>true</strong></span>
-        <span class="pill">success_step: <strong>95</strong></span>
-        <span class="pill">horizon: <strong>200</strong></span>
-        <span class="pill">run: <strong>eval_mini_5x5_h200_long500_v1</strong></span>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="brand-text">
+          <div class="brand-kicker">modal-lab · 017</div>
+          <div class="brand-name">XR-1 × RoboCasa365</div>
+        </div>
       </div>
-      <video controls autoplay loop muted playsinline src="data/success_OpenStandMixerHead_seed7.mp4"></video>
-      <p class="note">该任务 5 个 seed 全胜（72–103 步）。</p>
+      <nav class="nav" aria-label="页面章节">
+        <a href="#findings">结论</a>
+        <a href="#rates">成功率</a>
+        <a href="#replay">回放</a>
+        <a href="#story">链路</a>
+        <a href="#tech">技术</a>
+      </nav>
     </div>
+  </header>
 
-    <div class="card" id="fridge">
-      <h2>补跑成功 · CloseFridge · seed8（ObjCat 修复后）</h2>
-      <div class="pills">
-        <span class="pill ok">episode_success: <strong>true</strong></span>
-        <span class="pill">success_step: <strong>130</strong></span>
-        <span class="pill">SR: <strong>1/5 = 20%</strong></span>
-        <span class="pill">run: <strong>eval_mini_fridge_sink_h200_v1</strong></span>
+  <main class="shell">
+    <section class="hero" aria-labelledby="hero-title">
+      <div>
+        <div class="eyebrow">Closed-loop eval · L40S</div>
+        <h1 id="hero-title">厨房仿真里，<em>真的会成功</em>的机器人策略</h1>
+
+        <p class="lede">
+          Xiaomi Robotics-1（~5.4B VLA）在 RoboCasa365 / MuJoCo 里闭环执行。
+          不是动作数字，不是随机乱动——是看得到的任务成功回放，和一张可复现的小评测成功率表。
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#replay">看成功回放</a>
+          <a class="btn btn-ghost" href="#rates">看成功率表</a>
+        </div>
       </div>
-      <video controls loop muted playsinline src="data/success_CloseFridge_seed8.mp4"></video>
-      <p class="note">修复前 5/5 在创建环境时报 NaN；修复后 10/10 局全 pipeline_ok，且有任务成功。</p>
-    </div>
 
-    <div class="card" id="sink">
-      <h2>补跑成功 · TurnOnSinkFaucet · seed11</h2>
-      <div class="pills">
-        <span class="pill ok">episode_success: <strong>true</strong></span>
-        <span class="pill">success_step: <strong>186</strong></span>
-        <span class="pill">SR: <strong>1/5 = 20%</strong></span>
+      <aside class="hero-card" aria-label="核心指标">
+        <div class="metric-row">
+          <div class="ring" style="--p:40" role="img" aria-label="合成成功率 40%">
+            <div>
+              <strong>40%</strong>
+              <span>合成 SR</span>
+            </div>
+          </div>
+          <div class="metric-copy">
+            <h2>5 任务 × 5 seed</h2>
+            <p>10 / 25 局任务成功。简单任务接近满分，硬任务仍接近 0。</p>
+          </div>
+        </div>
+        <div class="mini-stats">
+          <div class="mini-stat">
+            <div class="k">Mixer</div>
+            <div class="v ok">5/5 · 100%</div>
+          </div>
+          <div class="mini-stat">
+            <div class="k">Kettle</div>
+            <div class="v ok">3/5 · 60%</div>
+          </div>
+          <div class="mini-stat">
+            <div class="k">Fridge / Sink</div>
+            <div class="v">各 1/5 · 20%</div>
+          </div>
+          <div class="mini-stat">
+            <div class="k">CBL</div>
+            <div class="v">0/5 · 0%</div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section id="findings" aria-labelledby="findings-title">
+      <div class="section-head">
+        <div>
+          <h2 id="findings-title">四条结论</h2>
+          <p>评测后可以站得住的判断——不是“看起来能动”。</p>
+        </div>
       </div>
-      <video controls loop muted playsinline src="data/success_TurnOnSinkFaucet_seed11.mp4"></video>
-    </div>
-
-    <div class="card">
-      <h2>成功率表 · 原 5×5 + Fridge/Sink 补跑</h2>
-      <table>
-        <thead>
-          <tr><th>track / task</th><th>h</th><th>succ</th><th>n</th><th>SR</th><th>备注</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>OpenStandMixerHead</td>
-            <td class="mono">200</td>
-            <td class="mono ok">5</td>
-            <td class="mono">5</td>
-            <td class="mono ok">100%</td>
-            <td>原 grid</td>
-          </tr>
-          <tr>
-            <td>TurnOnElectricKettle</td>
-            <td class="mono">200</td>
-            <td class="mono ok">3</td>
-            <td class="mono">5</td>
-            <td class="mono ok">60%</td>
-            <td>原 grid</td>
-          </tr>
-          <tr>
-            <td>CloseFridge</td>
-            <td class="mono">200</td>
-            <td class="mono ok">1</td>
-            <td class="mono">5</td>
-            <td class="mono ok">20%</td>
-            <td>补跑 · seed8@130</td>
-          </tr>
-          <tr>
-            <td>TurnOnSinkFaucet</td>
-            <td class="mono">200</td>
-            <td class="mono ok">1</td>
-            <td class="mono">5</td>
-            <td class="mono ok">20%</td>
-            <td>补跑 · seed11@186</td>
-          </tr>
-          <tr>
-            <td>CloseBlenderLid</td>
-            <td class="mono">200</td>
-            <td class="mono zero">0</td>
-            <td class="mono">5</td>
-            <td class="mono zero">0%</td>
-            <td>原 grid · 步数偏短</td>
-          </tr>
-          <tr>
-            <td>CloseBlenderLid long</td>
-            <td class="mono">500</td>
-            <td class="mono zero">0</td>
-            <td class="mono">5</td>
-            <td class="mono zero">0%</td>
-            <td>官方 h≈900</td>
-          </tr>
-        </tbody>
-      </table>
-      <p class="note" style="margin-top:.8rem">合成 5 任务 SR <strong>40%</strong> (10/25)。Fridge/Sink 修复前为 env NaN，不计入策略质量。</p>
-    </div>
-
-    <div class="card" id="policy">
-      <h2>对照 · 像样闭环 smoke · CBL · h=100</h2>
-      <div class="pills">
-        <span class="pill ok">pipeline: <strong>OK</strong></span>
-        <span class="pill">gpu: <strong>L40S</strong></span>
-        <span class="pill">wall: <strong>88s</strong></span>
-        <span class="pill">cost: <strong>$0.048</strong></span>
-        <span class="pill">task: <strong>fail</strong></span>
+      <div class="findings">
+        <article class="finding">
+          <div class="n">01</div>
+          <h3>闭环链路成立</h3>
+          <p>三路相机 → XR-1 推理 → 12D 动作 → MuJoCo 执行，单进程稳定跑满 horizon。</p>
+        </article>
+        <article class="finding">
+          <div class="n">02</div>
+          <h3>任务可以成功</h3>
+          <p>OpenStandMixerHead 5/5；Kettle 3/5；Fridge / Sink 修复后各有成功局。</p>
+        </article>
+        <article class="finding">
+          <div class="n">03</div>
+          <h3>费用可控</h3>
+          <p>L40S 上 h=100 smoke ~$0.05；5×5 mini ~$0.94；Fridge/Sink 补跑 ~$0.53。</p>
+        </article>
+        <article class="finding">
+          <div class="n">04</div>
+          <h3>硬任务仍短板</h3>
+          <p>CloseBlenderLid 在 h=200 / 500 仍 0%。官方对照 horizon≈900，成功局常 ≥236 步。</p>
+        </article>
       </div>
-      <video controls loop muted playsinline src="data/policy_episode_h100.mp4"></video>
-      <p class="note">单 seed 闭环链路验证；任务未成功。多 seed 后简单任务才出 SR。</p>
-    </div>
+    </section>
 
-    <div class="card">
-      <h2>对照 · 随机策略 60 步</h2>
-      <video controls loop muted playsinline src="data/CloseBlenderLid_random.mp4"></video>
-      <p class="note">随机乱动只证明仿真能出 mp4，不是策略质量参考。</p>
-    </div>
+    <section id="rates" aria-labelledby="rates-title">
+      <div class="section-head">
+        <div>
+          <h2 id="rates-title">成功率</h2>
+          <p>合成表 = 原 5×5 grid + Fridge/Sink 补跑（ObjCat 修复后）。</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sr-list" id="sr-list">
+          <div class="sr-row" data-pct="100">
+            <div class="sr-name">OpenStandMixerHead<small>h=200 · 5 seeds</small></div>
+            <div class="sr-bar-wrap"><div class="sr-bar ok" data-w="100"></div></div>
+            <div class="sr-pct ok">5/5</div>
+          </div>
+          <div class="sr-row" data-pct="60">
+            <div class="sr-name">TurnOnElectricKettle<small>h=200 · 5 seeds</small></div>
+            <div class="sr-bar-wrap"><div class="sr-bar mid" data-w="60"></div></div>
+            <div class="sr-pct mid">3/5</div>
+          </div>
+          <div class="sr-row" data-pct="20">
+            <div class="sr-name">CloseFridge<small>补跑 · seed8 @ step 130</small></div>
+            <div class="sr-bar-wrap"><div class="sr-bar" data-w="20"></div></div>
+            <div class="sr-pct">1/5</div>
+          </div>
+          <div class="sr-row" data-pct="20">
+            <div class="sr-name">TurnOnSinkFaucet<small>补跑 · seed11 @ step 186</small></div>
+            <div class="sr-bar-wrap"><div class="sr-bar" data-w="20"></div></div>
+            <div class="sr-pct">1/5</div>
+          </div>
+          <div class="sr-row" data-pct="0">
+            <div class="sr-name">CloseBlenderLid<small>h=200 · 仍短于官方</small></div>
+            <div class="sr-bar-wrap"><div class="sr-bar zero" data-w="0"></div></div>
+            <div class="sr-pct zero">0/5</div>
+          </div>
+          <div class="sr-row" data-pct="0">
+            <div class="sr-name">CloseBlenderLid · long<small>h=500 · 官方约 900</small></div>
+            <div class="sr-bar-wrap"><div class="sr-bar zero" data-w="0"></div></div>
+            <div class="sr-pct zero">0/5</div>
+          </div>
+        </div>
+        <div class="legend">
+          <span><i style="background:var(--ok)"></i>高成功</span>
+          <span><i style="background:var(--warn)"></i>中等</span>
+          <span><i style="background:var(--copper)"></i>低但真实成功</span>
+          <span><i style="background:rgba(255,255,255,.18)"></i>未成功</span>
+        </div>
+      </div>
 
-    <footer>
-      runs <code>eval_mini_5x5…</code> + <code>eval_mini_fridge_sink_h200_v1</code> ·
-      <a href="https://github.com/xiaoqianran/modal-lab/tree/main/017-xr1-robocasa365-sim">repo</a>
-      · 下一步可选：CBL×N @ h=900 · 018 VLABench
+      <div class="card" style="margin-top:0.85rem">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>任务</th>
+                <th>h</th>
+                <th>成功</th>
+                <th>SR</th>
+                <th>备注</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>OpenStandMixerHead</td>
+                <td class="mono">200</td>
+                <td class="mono ok">5/5</td>
+                <td class="mono ok">100%</td>
+                <td>最快成功 72 步</td>
+              </tr>
+              <tr>
+                <td>TurnOnElectricKettle</td>
+                <td class="mono">200</td>
+                <td class="mono ok">3/5</td>
+                <td class="mono mid">60%</td>
+                <td>成功 92 / 105 / 139 步</td>
+              </tr>
+              <tr>
+                <td>CloseFridge</td>
+                <td class="mono">200</td>
+                <td class="mono ok">1/5</td>
+                <td class="mono">20%</td>
+                <td>修复前 env NaN；现 pipeline_ok</td>
+              </tr>
+              <tr>
+                <td>TurnOnSinkFaucet</td>
+                <td class="mono">200</td>
+                <td class="mono ok">1/5</td>
+                <td class="mono">20%</td>
+                <td>修复前 env NaN；现 pipeline_ok</td>
+              </tr>
+              <tr>
+                <td>CloseBlenderLid</td>
+                <td class="mono">200 / 500</td>
+                <td class="mono zero">0/5 · 0/5</td>
+                <td class="mono zero">0%</td>
+                <td>策略在跑，任务未完成</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="replay" aria-labelledby="replay-title">
+      <div class="section-head">
+        <div>
+          <h2 id="replay-title">成功回放</h2>
+          <p>左侧点选片段。默认播放搅拌机任务（5/5 全胜）。</p>
+        </div>
+      </div>
+      <div class="theater">
+        <div class="playlist" role="tablist" aria-label="视频片段">
+          <button class="clip-btn" role="tab" aria-selected="true" data-src="data/success_OpenStandMixerHead_seed7.mp4" data-title="OpenStandMixerHead · seed7" data-meta="success · step 95 · h=200" data-note="该任务 5 个 seed 全部成功（72–103 步）。最干净的成功样本。">
+            <span class="t">Stand Mixer</span>
+            <span class="m">seed7 · step 95 · 100% task</span>
+          </button>
+          <button class="clip-btn" role="tab" aria-selected="false" data-src="data/success_CloseFridge_seed8.mp4" data-title="CloseFridge · seed8" data-meta="success · step 130 · h=200" data-note="ObjCat 路径修复后首次关冰箱成功。修复前 5/5 在创建环境时报 NaN。">
+            <span class="t">Close Fridge</span>
+            <span class="m">seed8 · step 130 · 20% task</span>
+          </button>
+          <button class="clip-btn" role="tab" aria-selected="false" data-src="data/success_TurnOnSinkFaucet_seed11.mp4" data-title="TurnOnSinkFaucet · seed11" data-meta="success · step 186 · h=200" data-note="水龙头任务同样从 NaN 恢复到可评测，并在 seed11 成功。">
+            <span class="t">Sink Faucet</span>
+            <span class="m">seed11 · step 186 · 20% task</span>
+          </button>
+          <button class="clip-btn" role="tab" aria-selected="false" data-src="data/policy_episode_h100.mp4" data-title="CloseBlenderLid · smoke h=100" data-meta="pipeline OK · task fail · 101 frames" data-note="像样闭环 smoke：链路无 error，但盖子任务在 100 步内未完成。">
+            <span class="t">CBL smoke</span>
+            <span class="m">h=100 · pipeline only</span>
+          </button>
+          <button class="clip-btn" role="tab" aria-selected="false" data-src="data/CloseBlenderLid_random.mp4" data-title="Random baseline · 60 steps" data-meta="random actions · not policy" data-note="随机动作对照：只证明仿真能出 mp4，不是策略质量参考。">
+            <span class="t">Random baseline</span>
+            <span class="m">60 steps · control</span>
+          </button>
+        </div>
+        <div class="player">
+          <video id="stage" controls playsinline autoplay muted loop src="data/success_OpenStandMixerHead_seed7.mp4"></video>
+          <div class="player-meta">
+            <span class="chip ok" id="chip-status">success</span>
+            <span class="chip copper" id="chip-title">OpenStandMixerHead · seed7</span>
+            <span class="chip" id="chip-meta">success · step 95 · h=200</span>
+            <p class="player-note" id="chip-note">该任务 5 个 seed 全部成功（72–103 步）。最干净的成功样本。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="story" aria-labelledby="story-title">
+      <div class="section-head">
+        <div>
+          <h2 id="story-title">评测链路</h2>
+          <p>从“能跑”到“能成功”的四步。</p>
+        </div>
+      </div>
+      <div class="story">
+        <div class="step">
+          <div class="idx">STEP 01</div>
+          <h3>闭环 smoke</h3>
+          <p>horizon=100 · L40S · ~88s · ~$0.05。证明相机→策略→动作→仿真闭环。</p>
+        </div>
+        <div class="step">
+          <div class="idx">STEP 02</div>
+          <h3>5×5 mini-eval</h3>
+          <p>5 任务 × 5 seed @ h=200，外加 CBL long @ h=500。Mixer / Kettle 先出成功。</p>
+        </div>
+        <div class="step">
+          <div class="idx">STEP 03</div>
+          <h3>修 Object zoo</h3>
+          <p>import 前 symlink 资产并 rebuild ObjCat。Fridge / Sink 的 NaN 消失。</p>
+        </div>
+        <div class="step">
+          <div class="idx">STEP 04</div>
+          <h3>补跑难任务</h3>
+          <p>Fridge / Sink 各 5 seed：均 20% SR，且有成功视频可回放。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="tech" aria-labelledby="tech-title">
+      <div class="section-head">
+        <div>
+          <h2 id="tech-title">技术要点</h2>
+          <p>部署在 Modal；默认 L40S；单容器加载模型 + 仿真。</p>
+        </div>
+      </div>
+      <div class="tech">
+        <article>
+          <h3>策略与观测</h3>
+          <p>
+            XR-1 · robot_type <code>robocasa365</code> · 观测历史 4 / interval 2 · replan 16 ·
+            输入 <code>320×256</code>（修 Qwen-VL reshape）· 动作 EE12。
+          </p>
+        </article>
+        <article>
+          <h3>资产与环境</h3>
+          <p>
+            RoboCasa kitchen assets 进 Volume（~24GB）。优先 volume symlink，避免每次拷 20GB。
+            Object 注册表在 import 时扫描——必须先挂盘再 import。
+          </p>
+        </article>
+        <article>
+          <h3>评测边界</h3>
+          <p>
+            只做 smoke + mini-eval，不做官方 2500 局。CBL 需要更接近官方的
+            <code>h≥900</code> 才能公平比较。
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <footer class="page-foot">
+      <div>
+        runs
+        <code>eval_mini_5x5_h200_long500_v1</code>
+        ·
+        <code>eval_mini_fridge_sink_h200_v1</code>
+        ·
+        <code>smoke_policy_h100_v1</code>
+      </div>
+      <div>
+        <a href="https://github.com/xiaoqianran/modal-lab/tree/main/017-xr1-robocasa365-sim">GitHub · 017</a>
+        · GPU L40S · 2026-08-10
+      </div>
     </footer>
-  </div>
+  </main>
+
+  <script>
+    (function () {
+      var video = document.getElementById("stage");
+      var chipTitle = document.getElementById("chip-title");
+      var chipMeta = document.getElementById("chip-meta");
+      var chipNote = document.getElementById("chip-note");
+      var chipStatus = document.getElementById("chip-status");
+      var buttons = Array.prototype.slice.call(document.querySelectorAll(".clip-btn"));
+
+      function select(btn) {
+        buttons.forEach(function (b) { b.setAttribute("aria-selected", "false"); });
+        btn.setAttribute("aria-selected", "true");
+        var src = btn.getAttribute("data-src");
+        var title = btn.getAttribute("data-title") || "";
+        var meta = btn.getAttribute("data-meta") || "";
+        var note = btn.getAttribute("data-note") || "";
+        if (video.getAttribute("src") !== src) {
+          video.src = src;
+          video.play().catch(function () {});
+        }
+        chipTitle.textContent = title;
+        chipMeta.textContent = meta;
+        chipNote.textContent = note;
+        var isSuccess = /success/i.test(meta) && !/task fail|not policy|random/i.test(meta + " " + note);
+        var isPipeline = /pipeline/i.test(meta);
+        var isRandom = /random|not policy/i.test(meta + " " + note);
+        chipStatus.textContent = isRandom ? "baseline" : isSuccess ? "success" : isPipeline ? "pipeline" : "clip";
+        chipStatus.className = "chip" + (isSuccess ? " ok" : isRandom ? "" : " copper");
+      }
+
+      buttons.forEach(function (btn) {
+        btn.addEventListener("click", function () { select(btn); });
+      });
+
+      // animate bars when visible
+      var bars = document.querySelectorAll(".sr-bar[data-w]");
+      function revealBars() {
+        bars.forEach(function (bar) {
+          var w = bar.getAttribute("data-w") || "0";
+          if (bar.classList.contains("zero")) return;
+          bar.style.width = w + "%";
+        });
+      }
+      if ("IntersectionObserver" in window) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) {
+              revealBars();
+              io.disconnect();
+            }
+          });
+        }, { threshold: 0.2 });
+        var list = document.getElementById("sr-list");
+        if (list) io.observe(list);
+      } else {
+        revealBars();
+      }
+    })();
+  </script>
 </body>
 </html>
