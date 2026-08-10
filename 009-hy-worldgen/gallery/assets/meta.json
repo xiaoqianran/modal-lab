@@ -1,0 +1,70 @@
+{
+  "experiment": "009-hy-worldgen",
+  "title": "HY-World 2.0 full pipeline smoke",
+  "scene": "scene_from_008",
+  "from_008": "smoke_qwen",
+  "gpu": "RTX-PRO-6000",
+  "nframe": 21,
+  "split_view_num": 1,
+  "max_steps": 4000,
+  "worldstereo": "worldstereo-memory-dmd",
+  "stages": {
+    "1": {
+      "ok": true,
+      "seconds": 60.11,
+      "est_cost_usd": 0.0506,
+      "ts": "2026-08-10T15:14:24.201433+00:00"
+    },
+    "2": {
+      "ok": true,
+      "seconds": 395.33,
+      "est_cost_usd": 0.3329,
+      "ts": "2026-08-10T15:15:35.304615+00:00"
+    },
+    "3": {
+      "ok": true,
+      "seconds": 137.84,
+      "est_cost_usd": 0.1161,
+      "ts": "2026-08-10T16:25:17.148869+00:00"
+    },
+    "4": {
+      "ok": true,
+      "seconds": 57.86,
+      "est_cost_usd": 0.0487,
+      "ts": "2026-08-10T16:28:07.040822+00:00"
+    },
+    "5": {
+      "ok": true,
+      "seconds": 208.57,
+      "est_cost_usd": 0.1756,
+      "ts": "2026-08-10T16:48:50.758411+00:00"
+    }
+  },
+  "total_seconds_logged": 859.71,
+  "total_est_cost_usd": 0.7239,
+  "gs": {
+    "psnr": 19.964466094970703,
+    "ssim": 0.7283122539520264,
+    "lpips": 0.18627668917179108,
+    "num_GS": 1357841,
+    "eval_s_per_image": 0.04562711715698242
+  },
+  "artifacts": {
+    "panorama": "assets/panorama.png",
+    "val_render": "assets/renders/val_step3999.png",
+    "ply_gs": "assets/ply/point_cloud_3999.ply",
+    "ply_aligned": "assets/ply/aligned_pcd.ply",
+    "ply_global": "assets/ply/global_pcd.ply",
+    "videos": [
+      "assets/videos/traj0_worldstereo.mp4",
+      "assets/videos/traj1_worldstereo.mp4",
+      "assets/videos/traj2_worldstereo.mp4"
+    ]
+  },
+  "notes": [
+    "Stage3 WorldMirror uses SDPA (no flash_attn)",
+    "Stage5 --disable_viewer so job exits cleanly",
+    "Single RTX-PRO-6000 smoke: 1 view \u00d7 3 traj, nframe=21"
+  ],
+  "built_at": "2026-08-10T16:58:08.118426Z"
+}

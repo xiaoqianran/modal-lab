@@ -1,145 +1,145 @@
-# 009 · HY-World 2.0 **World Generation**（全景 → 可导航 3D 世界）
+# 009 · World Generation 规划（**单卡 PRO 6000 优先**）
 
-> 上游：[Tencent-Hunyuan/HY-World-2.0](https://github.com/Tencent-Hunyuan/HY-World-2.0) · `hyworld2/worldgen`  
-> 输入：008 产出的 **panorama.png**（或官方 case）  
-> 输出：**3DGS / mesh / spz** 可导入引擎的世界
+> 上游：`hyworld2/worldgen`  
+> 前置：008 全景（已有 `scene_from_008`）  
+> **结论先行：不必须多卡；单卡 PRO 6000 官方脚本支持，但要砍规模 + 串行 VLM。**
 
 ---
 
-## 1. 全仓库两条线（你已经跑了什么）
+## 0. 必须多卡吗？
 
-| 线 | 模块 | 实验 | 状态 |
-|---|---|---|---|
-| **World Reconstruction** | WorldMirror 2.0 | **007** | ✅ 多视图 → 点云/深度/相机 |
-| **Panorama Generation** | HY-Pano 2.0 | **008** | ✅ 单图 → 360° 全景 |
-| **World Generation** | WorldNav + WorldStereo + 3DGS | **009（本实验）** | ⏳ 全景 → 最终 3D 世界 |
+| 说法 | 真相 |
+|---|---|
+| 官方 README「≥4 GPU recommended / 例 8×H20」 | **推荐配置 / 加速**，不是硬编码「少于 4 卡拒绝运行」 |
+| Stage1 `traj_generate.py` | 文档写明 **single GPU**；外挂 vLLM 可另机/另卡 |
+| Stage2 `traj_render.py` | `WORLD_SIZE` 默认 **1**；多卡只是分轨迹加速 |
+| Stage3 `video_gen.py` | `WORLD_SIZE` 默认 **1**；`--fsdp` **可选**（多卡切分） |
+| Stage4 `gen_gs_data.py` | 默认 **1** 进程即可 |
+| Stage5 `world_gs_trainer` | 官方写了 **x1 GPU: max_steps 8000** |
 
-官方「生成一个世界」不是一步模型，而是：
+**→ 一张 RTX PRO 6000（~96GB）理论上可以跑通整条链路。**  
+多卡主要省时间；单卡用 **更少轨迹 + DMD 4-step + 串行占卡** 换可负担成本。
+
+---
+
+## 1. 单卡难点（不是“不能”，是“要挤”）
+
+### 1.1 VLM 和视觉模型抢同一张卡
+
+Stage1/2 设计是：
+
+- **本卡**：MoGe 深度 + SAM3 + ZIM/GD 等  
+- **另起 vLLM**：Qwen3-VL-8B 做规划/caption  
+
+只有 1×PRO 6000 时：
+
+| 策略 | 做法 | 评价 |
+|---|---|---|
+| **A. 串行（推荐）** | 先起小 VLM → 写完轨迹/caption → **杀掉 vLLM 腾显存** → 再跑渲染/扩散 | 最稳 |
+| B. 同卡硬塞 | 8B VLM + SAM3 + MoGe 一起 | 96GB 可能顶，风险 OOM |
+| C. VLM 改 CPU / 更小 VL | 3B/慢 | 省显存、费时间 |
+| D. 跳过部分 VLM | 少 `force_vlm`、少 wonder/recon 轨迹 | 最便宜，质量降 |
+
+### 1.2 Stage3 WorldStereo 权重本身就大
+
+HF `hanshanxue/WorldStereo` 约 **68GB 盘**：
+
+| 变体 | 权重文件约 |
+|---|---:|
+| **worldstereo-memory-dmd**（默认，4-step） | **~35GB** |
+| worldstereo-memory（全步） | ~22GB（另有 camera 等） |
+| worldstereo-camera | ~11GB |
+
+单卡 96GB：权重 ~35GB bf16 + MoGe + SAM3-Video + 激活，**紧但有希望**；不行再开 **CPU offload / 降分辨率 / 少 reference**。  
+官方多卡 FSDP 是为了更快更稳，不是唯一路径。
+
+### 1.3 Stage5 单卡会更久
+
+官方：8 卡 `max_steps=1500` → **1 卡 `max_steps=8000`**（steps 按卡数反比拉长）。  
+时间变长，**单价不变，总价上升**。
+
+---
+
+## 2. 单卡 PRO 6000 最小可跑配置（smoke）
+
+目标：**证明能出 ply/spz**，不是官方 demo 画质。
+
+| 旋钮 | 官方味 | **单卡省钱 smoke** |
+|---|---|---|
+| 轨迹数量 | wonder_topk=3, recon_topk=5 + 多 view | **view≤2，wonder=1，recon=0～1** |
+| nframe | 21 | **12～16**（若接口允许） |
+| WorldStereo | memory-dmd | **memory-dmd**（必选） |
+| FSDP | 8 卡 | **关**（单进程） |
+| max_reference | 8 | **2～4** |
+| Stage5 steps | 1500×8 卡等价 | **4000～8000**（先 4000 试） |
+| 场景 | 多 case | **仅 scene_from_008 一张全景** |
+| VLM | Qwen3-VL-8B ×8 卡 | **单卡串行 / 或更小 VL** |
+
+---
+
+## 3. 花费粗估（**仅 1× RTX-PRO-6000**）
+
+单价按 Modal 约 **$0.000842 / s ≈ $3.03 / h**（与 008 实测同表）。
+
+| 阶段 | 在干什么 | 单卡耗时粗估（smoke） | **GPU $ 粗估** |
+|---|---|---:|---:|
+| 0 prepare | 拷 008 全景 | CPU ≈0 | **$0** |
+| 下权重 | WorldStereo ~35–68GB + SAM/MoGe 等 | CPU | **$0**（时间/存储） |
+| **1 轨迹** | 深度/分割 + VLM 规划 | 15–40 min | **$0.8–2.0** |
+| **2 渲染** | 少轨迹点云视频 + caption | 10–30 min | **$0.5–1.5** |
+| **3 扩帧** | WorldStereo-dmd × 少轨迹 | **40–120 min** | **$2–6** ← 大头 |
+| **4 GS 数据** | 抽帧/深度/法线 | 15–40 min | **$0.8–2.0** |
+| **5 3DGS** | 单卡 4k–8k steps | 40–100 min | **$2–5** |
+| **合计（顺利一枪）** | | **约 2–5.5 h** | **约 $6–18** |
+| 含失败重试 / 调参 | | ×1.5–3 | **$10–40** 更现实缓冲 |
+
+### 对照
+
+| 配置 | 粗估 |
+|---|---|
+| **1× PRO 6000 · 最小 smoke** | **~$6–18 成功；预算预留 $20–30 更安心** |
+| 1× H100 · 同规模 | 更快，总价常接近或略高（单价贵） |
+| 官方味 4–8 卡 · 多轨迹 | **$50–150+** 很容易 |
+
+**008 全景 ~$0.11**；009 完整世界是 **两位数美元级**，不是「再花一毛钱」。
+
+---
+
+## 4. 单卡执行顺序（规划，未默认开火）
 
 ```text
-图/文
-  │
-  ▼
-[008] HY-Pano          全景 panorama.png
-  │
-  ▼
-[009-1] Trajectory Planning   WorldNav + VLM（Qwen3-VL）
-  │
-  ▼
-[009-2] Trajectory Rendering  沿轨迹渲染点云视频 + caption
-  │
-  ▼
-[009-3] World Expansion       WorldStereo 2.0（~17B）扩关键帧
-  │
-  ▼
-[009-4] GS Data Prep          帧/深度/法线/相机（含 WorldMirror）
-  │
-  ▼
-[009-5] 3DGS Training         gsplat 优化 → ply / spz / mesh
-  │
-  ▼
-        真正「可玩」的 3D 世界
+[已完成] 008 panorama → prepare scene_from_008
+
+Phase A  下载权重（CPU）
+Phase B  Stage1  单卡 · 串行 VLM · 极少轨迹       预算点 ~$2
+Phase C  Stage2  单进程渲染                      预算点 ~$1.5
+Phase D  Stage3  单进程 DMD · 无 FSDP             预算点 ~$6  ⚠️ 最贵确认点
+Phase E  Stage4  单进程                           预算点 ~$2
+Phase F  Stage5  max_steps=4000 先试              预算点 ~$3
+Phase G  拉 ply/spz + HTML 预览
 ```
 
-官方 README 把中间叫 4 大能力（Pano / WorldNav / WorldStereo / Composition），`worldgen` 代码拆成 **5 个脚本阶段**。
+**门禁：每个 Phase 结束看 meta / 产物；Stage3 前必须你口头确认。**
 
 ---
 
-## 2. 各阶段脚本与依赖
+## 5. 我认为「只有一张 PRO 6000」可不可行？
 
-| Stage | 脚本 | 核心依赖 | 官方 GPU 暗示 | 大概体量 |
-|---|---|---|---|---|
-| 1 | `traj_generate.py` | **vLLM + Qwen3-VL-8B**、SAM3、navmesh | 单卡 + 另起 VLM 服 | VLM 8B |
-| 2 | `traj_render.py` | 多卡 torchrun、VLM caption | 官方例 8 卡 | 渲染为主 |
-| 3 | `video_gen.py` | **WorldStereo-2 ~17B**、FSDP | 官方例 8 卡 | 最重扩散段 |
-| 4 | `gen_gs_data.py` | WorldMirror 系几何 | 多卡 | 中 |
-| 5 | `world_gs_trainer.py` | gsplat_maskgaussian | 1–8 卡（steps 反比） | 训练段 |
-
-官方前提：
-
-- ≥4 GPU recommended（测过 8×H20）
-- 单独起 vLLM 给 Stage 1–2
-- WorldStereo 权重：`hanshanxue/WorldStereo`（~17B）
-- 自定义编译：`third_party/gsplat_maskgaussian`、`third_party/navmesh`
+| | |
+|---|---|
+| **可行吗** | **可以尝试**，代码路径支持单进程；96GB 对 DMD ~35GB 权重是目前 Modal 单卡里较合适的一档 |
+| **风险** | Stage3 OOM / VLM 同卡冲突 / Stage5 时间长导致账单超预期 |
+| **不建议** | 一上来按官方 8 卡命令抄；多轨迹 + 全步 WorldStereo |
+| **建议默认** | 单卡 PRO 6000 + 极少轨迹 + DMD + 分 stage 确认 |
 
 ---
 
-## 3. 成本现实（比 008 贵一个数量级）
+## 6. 你怎么拍板
 
-008 单张全景 ~**$0.11**（PRO 6000）。  
-009 官方配置是 **多卡 + 17B 视频扩散 + 3DGS 训练 + VLM 服务**：
+回一句即可：
 
-| 策略 | 卡 | 粗估（极粗） | 备注 |
-|---|---|---|---|
-| **最小 smoke**（少轨迹、DMD 4-step、1–2 卡、少 steps） | PRO 6000 / H100×1–2 | **数美元级** | 质量会降，先验证通路 |
-| 官方推荐味 | H100×4–8 | **$20–100+** | 别默认 |
-| 完整精品场景 | 8× 高端 | **很容易三位数** | 需你明确点头 |
+1. **「按单卡最小 smoke 做，总预算封顶 $X」**（建议 X=20 或 30）  
+2. **「先只做 Stage1+2，Stage3 再说」**（更省，先验证轨迹）  
+3. **「先别跑，只保持规划」**
 
-**默认原则：分 stage 跑、每 stage 可停、禁止一键全开 8 卡。**
-
----
-
-## 4. 省钱执行规划（009）
-
-### Phase 0 — Scaffold ✅（本目录）
-
-- PLAN / README / run CLI 骨架  
-- 不默认扣费
-
-### Phase 1 — 数据衔接
-
-- 从 **008** `runs/smoke_qwen/panorama.png` 拷进 scene dir  
-- 或用官方 `examples/worldgen/case000`
-
-### Phase 2 — Stage 1 轨迹（相对便宜）
-
-- 起 **小 VLM**：Qwen2.5-VL-3B/7B 或官方 8B 单卡  
-- 单卡 **PRO 6000** / L40S  
-- 少目标、短轨迹 → 验证 `navmesh/` 产出
-
-### Phase 3 — Stage 2 渲染
-
-- 先 **1–2 GPU**，不要 8 卡  
-- 输出 `render_results/**/render.mp4`
-
-### Phase 4 — Stage 3 WorldStereo（贵）
-
-- 默认 **worldstereo-memory-dmd**（4-step）  
-- 先试 **H100×1–2 + FSDP 或单卡 offload**；不行再升  
-- 轨迹数砍到最少
-
-### Phase 5 — Stage 4–5 成世界
-
-- Stage 4：复用 007 WorldMirror 权重（已有 volume）  
-- Stage 5：单卡 PRO 6000 / H100，`max_steps` 按官方比例拉长（x1 → 8000）  
-- 导出 ply / spz / mesh + 简单 HTML 预览
-
-### 明确不做（默认）
-
-- 8×H100 全 pipeline 一键  
-- 无预算确认的 Stage 3 多轨迹  
-- 再下 80B HY-Pano full（继续用 008 Qwen 全景）
-
----
-
-## 5. 与 007 / 008 的关系
-
-| | 007 WorldMirror | 008 HY-Pano | 009 WorldGen |
-|---|---|---|---|
-| 输入 | 多图/视频 | 单图 | **全景**（来自 008） |
-| 输出 | 点云/深度/相机/GS attrs | panorama.png | **可导航 3D 世界** |
-| 默认卡 | T4 | **PRO 6000** | 分 stage；Stage3 才上高端 |
-| 角色 | 重建支线；也被 Stage4 调用 | 生成管线第 0 步 | 生成管线后半程 |
-
----
-
-## 6. 你确认后才开火的命令（草案）
-
-```bash
-python main.py 009 status
-python main.py 009 prepare --from-008 runs/smoke_qwen   # 接 008 全景
-python main.py 009 stage1 --gpu RTX-PRO-6000            # 轨迹
-# … stage2 / stage3 需你确认预算后再跑
-```
-
-**下一步建议：** 先 `prepare` + `stage1`（最便宜验证），Stage3 前再问你一次。
+我不会在没预算数字前自动开 Stage3。

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>009 · HY-Worldgen · Gallery</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0c0e12; --elev: #141820; --line: rgba(255,255,255,.08);
+      --fg: #eef1f6; --muted: #8b93a7; --accent: #3dd6c6; --accent2: #f0a46e;
+      --ok: #3dd68c; --font: "DM Sans", system-ui, sans-serif; --mono: "JetBrains Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100%; color: var(--fg); font-family: var(--font);
+      background:
+        radial-gradient(1000px 500px at 10% -10%, rgba(61,214,198,.12), transparent 55%),
+        radial-gradient(800px 400px at 100% 0%, rgba(240,164,110,.08), transparent 50%),
+        var(--bg);
+    }
+    .wrap { width: min(1180px, calc(100% - 2rem)); margin: 0 auto; padding: 1.5rem 0 3rem; }
+    .eyebrow { color: var(--accent); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; }
+    h1 { margin: .4rem 0; font-size: clamp(1.5rem, 3vw, 2.2rem); letter-spacing: -.03em; }
+    .lede { color: var(--muted); max-width: 58ch; line-height: 1.55; }
+    .stats { display: grid; grid-template-columns: repeat(2,1fr); gap: .75rem; margin: 1.25rem 0; }
+    @media (min-width:800px){ .stats { grid-template-columns: repeat(5,1fr); } }
+    .stat { background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 14px; padding: .9rem 1rem; }
+    .stat .l { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; }
+    .stat .v { font-size: 1.15rem; font-weight: 700; margin-top: .2rem; font-variant-numeric: tabular-nums; }
+    .stat .s { color: var(--muted); font-size: .75rem; font-family: var(--mono); margin-top: .15rem; }
+    .panel { background: var(--elev); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; margin-bottom: 1.1rem; box-shadow: 0 18px 50px rgba(0,0,0,.4); }
+    .panel-h { padding: .9rem 1.1rem; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: .5rem 1rem; justify-content: space-between; align-items: baseline; }
+    .panel-h h2 { margin: 0; font-size: 1rem; }
+    .panel-h p { margin: 0; color: var(--muted); font-size: .82rem; }
+    .grid2 { display: grid; gap: 0; }
+    @media (min-width:860px){ .grid2 { grid-template-columns: 1fr 1fr; } }
+    .grid3 { display: grid; gap: 0; }
+    @media (min-width:900px){ .grid3 { grid-template-columns: 1fr 1fr 1fr; } }
+    figure { margin: 0; border-top: 1px solid var(--line); background: #07090d; }
+    @media (min-width:860px){
+      .grid2 figure, .grid3 figure { border-top: 0; border-left: 1px solid var(--line); }
+      .grid2 figure:first-child, .grid3 figure:first-child { border-left: 0; }
+    }
+    figure img, figure video { display: block; width: 100%; height: auto; background: #05070b; }
+    figure video { max-height: 320px; object-fit: contain; }
+    figcaption { padding: .55rem .8rem .75rem; color: var(--muted); font-size: .75rem; letter-spacing: .03em; }
+    .pano-wrap { overflow-x: auto; background: #07090d; }
+    .pano-wrap img { min-width: 100%; height: auto; display: block; }
+    .stages { display: grid; gap: .55rem; padding: 1rem; }
+    .stage {
+      display: grid; grid-template-columns: 2.2rem 1fr auto auto; gap: .75rem; align-items: center;
+      padding: .65rem .8rem; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.02);
+    }
+    .stage .n { width: 1.7rem; height: 1.7rem; border-radius: 999px; display: grid; place-items: center; font-size: .78rem; font-weight: 700; background: rgba(61,214,198,.15); color: var(--accent); }
+    .stage .t { font-weight: 600; font-size: .92rem; }
+    .stage .d { color: var(--muted); font-size: .78rem; }
+    .stage .ok { color: var(--ok); font-family: var(--mono); font-size: .78rem; }
+    .stage .cost { color: var(--accent2); font-family: var(--mono); font-size: .78rem; text-align: right; }
+    .dl { display: flex; flex-wrap: wrap; gap: .6rem; padding: 1rem; }
+    .dl a {
+      display: inline-flex; align-items: center; gap: .4rem; padding: .55rem .85rem; border-radius: 999px;
+      border: 1px solid var(--line); background: rgba(255,255,255,.03); color: var(--fg); text-decoration: none; font-size: .85rem;
+    }
+    .dl a:hover { border-color: rgba(61,214,198,.45); color: var(--accent); }
+    .dl .sz { color: var(--muted); font-family: var(--mono); font-size: .72rem; }
+    pre { margin: 0; padding: 1rem; overflow: auto; max-height: 360px; font-family: var(--mono); font-size: .72rem; color: #c8d0e0; background: #0a0d12; }
+    footer { color: var(--muted); font-size: .82rem; display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; justify-content: space-between; margin-top: .5rem; }
+    a { color: var(--accent); }
+    .notes { padding: 0 1rem 1rem; color: var(--muted); font-size: .85rem; }
+    .notes li { margin: .25rem 0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">009 · HY-World 2.0 · single RTX-PRO-6000</div>
+    <h1>全景 → 轨迹 → WorldStereo → WorldMirror → 3DGS</h1>
+    <p class="lede">
+      从 008 全景起步的完整 worldgen smoke：nframe=21、1 view × 3 traj、memory-dmd、
+      WorldMirror SDPA（无 flash_attn）、3DGS 4000 steps。
+    </p>
+
+    <section class="stats" id="stats"></section>
+
+    <section class="panel">
+      <div class="panel-h">
+        <h2>Stage pipeline</h2>
+        <p>成功阶段耗时 / 估费（仅 ok 的 run）</p>
+      </div>
+      <div class="stages" id="stages"></div>
+      <ul class="notes" id="notes"></ul>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h">
+        <h2>Input panorama（008 → 009）</h2>
+        <p>smoke_qwen ERP · 可横向滚动</p>
+      </div>
+      <div class="pano-wrap">
+        <img src="assets/panorama.png" alt="panorama" />
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h">
+        <h2>Trajectory render vs WorldStereo</h2>
+        <p>上：Stage2 render · 下：Stage3 worldstereo-memory-dmd 扩帧</p>
+      </div>
+      <div class="grid3" id="traj-grid">
+        <figure>
+          <video controls playsinline muted loop src="assets/videos/traj0_render.mp4"></video>
+          <video controls playsinline muted loop src="assets/videos/traj0_worldstereo.mp4"></video>
+          <figcaption>traj0 · render → WorldStereo</figcaption>
+        </figure>
+        <figure>
+          <video controls playsinline muted loop src="assets/videos/traj1_render.mp4"></video>
+          <video controls playsinline muted loop src="assets/videos/traj1_worldstereo.mp4"></video>
+          <figcaption>traj1 · render → WorldStereo</figcaption>
+        </figure>
+        <figure>
+          <video controls playsinline muted loop src="assets/videos/traj2_render.mp4"></video>
+          <video controls playsinline muted loop src="assets/videos/traj2_worldstereo.mp4"></video>
+          <figcaption>traj2 · render → WorldStereo</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h">
+        <h2>3DGS validation render</h2>
+        <p>Stage5 · step 3999 · val view</p>
+      </div>
+      <div class="grid2">
+        <figure>
+          <img src="assets/start_frame.png" alt="start frame" />
+          <figcaption>Start frame (view0)</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/renders/val_step3999.png" alt="val render" />
+          <figcaption>Val render · step 3999</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h">
+        <h2>Download point clouds</h2>
+        <p>aligned_pcd（WM 对齐）· global_pcd · 3DGS ply</p>
+      </div>
+      <div class="dl" id="downloads"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h"><h2>meta.json</h2><p>阶段日志汇总</p></div>
+      <pre id="meta">loading…</pre>
+    </section>
+
+    <footer>
+      <div>Upstream <a href="https://github.com/Tencent-Hunyuan/HY-World-2.0">HY-World-2.0</a> · Modal <code>modal-lab-hy-worldgen</code></div>
+      <div id="foot">scene: scene_from_008</div>
+    </footer>
+  </div>
+  <script>
+    const STAGE_LABEL = {
+      1: ["traj_generate", "轨迹生成"],
+      2: ["traj_render", "轨迹渲染"],
+      3: ["video_gen + WorldMirror", "WorldStereo 扩帧 + 对齐"],
+      4: ["gen_gs_data", "GS 训练数据"],
+      5: ["world_gs_trainer", "3DGS 训练"],
+    };
+    const PLY = [
+      ["assets/ply/aligned_pcd.ply", "aligned_pcd.ply", "WorldMirror 对齐点云"],
+      ["assets/ply/global_pcd.ply", "global_pcd.ply", "generation bank"],
+      ["assets/ply/point_cloud_3999.ply", "point_cloud_3999.ply", "3DGS 最终模型"],
+    ];
+    function fmtMB(n){ return n < 1024*1024 ? (n/1024).toFixed(0)+' KB' : (n/1024/1024).toFixed(1)+' MB'; }
+    function money(x){ return x==null ? '—' : '$'+Number(x).toFixed(4); }
+    function num(x,d=2){ return x==null ? '—' : Number(x).toFixed(d); }
+
+    fetch('assets/meta.json').then(r=>r.json()).then(async m=>{
+      const g = m.gs || {};
+      document.getElementById('stats').innerHTML = [
+        ['GPU', m.gpu || '—', m.worldstereo || ''],
+        ['Cost (ok stages)', money(m.total_est_cost_usd), num(m.total_seconds_logged,1)+'s logged'],
+        ['PSNR', num(g.psnr,2), 'SSIM '+num(g.ssim,3)],
+        ['Gaussians', g.num_GS!=null ? (g.num_GS/1e6).toFixed(2)+'M' : '—', 'LPIPS '+num(g.lpips,3)],
+        ['Steps', m.max_steps || 4000, 'nframe '+ (m.nframe||'—')],
+      ].map(([l,v,s])=>`<div class="stat"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+
+      const stages = m.stages || {};
+      document.getElementById('stages').innerHTML = Object.keys(stages).sort((a,b)=>a-b).map(k=>{
+        const s = stages[k];
+        const [en, zh] = STAGE_LABEL[k] || ['stage '+k, ''];
+        return `<div class="stage">
+          <div class="n">${k}</div>
+          <div><div class="t">${zh || en}</div><div class="d">${en}</div></div>
+          <div class="ok">${s.ok===true?'ok':s.ok===false?'fail':'—'}</div>
+          <div class="cost">${num(s.seconds,1)}s · ${money(s.est_cost_usd)}</div>
+        </div>`;
+      }).join('');
+
+      document.getElementById('notes').innerHTML = (m.notes||[]).map(n=>`<li>${n}</li>`).join('');
+      document.getElementById('meta').textContent = JSON.stringify(m, null, 2);
+      document.getElementById('foot').textContent = `scene: ${m.scene||'—'} · from ${m.from_008||'—'}`;
+
+      // sizes via HEAD not available on file:// — approximate from known sizes if fetch fails
+      const dl = document.getElementById('downloads');
+      const cards = await Promise.all(PLY.map(async ([href, name, desc])=>{
+        let sz = '';
+        try {
+          const res = await fetch(href, {method:'HEAD'});
+          const len = res.headers.get('content-length');
+          if (len) sz = fmtMB(+len);
+        } catch(_){}
+        return `<a href="${href}" download><span>${name}</span><span class="sz">${sz || desc}</span></a>`;
+      }));
+      dl.innerHTML = cards.join('');
+    }).catch(e=>{
+      document.getElementById('meta').textContent = String(e);
+    });
+  </script>
+</body>
+</html>
