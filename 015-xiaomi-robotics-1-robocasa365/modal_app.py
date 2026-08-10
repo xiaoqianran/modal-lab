@@ -187,7 +187,7 @@ def _nvidia_smi() -> dict[str, Any] | None:
 def _make_synthetic_views(
     instruction: str,
     history: int = OBS_HISTORY,
-    size: tuple[int, int] = (320, 240),
+    size: tuple[int, int] = (320, 256),  # H,W must be multiples of patch*merge=32
 ) -> dict[str, list]:
     """Build fake left/right/wrist camera frame lists (PIL RGB)."""
     from PIL import Image, ImageDraw, ImageFont
@@ -343,6 +343,7 @@ def _run_infer(
         return_dict=True,
         return_tensors="pt",
         do_resize=False,
+        do_sample_frames=False,  # we already pass exact history frames
         state=state,
         robot_type=ROBOT_TYPE,
     )
