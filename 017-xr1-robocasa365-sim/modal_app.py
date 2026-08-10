@@ -62,7 +62,11 @@ MODEL_DIR = Path(WEIGHTS_MOUNT) / "Xiaomi-Robotics-1-RoboCasa365"
 # optional (CACHE_FULL_ASSETS) because shutil.copytree of that size is very slow.
 ASSETS_CACHE_DIR = Path(ASSETS_MOUNT) / "models_assets"
 ASSETS_VOL_DIR = Path(ASSETS_MOUNT) / "kitchen_assets_marker"
+# Fixed install path in sim_image — used to symlink BEFORE import robocasa.
+# robocasa builds ObjCat.mjcf_paths at import time; empty zoo → NaN probs later.
+PACKAGE_ASSETS_BASE = Path("/opt/robocasa/robocasa/models/assets")
 VOLUME_WEIGHTS = "modal-lab-xr1-robocasa365-weights"
+
 VOLUME_ASSETS = "modal-lab-xr1-robocasa365-sim-assets"
 VOLUME_OUTPUTS = "modal-lab-xr1-robocasa365-sim-outputs"
 # Set True only when you intentionally want multi-GB volume mirror.
@@ -252,16 +256,30 @@ def _assets_tree_ready(base: Path) -> bool:
 
 
 def _robocasa_assets_base() -> Path:
-    import robocasa
+    """Prefer live robocasa path; fall back to known image install path."""
+    try:
+        import robocasa
 
-    return Path(robocasa.__path__[0]) / "models" / "assets"
+        return Path(robocasa.__path__[0]) / "models" / "assets"
+    except Exception:
+        return PACKAGE_ASSETS_BASE
 
 
 def _link_package_assets_to_cache() -> str | None:
+    """Symlink package assets → volume cache. Safe before `import robocasa`."""
     cache = ASSETS_CACHE_DIR
     if not _assets_tree_ready(cache):
         return None
-    base = _robocasa_assets_base()
+    base = PACKAGE_ASSETS_BASE
+    # If robocasa already imported, prefer its path (same location in our image).
+    try:
+        import sys
+
+        if "robocasa" in sys.modules:
+            base = _robocasa_assets_base()
+    except Exception:
+        pass
+
     parent = base.parent
     parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -272,7 +290,11 @@ def _link_package_assets_to_cache() -> str | None:
         elif base.exists():
             if _assets_tree_ready(base):
                 return "package"
-            shutil.rmtree(base)
+            # Incomplete tree — replace with volume symlink
+            if base.is_dir():
+                shutil.rmtree(base)
+            else:
+                base.unlink()
         base.symlink_to(cache)
         if _assets_tree_ready(base):
             print(f"linked package assets → {cache}", flush=True)
@@ -280,6 +302,103 @@ def _link_package_assets_to_cache() -> str | None:
     except Exception as e:  # noqa: BLE001
         print(f"symlink assets failed: {e!r}", flush=True)
     return None
+
+
+def _rebuild_obj_cat_mjcf_paths() -> dict[str, Any]:
+    """
+    Re-scan object asset folders into ObjCat.mjcf_paths.
+
+    robocasa builds these lists at import time. If assets were missing/empty
+    then, sample_kitchen_object ends up with sum(len(choices))=0 →
+    ValueError('Probabilities contain NaN') on tasks that place free objects
+    (CloseFridge, TurnOnSinkFaucet, …). Fixture-only tasks still work.
+    """
+    import os
+
+    try:
+        from robocasa.models.objects.kitchen_object_utils import (
+            BASE_ASSET_ZOO_PATH,
+            OBJ_CATEGORIES,
+            ObjCat,
+        )
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "error": repr(e)}
+
+    cats = 0
+    paths = 0
+    empty = 0
+    rebuilt = 0
+    for _cat_name, regs in OBJ_CATEGORIES.items():
+        if not isinstance(regs, dict):
+            continue
+        for _reg_name, obj_cat in regs.items():
+            if not isinstance(obj_cat, ObjCat):
+                continue
+            cats += 1
+            # Keep non-empty lists (import-time scan already good, incl. custom folders)
+            if getattr(obj_cat, "mjcf_paths", None):
+                paths += len(obj_cat.mjcf_paths)
+                continue
+
+            reg_type = getattr(obj_cat, "reg_type", "objaverse")
+            model_folders = [f"{reg_type}/{obj_cat.name}"]
+            cat_mjcf_paths: list[str] = []
+            exclude = set(getattr(obj_cat, "exclude", None) or [])
+            is_aux = bool(getattr(obj_cat, "is_auxiliary_obj", False))
+            for folder in model_folders:
+                cat_path = os.path.join(BASE_ASSET_ZOO_PATH, folder)
+                if not os.path.exists(cat_path):
+                    continue
+                try:
+                    model_names = os.listdir(cat_path)
+                except OSError:
+                    continue
+                for model_name in model_names:
+                    model_dir = os.path.join(cat_path, model_name)
+                    if not os.path.isdir(model_dir):
+                        continue
+                    if is_aux:
+                        try:
+                            sub_names = os.listdir(model_dir)
+                        except OSError:
+                            continue
+                        for sub_name in sub_names:
+                            sub_dir = os.path.join(model_dir, sub_name)
+                            if (
+                                os.path.isdir(sub_dir)
+                                and "model.xml" in os.listdir(sub_dir)
+                                and model_name not in exclude
+                            ):
+                                cat_mjcf_paths.append(
+                                    os.path.join(sub_dir, "model.xml")
+                                )
+                    else:
+                        try:
+                            contents = os.listdir(model_dir)
+                        except OSError:
+                            continue
+                        if "model.xml" in contents and model_name not in exclude:
+                            cat_mjcf_paths.append(
+                                os.path.join(model_dir, "model.xml")
+                            )
+            obj_cat.mjcf_paths = sorted(cat_mjcf_paths)
+            rebuilt += 1
+            n = len(obj_cat.mjcf_paths)
+            paths += n
+            if n == 0:
+                empty += 1
+
+    info = {
+        "ok": True,
+        "base_asset_zoo": BASE_ASSET_ZOO_PATH,
+        "zoo_exists": os.path.isdir(BASE_ASSET_ZOO_PATH),
+        "categories": cats,
+        "total_mjcf_paths": paths,
+        "rebuilt_empty_slots": rebuilt,
+        "still_empty": empty,
+    }
+    print(f"rebuilt ObjCat paths: {info}", flush=True)
+    return info
 
 
 def _write_assets_marker(extra: dict[str, Any] | None = None) -> None:
@@ -327,7 +446,9 @@ def _cache_package_assets_to_volume() -> dict[str, Any]:
 
 def _assets_ready() -> bool:
     try:
-        if _assets_tree_ready(_robocasa_assets_base()):
+        if _assets_tree_ready(PACKAGE_ASSETS_BASE) or _assets_tree_ready(
+            _robocasa_assets_base()
+        ):
             return True
     except Exception:
         pass
@@ -361,7 +482,20 @@ def _nvidia_smi() -> dict[str, Any] | None:
 
 
 def _download_assets_impl(force: bool = False) -> dict[str, Any]:
+    """
+    Ensure kitchen assets are on disk and ObjCat path caches are populated.
+
+    Order matters:
+      1) symlink volume → package path (no robocasa import)
+      2) import robocasa (scans object zoo at import)
+      3) rebuild mjcf_paths in case import raced an empty tree
+    """
     t0 = time.time()
+
+    # 1) Link volume assets BEFORE first robocasa import when possible.
+    pre_link = _link_package_assets_to_cache()
+
+    # 2) Now import (download registry lives inside the package).
     import robocasa  # noqa: F401
     from robocasa.scripts.download_kitchen_assets import (
         DOWNLOAD_ASSET_REGISTRY,
@@ -371,13 +505,15 @@ def _download_assets_impl(force: bool = False) -> dict[str, Any]:
     base = _robocasa_assets_base()
 
     if not force:
-        linked = _link_package_assets_to_cache()
+        linked = pre_link or _link_package_assets_to_cache()
         if linked or _assets_tree_ready(base):
+            rebuild = _rebuild_obj_cat_mjcf_paths()
             info = {
                 "skipped": True,
                 "reason": f"assets ready via {linked or 'package'}",
                 "source": linked or "package",
                 "assets": _dir_info(base),
+                "obj_cat_rebuild": rebuild,
                 "wall_s": round(time.time() - t0, 2),
                 "ready": True,
             }
@@ -411,11 +547,15 @@ def _download_assets_impl(force: bool = False) -> dict[str, Any]:
 
     print("downloads finished; writing marker (full volume mirror optional)", flush=True)
     cache_info = _cache_package_assets_to_volume()
+    # Volume may now have assets — ensure package path points at them
+    _link_package_assets_to_cache()
+    rebuild = _rebuild_obj_cat_mjcf_paths()
     info = {
         "skipped": False,
         "results": results,
         "assets": _dir_info(base),
         "cache_write": cache_info,
+        "obj_cat_rebuild": rebuild,
         "ready": _assets_tree_ready(base),
         "wall_s": round(time.time() - t0, 2),
         "source": "download",
@@ -708,11 +848,12 @@ def smoke_random_fn(
 ) -> dict[str, Any]:
     import numpy as np
     import imageio.v2 as imageio
-    import gymnasium as gym
-    import robocasa  # noqa: F401
 
     t0 = time.time()
+    # Assets MUST be ready before `import robocasa` (ObjCat scans at import).
     assets_info = _download_assets_impl(force=False)
+    import gymnasium as gym
+    import robocasa  # noqa: F401
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     name = run_name or f"random_{task}_{stamp}"
@@ -814,13 +955,13 @@ def smoke_policy_fn(
     import collections
     import numpy as np
     import imageio.v2 as imageio
-    import gymnasium as gym
-    import robocasa  # noqa: F401
-    from robocasa.utils.env_utils import convert_action
 
     t0 = time.time()
     print(f"==> ensuring assets (horizon={horizon})", flush=True)
     assets_info = _download_assets_impl(force=False)
+    import gymnasium as gym
+    import robocasa  # noqa: F401
+    from robocasa.utils.env_utils import convert_action
     if not _model_ready(MODEL_DIR):
         return {
             "success": False,
@@ -1171,15 +1312,14 @@ def eval_mini_fn(
     2) long: long_task × seeds @ long_horizon (default CBL×5 @ 500)
        Official CBL successes need ~236–870 steps; 200 is often too short.
     """
-    import gymnasium as gym
-    import robocasa  # noqa: F401
-
     t0 = time.time()
     tasks = [t.strip() for t in (tasks_csv or ",".join(MINI_EVAL_TASKS)).split(",") if t.strip()]
     seeds = [base_seed + i for i in range(num_seeds)]
 
     print(f"==> eval_mini tasks={tasks} seeds={seeds} h={horizon} long_h={long_horizon}", flush=True)
     assets_info = _download_assets_impl(force=False)
+    import gymnasium as gym
+    import robocasa  # noqa: F401
     if not _model_ready(MODEL_DIR):
         return {"success": False, "error": "weights missing"}
 
