@@ -13,6 +13,7 @@ main.py                 # 入口，调度到 001 / 002 / …
 005-pixal3d/            # TencentARC Pixal3D 单图 → GLB（默认 H100）
 006-hunyuanworld-mirror/# Tencent HunyuanWorld-Mirror 3D 重建（默认 L4 最低成本）
 007-hy-world-2.0/       # HY-World 2.0 · WorldMirror 2.0 recon（默认 T4 最低成本）
+010-ace-step-1.5/       # ACE-Step 1.5 音乐生成（默认 L4 · turbo DiT）
 ```
 
 命名约定：`NNN-topic`（序号 + 主题）。`python main.py 001 …` 等短号在唯一时可解析到对应目录。
@@ -34,6 +35,7 @@ python main.py 005 i2v --image 005-pixal3d/inputs/sample.webp --gpu H100
 python main.py 005 build-natten --gpu A100-40GB   # A100 首次
 python main.py 006 smoke          # HunyuanWorld-Mirror 最低成本冒烟
 python main.py 007 smoke          # HY-World 2.0 WorldMirror recon（T4）
+python main.py 010 smoke          # ACE-Step 1.5 音乐（L4 · 20s 器乐）
 
 # 也可直接进目录
 cd 001-longcat-video && python run.py status
@@ -51,6 +53,7 @@ cd 005-pixal3d && python run.py smoke
 | `005-pixal3d` | [Pixal3D](https://github.com/TencentARC/Pixal3D) 图生 3D → GLB；**默认 H100**；A100-40GB 可选 |
 | `006-hunyuanworld-mirror` | [HunyuanWorld-Mirror](https://github.com/Tencent-Hunyuan/HunyuanWorld-Mirror) 多视图 3D；**默认 L4 最低成本** |
 | `007-hy-world-2.0` | [HY-World 2.0](https://github.com/Tencent-Hunyuan/HY-World-2.0) **WorldMirror 2.0 recon**；**默认 T4**（不跑 80B panogen） |
+| `010-ace-step-1.5` | [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5) 开源音乐生成；**默认 L4**；主包 turbo + 可选 1.7B LM |
 
 H100 / PRO 6000 / A100 对照（OCR 等）见 [GPU_COMPARISON.md](GPU_COMPARISON.md)。  
 Pixal3D 专项实测见 [005-pixal3d/GPU_BENCHMARK.md](005-pixal3d/GPU_BENCHMARK.md)。
@@ -58,7 +61,7 @@ Pixal3D 专项实测见 [005-pixal3d/GPU_BENCHMARK.md](005-pixal3d/GPU_BENCHMARK
 ## 约定
 
 - 每个实验：`run.py` + `README.md`；权重 / 输出走 Modal Volume，不入库
-- GPU：`001` / `004` 默认 **RTX-PRO-6000**；`005` 默认 **H100**；`006` 默认 **L4**；`007` 默认 **T4**
+- GPU：`001` / `004` 默认 **RTX-PRO-6000**；`005` 默认 **H100**；`006` 默认 **L4**；`007` 默认 **T4**；`010` 默认 **L4**
 - 上游代码可 vendoring，或镜像 build 时 clone（005 采用后者）
 
 远程：https://github.com/xiaoqianran/modal-lab
