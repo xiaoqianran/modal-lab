@@ -1,0 +1,84 @@
+{
+  "success": true,
+  "mode": "policy",
+  "task": "CloseBlenderLid",
+  "instruction": "Close the lid blender by securely placing the lid on top.",
+  "horizon": 100,
+  "steps_run": 100,
+  "episode_success": false,
+  "success_step": null,
+  "seed": 7,
+  "split": "pretrain",
+  "run_name": "smoke_policy_h100_v1",
+  "attn": "eager",
+  "policy_image_size_wh": [
+    320,
+    256
+  ],
+  "cam_shapes_raw": {
+    "video.robot0_agentview_left": [
+      256,
+      256,
+      3
+    ],
+    "video.robot0_agentview_right": [
+      256,
+      256,
+      3
+    ],
+    "video.robot0_eye_in_hand": [
+      256,
+      256,
+      3
+    ]
+  },
+  "assets_source": "volume_symlink",
+  "assets_skipped": true,
+  "load_s": 14.63,
+  "infer_times_s": [
+    1.797,
+    0.207,
+    0.207,
+    0.208,
+    0.209,
+    0.201,
+    0.212
+  ],
+  "infer_total_s": 3.041,
+  "infer_count": 7,
+  "first_action_preview": [
+    -0.030517578125,
+    0.0009765625,
+    -0.005859375,
+    -0.00390625,
+    -0.0087890625,
+    -0.001953125,
+    -1.0078125,
+    0.00390625,
+    0.0009765625,
+    0.00048828125,
+    -0.0009765625,
+    -1.0078125
+  ],
+  "video": "runs/smoke_policy_h100_v1/CloseBlenderLid/episode_000_seed_7_failure.mp4",
+  "video_frames": 101,
+  "video_bytes": 285076,
+  "gpu": "L40S",
+  "vram_before": {
+    "name": "NVIDIA L40S",
+    "mem_used_mib": 5.0,
+    "mem_total_mib": 49140.0,
+    "util_gpu_pct": 0.0
+  },
+  "vram_after": {
+    "name": "NVIDIA L40S",
+    "mem_used_mib": 10474.0,
+    "mem_total_mib": 49140.0,
+    "util_gpu_pct": 0.0
+  },
+  "wall_s": 87.8,
+  "cost_est_usd": 0.0476,
+  "error": null,
+  "utc": "20260810T163507Z",
+  "note": "Proper closed-loop demo: horizon=100 on L40S. Official smoke is 20; longer horizon gives the arm time to act. Frames resized to 320\u00d7256 after crop."
+}

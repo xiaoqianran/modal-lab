@@ -14,6 +14,7 @@ MODAL_APP = EXP_DIR / "modal_app.py"
 VOL_OUT = "modal-lab-xr1-robocasa365-sim-outputs"
 DEFAULT_GPU = "L40S"
 DEFAULT_TASK = "CloseBlenderLid"
+DEFAULT_POLICY_HORIZON = 100
 
 
 def _modal() -> str:
@@ -35,10 +36,10 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("status")
     d = sub.add_parser("download-weights", help="拉 XR-1 RoboCasa365 权重（可与 015 共用 Volume）")
     d.add_argument("--force", action="store_true")
-    a = sub.add_parser("download-assets", help="拉 RoboCasa 厨房资产 ~10GB")
+    a = sub.add_parser("download-assets", help="拉 RoboCasa 厨房资产并写入 Volume 缓存")
     a.add_argument("--force", action="store_true")
 
-    r = sub.add_parser("smoke-random", help="随机策略 1 局 → mp4（验证仿真+视频）")
+    r = sub.add_parser("smoke-random", help="随机策略 1 局 → mp4")
     r.add_argument("--gpu", default=DEFAULT_GPU)
     r.add_argument("--task", default=DEFAULT_TASK)
     r.add_argument("--steps", type=int, default=80)
@@ -46,20 +47,19 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--split", default="pretrain")
     r.add_argument("--run-name", default="")
 
-    pol = sub.add_parser("smoke-policy", help="XR-1 闭环 1 局短 horizon → mp4")
+    pol = sub.add_parser("smoke-policy", help="XR-1 闭环（默认 horizon=100）→ mp4")
     pol.add_argument("--gpu", default=DEFAULT_GPU)
     pol.add_argument("--task", default=DEFAULT_TASK)
-    pol.add_argument("--horizon", type=int, default=20)
+    pol.add_argument("--horizon", type=int, default=DEFAULT_POLICY_HORIZON)
     pol.add_argument("--seed", type=int, default=7)
     pol.add_argument("--split", default="pretrain")
     pol.add_argument("--run-name", default="")
     pol.add_argument("--attn", default="sdpa")
 
-    # alias
     sm = sub.add_parser("smoke", help="= smoke-policy")
     sm.add_argument("--gpu", default=DEFAULT_GPU)
     sm.add_argument("--task", default=DEFAULT_TASK)
-    sm.add_argument("--horizon", type=int, default=20)
+    sm.add_argument("--horizon", type=int, default=DEFAULT_POLICY_HORIZON)
     sm.add_argument("--seed", type=int, default=7)
     sm.add_argument("--split", default="pretrain")
     sm.add_argument("--run-name", default="")
@@ -76,10 +76,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if ns.cmd == "status":
         print("experiment: 017-xr1-robocasa365-sim")
-        print("note: 016 is MusicGen — sim is 017")
-        print(f"app: modal-lab-xr1-robocasa365-sim")
-        print(f"outputs: {VOL_OUT}")
-        print(f"default: task={DEFAULT_TASK} gpu={DEFAULT_GPU}")
+        print(f"default: task={DEFAULT_TASK} gpu={DEFAULT_GPU} horizon={DEFAULT_POLICY_HORIZON}")
         return _run([m, "run", "--timestamps", str(MODAL_APP), "--action", "status"])
 
     if ns.cmd == "download-weights":

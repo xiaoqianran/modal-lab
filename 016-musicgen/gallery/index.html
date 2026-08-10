@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>016 · 仿真视频 + MusicGen</title>
+  <title>016 · XR-1 闭环仿真 + MusicGen</title>
   <style>
     :root { --bg:#0a0c10; --elev:#12161f; --line:rgba(255,255,255,.08); --fg:#eef1f6; --muted:#8b93a7; --accent:#6ea8fe; --ok:#3dd68c; --warm:#f0a46e; }
     * { box-sizing: border-box; }
@@ -30,72 +30,62 @@
     footer { margin-top:1.5rem; color:var(--muted); font-size:.82rem; }
     code { background:rgba(255,255,255,.05); padding:.1rem .3rem; border-radius:6px; font-size:.85em; }
     .note { margin-top:.75rem; padding:.7rem .85rem; border-radius:10px; background:rgba(240,164,110,.08); border:1px solid rgba(240,164,110,.22); color:#f3d2b0; font-size:.86rem; }
-    .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:.5rem; margin:.75rem 0; }
+    .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:.5rem; margin:.75rem 0; }
     .stat { background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:10px; padding:.55rem .7rem; }
     .stat .k { font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
     .stat .v { font-family:ui-monospace,monospace; margin-top:.1rem; font-size:.92rem; }
-    h2.section { margin:2rem 0 .4rem; font-size:1.15rem; color:var(--muted); font-weight:600; letter-spacing:.02em; }
+    h2.section { margin:2rem 0 .4rem; font-size:1.15rem; color:var(--muted); font-weight:600; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="eyebrow">016 gallery · XR-1 仿真 + MusicGen</div>
-    <h1>仿真视频（含 XR-1 闭环）</h1>
+    <div class="eyebrow">016 gallery · 像样的 XR-1 闭环</div>
+    <h1>horizon=100 · L40S 闭环视频</h1>
     <p class="lede">
-      Modal 上 RoboCasa365 / MuJoCo。默认 GPU 已改为 <strong>L40S</strong>。
-      代码在 <code>017-xr1-robocasa365-sim</code>（016 本体仍是 MusicGen）。
+      不再是官方 smoke 的 20 步。默认 <strong>100 步</strong>，模型连续规划 7 次、推理合计 ~3s，整局约 <strong>$0.05</strong>。
+      代码在 <code>017-xr1-robocasa365-sim</code>。
     </p>
 
     <article class="card policy" id="policy">
       <div class="row">
-        <h3 style="margin:0;font-size:1.15rem">XR-1 策略闭环 · CloseBlenderLid</h3>
+        <h3 style="margin:0;font-size:1.15rem">XR-1 闭环 · CloseBlenderLid · h=100</h3>
         <div>
           <span class="chip ok">pipeline OK</span>
-          <span class="chip cheap">L40S</span>
-          <span class="chip warm">task fail · horizon 20</span>
+          <span class="chip cheap">L40S · $0.05</span>
+          <span class="chip warm">task not done</span>
         </div>
       </div>
       <div class="box">
-        模型看三路相机 → 吐 12D 动作 → 仿真执行 20 步 · 指令：
-        <em>Close the lid blender by securely placing the lid on top.</em>
+        三路相机（左 / 右 / 手腕）→ XR-1 → 12D 动作 → MuJoCo 执行 100 步。<br/>
+        指令：<em>Close the lid blender by securely placing the lid on top.</em>
       </div>
       <video controls autoplay loop muted playsinline preload="auto"
-             src="assets/CloseBlenderLid_policy.mp4"></video>
+             src="assets/CloseBlenderLid_policy_h100.mp4"></video>
       <div class="stats">
-        <div class="stat"><div class="k">墙钟</div><div class="v">375 s ≈ 6.2 min</div></div>
-        <div class="stat"><div class="k">估费</div><div class="v">$0.20</div></div>
-        <div class="stat"><div class="k">推理</div><div class="v">2.15s → 0.33s</div></div>
-        <div class="stat"><div class="k">VRAM</div><div class="v">10.5 / 46 GB</div></div>
-        <div class="stat"><div class="k">帧数</div><div class="v">21</div></div>
-        <div class="stat"><div class="k">任务成功</div><div class="v">否（horizon 短）</div></div>
+        <div class="stat"><div class="k">墙钟</div><div class="v">88 s</div></div>
+        <div class="stat"><div class="k">估费</div><div class="v">$0.048</div></div>
+        <div class="stat"><div class="k">步数</div><div class="v">100 / 100</div></div>
+        <div class="stat"><div class="k">推理</div><div class="v">7× · 共 3.0s</div></div>
+        <div class="stat"><div class="k">VRAM</div><div class="v">10.5 GB</div></div>
+        <div class="stat"><div class="k">视频</div><div class="v">101 帧 · 278KB</div></div>
+        <div class="stat"><div class="k">资产</div><div class="v">volume 复用</div></div>
+        <div class="stat"><div class="k">任务成功</div><div class="v">否</div></div>
       </div>
       <p class="note">
-        shape 已修：裁剪后 <strong>resize 320×256</strong>（32 的倍数）。任务未完成是因为官方 smoke 只跑 20 步，经常不够盖上盖。
+        任务仍失败不代表链路坏了：单局 seed=7、无多 seed 统计。下一步若要成功率数字，再跑小规模多局评测。
       </p>
     </article>
 
     <article class="card sim" id="sim">
       <div class="row">
-        <h3 style="margin:0;font-size:1.15rem">对照 · 随机策略 episode</h3>
-        <div>
-          <span class="chip ok">video OK</span>
-          <span class="chip warm">random · not XR-1</span>
-          <span class="chip">A100 当时</span>
-        </div>
+        <h3 style="margin:0;font-size:1.15rem">对照 · 随机策略</h3>
+        <div><span class="chip warm">random</span></div>
       </div>
-      <div class="box">随机乱动 60 步 — 证明仿真能出 mp4</div>
       <video controls loop muted playsinline preload="metadata"
              src="assets/CloseBlenderLid_random.mp4"></video>
-      <div class="stats">
-        <div class="stat"><div class="k">墙钟（含首次资产）</div><div class="v">1029 s</div></div>
-        <div class="stat"><div class="k">估费</div><div class="v">$0.60</div></div>
-        <div class="stat"><div class="k">视频</div><div class="v">214 KB · 60 帧</div></div>
-      </div>
     </article>
 
-    <h2 class="section">—— 以下是 016 MusicGen 试听 ——</h2>
-    <p class="lede">对照 T4 vs L4、短时长、jazz/EDM。结论：<strong>T4 + small</strong> 最低价档；最短实用约 <strong>8s / $0.0037</strong>。</p>
-
+    <h2 class="section">—— 016 MusicGen 试听 ——</h2>
     <table>
       <thead><tr><th>run</th><th>GPU</th><th>墙钟</th><th>生成</th><th>估费</th><th>音频</th></tr></thead>
       <tbody>
@@ -110,40 +100,30 @@
     <article class="card">
       <div class="row"><h3 style="margin:0;font-size:1.05rem">默认 smoke · lo-fi 15s · T4</h3>
       <div><span class="chip">$0.0052</span><span class="chip ok">OK</span></div></div>
-      <div class="box"><code>smoke_lofi</code></div>
       <audio controls preload="none" src="assets/smoke_lofi.wav"></audio>
     </article>
-
     <article class="card">
-      <div class="row"><h3 style="margin:0;font-size:1.05rem">最便宜冒烟 · lo-fi 8s · T4</h3>
-      <div><span class="chip">$0.0037</span><span class="chip cheap">cheapest</span><span class="chip ok">OK</span></div></div>
-      <div class="box"><code>bench_t4_8s</code></div>
+      <div class="row"><h3 style="margin:0;font-size:1.05rem">最便宜 · lo-fi 8s · T4</h3>
+      <div><span class="chip">$0.0037</span><span class="chip cheap">cheapest</span></div></div>
       <audio controls preload="none" src="assets/bench_t4_8s.wav"></audio>
     </article>
-
     <article class="card">
-      <div class="row"><h3 style="margin:0;font-size:1.05rem">对照 · lo-fi 15s · L4（更贵）</h3>
-      <div><span class="chip">$0.0078</span><span class="chip ok">OK</span></div></div>
-      <div class="box"><code>bench_l4_15s</code></div>
+      <div class="row"><h3 style="margin:0;font-size:1.05rem">L4 对照 · 15s</h3>
+      <div><span class="chip">$0.0078</span></div></div>
       <audio controls preload="none" src="assets/bench_l4_15s.wav"></audio>
     </article>
-
     <article class="card">
-      <div class="row"><h3 style="margin:0;font-size:1.05rem">其它任务 · jazz trio 12s · T4</h3>
-      <div><span class="chip">$0.0044</span><span class="chip ok">OK</span></div></div>
-      <div class="box"><code>bench_t4_jazz</code></div>
+      <div class="row"><h3 style="margin:0;font-size:1.05rem">jazz · 12s</h3>
+      <div><span class="chip">$0.0044</span></div></div>
       <audio controls preload="none" src="assets/bench_t4_jazz.wav"></audio>
     </article>
-
     <article class="card">
-      <div class="row"><h3 style="margin:0;font-size:1.05rem">其它任务 · EDM 12s · T4</h3>
-      <div><span class="chip">$0.0051</span><span class="chip ok">OK</span></div></div>
-      <div class="box"><code>bench_t4_edm</code></div>
+      <div class="row"><h3 style="margin:0;font-size:1.05rem">EDM · 12s</h3>
+      <div><span class="chip">$0.0051</span></div></div>
       <audio controls preload="none" src="assets/bench_t4_edm.wav"></audio>
     </article>
 
-    <p class="lede" style="margin-top:1.25rem">仿真代码 <code>017-xr1-robocasa365-sim</code> · 默认 <strong>L40S</strong>。</p>
-    <footer>016 gallery · XR-1 policy + random sim + MusicGen</footer>
+    <footer>017 sim default: L40S · horizon=100 · assets volume reuse when available</footer>
   </div>
 </body>
 </html>
