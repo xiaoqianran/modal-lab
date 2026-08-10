@@ -1245,17 +1245,27 @@ def run_stage(
     try:
         if need_vlm:
             cuda_dev = _resolve_vlm_cuda(gpu_label, vlm_mode)
-            # On share mode with nav models, keep mem util moderate
             mem = vlm_mem_util
-            if apply_nav_traj and stage == 1 and vlm_mode == "share":
-                mem = min(mem, 0.35)
-            vlm_proc = _start_vlm(
-                gpu_mem_util=mem,
-                max_model_len=vlm_max_model_len,
-                cuda_devices=cuda_dev,
-            )
-            log["vlm_mem_util"] = mem
-            log["vlm_cuda"] = cuda_dev
+            # Stage1 without nav: skip VLM (meta pre-seeded) to avoid MoGe SIGSEGV
+            # Stage1 with nav: start VLM (risky on 1×GPU)
+            # Stage2: start VLM for captions
+            start_vlm = True
+            if stage == 1 and not apply_nav_traj:
+                start_vlm = False
+                print("[vlm] stage1 no-nav: skip VLM (meta seeded; free GPU for MoGe)", flush=True)
+            if start_vlm:
+                if apply_nav_traj and stage == 1 and vlm_mode == "share":
+                    mem = min(mem, 0.35)
+                vlm_proc = _start_vlm(
+                    gpu_mem_util=mem if stage == 1 else 0.50,
+                    max_model_len=vlm_max_model_len,
+                    cuda_devices=cuda_dev,
+                )
+                log["vlm_mem_util"] = mem
+                log["vlm_cuda"] = cuda_dev
+            else:
+                log["vlm_mem_util"] = None
+                log["vlm_cuda"] = None
 
         if stage == 1:
             cmd = [
@@ -1409,14 +1419,19 @@ def run_stage12(
     mem = min(vlm_mem_util, 0.35) if apply_nav_traj and vlm_mode == "share" else vlm_mem_util
 
     try:
-        vlm_proc = _start_vlm(
-            gpu_mem_util=mem,
-            max_model_len=vlm_max_model_len,
-            cuda_devices=cuda_dev,
-        )
-
         # ----- Stage 1 -----
+        # CRITICAL: do NOT keep VLM on GPU while MoGe runs (same-card OOM/SIGSEGV).
+        # Pre-seeded meta_info skips VLM for env_cls. apply_nav_traj needs VLM mid-run —
+        # for that path we briefly start VLM only if objects.json missing, then kill before MoGe.
+        # Smoke default: no nav → stage1 pure vision, VLM only in stage2 captions.
         s1_t0 = time.time()
+        need_vlm_s1 = bool(apply_nav_traj) or not (scene_path / "meta_info.json").is_file()
+        if need_vlm_s1 and apply_nav_traj:
+            print("[vlm] stage1 needs nav VLM briefly — start then MoGe shares risk; prefer --no-apply-nav-traj on 1×GPU", flush=True)
+            vlm_proc = _start_vlm(gpu_mem_util=mem, max_model_len=vlm_max_model_len, cuda_devices=cuda_dev)
+        elif need_vlm_s1:
+            vlm_proc = _start_vlm(gpu_mem_util=0.45, max_model_len=vlm_max_model_len, cuda_devices=cuda_dev)
+
         cmd1 = [
             "python", "traj_generate.py",
             "--target_path", str(scene_path),
@@ -1429,7 +1444,7 @@ def run_stage12(
             "--wonder_topk", str(wonder_topk),
             "--recon_topk", str(max(recon_topk, 0)),
         ]
-        if force_vlm:
+        if force_vlm and need_vlm_s1:
             cmd1.append("--force_vlm")
         if apply_nav_traj:
             cmd1.append("--apply_nav_traj")
@@ -1439,18 +1454,50 @@ def run_stage12(
             cmd1.append("--apply_recon_iteration")
         print("======== STAGE 1 ========", flush=True)
         print("+", " ".join(cmd1), flush=True)
+        # Free VLM before MoGe if we only needed it for meta (already written) — hard with concurrent design.
+        # When meta exists and no nav: never started VLM here.
+        if vlm_proc is not None and not apply_nav_traj:
+            # meta labeling happens first inside traj_generate; keep VLM only if meta missing.
+            # If meta already present, stop VLM before heavy MoGe by not having started it.
+            pass
+        # Always kill VLM before long MoGe if nav is off
+        if vlm_proc is not None and not apply_nav_traj:
+            _stop_vlm(vlm_proc)
+            vlm_proc = None
+            try:
+                import torch
+                torch.cuda.empty_cache()
+            except Exception:
+                pass
+
         subprocess.check_call(cmd1, cwd=str(WORLDGEN))
+        # After stage1, free any leftover VLM before stage2 restart cleanly
+        if vlm_proc is not None:
+            _stop_vlm(vlm_proc)
+            vlm_proc = None
+            try:
+                import torch
+                torch.cuda.empty_cache()
+            except Exception:
+                pass
         s1 = {
             "stage": 1, "ok": True,
             "seconds": round(time.time() - s1_t0, 2),
             "est_cost_usd": _price(gpu_label, time.time() - s1_t0),
             "cmd": cmd1,
+            "vlm_during_stage1": need_vlm_s1,
         }
         _write_meta(scene, {**s1, "ts": datetime.now(timezone.utc).isoformat(), "gpu": gpu_label})
         results.append(s1)
 
         # ----- Stage 2 -----
+        # Start VLM for captions only (after stage1 freed GPU)
         s2_t0 = time.time()
+        vlm_proc = _start_vlm(
+            gpu_mem_util=0.50,
+            max_model_len=vlm_max_model_len,
+            cuda_devices=cuda_dev,
+        )
         cmd2 = [
             "torchrun", "--nproc_per_node=1", "traj_render.py",
             "--target_path", str(scene_path),
