@@ -82,6 +82,7 @@ def main(argv: list[str] | None = None) -> int:
     ev.add_argument("--horizon", type=int, default=DEFAULT_EVAL_HORIZON)
     ev.add_argument("--long-horizon", type=int, default=DEFAULT_EVAL_LONG_HORIZON)
     ev.add_argument("--long-task", default="CloseBlenderLid")
+    ev.add_argument("--no-long", action="store_true", help="skip CBL long track")
     ev.add_argument("--split", default="pretrain")
     ev.add_argument("--run-name", default="")
     ev.add_argument("--attn", default="sdpa")
@@ -143,8 +144,11 @@ def main(argv: list[str] | None = None) -> int:
             "--long-task", ns.long_task,
             "--split", ns.split,
             "--attn", ns.attn,
-            "--run-long-track",
         ]
+        if ns.no_long:
+            cmd.append("--no-run-long-track")
+        else:
+            cmd.append("--run-long-track")
         if ns.run_name:
             cmd += ["--run-name", ns.run_name]
         return _run(cmd)

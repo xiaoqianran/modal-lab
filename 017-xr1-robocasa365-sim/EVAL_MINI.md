@@ -19,8 +19,8 @@
 |---|---:|---:|---:|---:|---|
 | **OpenStandMixerHead** | 200 | **5** | 5 | **100%** | 任务成功 ✓ |
 | **TurnOnElectricKettle** | 200 | **3** | 5 | **60%** | 任务成功 ✓ |
-| CloseFridge | 200 | 0 | 5 | 0% | env 创建失败 `NaN`（资产/采样） |
-| TurnOnSinkFaucet | 200 | 0 | 5 | 0% | 同上 |
+| CloseFridge | 200 | 0 | 5 | 0% | ~~env NaN~~ → 见下方补跑 |
+| TurnOnSinkFaucet | 200 | 0 | 5 | 0% | ~~env NaN~~ → 见下方补跑 |
 | CloseBlenderLid | 200 | 0 | 5 | 0% | 跑满 200 仍失败（步数偏短） |
 | CloseBlenderLid **long** | 500 | 0 | 5 | 0% | 仍失败（官方 h=900，5 seed 小样本） |
 
@@ -113,3 +113,36 @@ runs/eval_mini_5x5_h200_long500_v1/
 ```
 
 Gallery：`gallery/data/success_OpenStandMixerHead_seed7.mp4`（任务成功回放）
+
+---
+
+## 补跑 · Fridge + Sink（ObjCat 修复后）
+
+**run**: `eval_mini_fridge_sink_h200_v1`  
+**GPU**: L40S · **墙钟**: 971 s ≈ 16 min · **估费**: **$0.53**  
+**配置**: CloseFridge + TurnOnSinkFaucet × 5 seed (7–11) · **h=200** · 无 long track  
+**assets**: volume_symlink · ObjCat rebuild **3134 paths / 0 empty**
+
+| task | h | succ | n | SR | 成功 seed / step |
+|------|--:|---:|---:|---:|------------------|
+| **CloseFridge** | 200 | **1** | 5 | **20%** | seed8 @ **130** |
+| **TurnOnSinkFaucet** | 200 | **1** | 5 | **20%** | seed11 @ **186** |
+| **合计** | 200 | **2** | 10 | **20%** | — |
+
+全部 10 局 `pipeline_ok=true`、`error=null`、`steps>0` —— **不再有 NaN**。
+
+### 与原 5×5 合并（逻辑表）
+
+| task | SR | 来源 |
+|------|-----|------|
+| OpenStandMixerHead | **100%** (5/5) | 原 grid |
+| TurnOnElectricKettle | **60%** (3/5) | 原 grid |
+| CloseFridge | **20%** (1/5) | 本补跑 |
+| TurnOnSinkFaucet | **20%** (1/5) | 本补跑 |
+| CloseBlenderLid | 0% (0/5) | 原 grid |
+| **合成 5 任务** | **10/25 = 40%** | — |
+
+Gallery 新增：
+
+- `success_CloseFridge_seed8.mp4`
+- `success_TurnOnSinkFaucet_seed11.mp4`

@@ -93,3 +93,15 @@ Modal：`ap-NV2oCu4r1R6zwlrO11n4lF`
 | 费用 | **$0.94** · 29 min · L40S |
 
 **首次任务成功视频**：`gallery/data/success_OpenStandMixerHead_seed7.mp4`（step 95）。
+
+## Fridge/Sink 补跑（ObjCat 修复后 · 2026-08-10）
+
+`eval_mini_fridge_sink_h200_v1` · L40S · h=200 · 10 局 · **$0.53** · 16 min
+
+| task | SR | 成功 |
+|------|-----|------|
+| CloseFridge | **1/5 = 20%** | seed8 @ step 130 |
+| TurnOnSinkFaucet | **1/5 = 20%** | seed11 @ step 186 |
+
+全部 env 创建成功（修复前 10/10 NaN）。合成 5 任务 SR **40%** (10/25)。  
+视频：`gallery/data/success_CloseFridge_seed8.mp4` · `success_TurnOnSinkFaucet_seed11.mp4`

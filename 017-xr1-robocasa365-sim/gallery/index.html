@@ -65,11 +65,12 @@
     </p>
 
     <div class="pills">
-      <span class="pill ok">grid SR: <strong>32%</strong> (8/25)</span>
-      <span class="pill ok">可运行任务: <strong>80%</strong> (8/10)</span>
-      <span class="pill">Mixer: <strong>5/5</strong></span>
-      <span class="pill">Kettle: <strong>3/5</strong></span>
-      <span class="pill bad">CBL long: <strong>0/5</strong></span>
+      <span class="pill ok">合成 5 任务: <strong>40%</strong> (10/25)</span>
+      <span class="pill ok">Mixer: <strong>5/5</strong></span>
+      <span class="pill ok">Kettle: <strong>3/5</strong></span>
+      <span class="pill ok">Fridge: <strong>1/5</strong></span>
+      <span class="pill ok">Sink: <strong>1/5</strong></span>
+      <span class="pill bad">CBL: <strong>0/5</strong></span>
     </div>
 
     <div class="card" id="success">
@@ -81,11 +82,33 @@
         <span class="pill">run: <strong>eval_mini_5x5_h200_long500_v1</strong></span>
       </div>
       <video controls autoplay loop muted playsinline src="data/success_OpenStandMixerHead_seed7.mp4"></video>
-      <p class="note">该任务 5 个 seed 全胜（72–103 步）。TurnOnElectricKettle 3/5。闭环策略真的能完成简单厨房任务。</p>
+      <p class="note">该任务 5 个 seed 全胜（72–103 步）。</p>
+    </div>
+
+    <div class="card" id="fridge">
+      <h2>补跑成功 · CloseFridge · seed8（ObjCat 修复后）</h2>
+      <div class="pills">
+        <span class="pill ok">episode_success: <strong>true</strong></span>
+        <span class="pill">success_step: <strong>130</strong></span>
+        <span class="pill">SR: <strong>1/5 = 20%</strong></span>
+        <span class="pill">run: <strong>eval_mini_fridge_sink_h200_v1</strong></span>
+      </div>
+      <video controls loop muted playsinline src="data/success_CloseFridge_seed8.mp4"></video>
+      <p class="note">修复前 5/5 在创建环境时报 NaN；修复后 10/10 局全 pipeline_ok，且有任务成功。</p>
+    </div>
+
+    <div class="card" id="sink">
+      <h2>补跑成功 · TurnOnSinkFaucet · seed11</h2>
+      <div class="pills">
+        <span class="pill ok">episode_success: <strong>true</strong></span>
+        <span class="pill">success_step: <strong>186</strong></span>
+        <span class="pill">SR: <strong>1/5 = 20%</strong></span>
+      </div>
+      <video controls loop muted playsinline src="data/success_TurnOnSinkFaucet_seed11.mp4"></video>
     </div>
 
     <div class="card">
-      <h2>成功率表 · ① grid h=200 + ② long h=500</h2>
+      <h2>成功率表 · 原 5×5 + Fridge/Sink 补跑</h2>
       <table>
         <thead>
           <tr><th>track / task</th><th>h</th><th>succ</th><th>n</th><th>SR</th><th>备注</th></tr>
@@ -97,7 +120,7 @@
             <td class="mono ok">5</td>
             <td class="mono">5</td>
             <td class="mono ok">100%</td>
-            <td>任务成功 ✓</td>
+            <td>原 grid</td>
           </tr>
           <tr>
             <td>TurnOnElectricKettle</td>
@@ -105,23 +128,23 @@
             <td class="mono ok">3</td>
             <td class="mono">5</td>
             <td class="mono ok">60%</td>
-            <td>任务成功 ✓</td>
+            <td>原 grid</td>
           </tr>
           <tr>
             <td>CloseFridge</td>
             <td class="mono">200</td>
-            <td class="mono zero">0</td>
+            <td class="mono ok">1</td>
             <td class="mono">5</td>
-            <td class="mono zero">0%</td>
-            <td>env 创建 NaN（资产）</td>
+            <td class="mono ok">20%</td>
+            <td>补跑 · seed8@130</td>
           </tr>
           <tr>
             <td>TurnOnSinkFaucet</td>
             <td class="mono">200</td>
-            <td class="mono zero">0</td>
+            <td class="mono ok">1</td>
             <td class="mono">5</td>
-            <td class="mono zero">0%</td>
-            <td>同上</td>
+            <td class="mono ok">20%</td>
+            <td>补跑 · seed11@186</td>
           </tr>
           <tr>
             <td>CloseBlenderLid</td>
@@ -129,24 +152,19 @@
             <td class="mono zero">0</td>
             <td class="mono">5</td>
             <td class="mono zero">0%</td>
-            <td>跑满仍失败</td>
+            <td>原 grid · 步数偏短</td>
           </tr>
           <tr>
-            <td>CloseBlenderLid <strong>long</strong></td>
+            <td>CloseBlenderLid long</td>
             <td class="mono">500</td>
             <td class="mono zero">0</td>
             <td class="mono">5</td>
             <td class="mono zero">0%</td>
-            <td>官方 h=900；仍短</td>
+            <td>官方 h≈900</td>
           </tr>
         </tbody>
       </table>
-      <div class="grid four" style="margin-top:1rem">
-        <div class="stat"><div class="k">grid 全体</div><div class="v">8/25 · 32%</div></div>
-        <div class="stat"><div class="k">可运行 only</div><div class="v ok">8/10 · 80%</div></div>
-        <div class="stat"><div class="k">wall</div><div class="v">~29 min</div></div>
-        <div class="stat"><div class="k">cost</div><div class="v">~$0.94</div></div>
-      </div>
+      <p class="note" style="margin-top:.8rem">合成 5 任务 SR <strong>40%</strong> (10/25)。Fridge/Sink 修复前为 env NaN，不计入策略质量。</p>
     </div>
 
     <div class="card" id="policy">
@@ -169,9 +187,9 @@
     </div>
 
     <footer>
-      run <code>eval_mini_5x5_h200_long500_v1</code> · commit <code>fe0f50e</code> ·
+      runs <code>eval_mini_5x5…</code> + <code>eval_mini_fridge_sink_h200_v1</code> ·
       <a href="https://github.com/xiaoqianran/modal-lab/tree/main/017-xr1-robocasa365-sim">repo</a>
-      · 下一步可选：CBL×N @ h=900 · 换掉 NaN 任务 · 018 VLABench
+      · 下一步可选：CBL×N @ h=900 · 018 VLABench
     </footer>
   </div>
 </body>
