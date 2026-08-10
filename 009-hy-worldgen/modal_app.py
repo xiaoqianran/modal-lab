@@ -236,22 +236,33 @@ def _vlm_ready(timeout_s: float = 5.0) -> bool:
         return False
 
 
-def _wait_vlm(timeout_s: float = 900.0, log_path: Path | None = None) -> None:
+def _wait_vlm(
+    timeout_s: float = 900.0,
+    log_path: Path | None = None,
+    proc: subprocess.Popen | None = None,
+) -> None:
     t0 = time.time()
     while time.time() - t0 < timeout_s:
+        if proc is not None and proc.poll() is not None:
+            tail = ""
+            if log_path and log_path.is_file():
+                tail = log_path.read_text(errors="replace")[-2000:]
+            raise RuntimeError(
+                f"vLLM exited early code={proc.returncode}\n{tail}"
+            )
         if _vlm_ready(timeout_s=3.0):
             print(f"[vlm] ready in {time.time() - t0:.1f}s → http://{VLM_HOST}:{VLM_PORT}")
             return
-        if log_path and log_path.is_file():
+        if log_path and log_path.is_file() and int(time.time() - t0) % 30 < 5:
             try:
-                tail = log_path.read_text(errors="replace")[-800:]
-                if "error" in tail.lower() and "Traceback" in tail:
-                    print(f"[vlm] log tail:\n{tail}")
+                tail = log_path.read_text(errors="replace")[-400:]
+                print(f"[vlm] still starting… log tail:\n{tail}", flush=True)
             except Exception:
                 pass
         time.sleep(4)
+    tail = log_path.read_text(errors="replace")[-2000:] if log_path and log_path.is_file() else ""
     raise TimeoutError(
-        f"vLLM not ready after {timeout_s}s — see /tmp/vllm_vlm.log"
+        f"vLLM not ready after {timeout_s}s — see /tmp/vllm_vlm.log\n{tail}"
     )
 
 
@@ -286,14 +297,13 @@ def _start_vlm(
         "--gpu-memory-utilization", str(gpu_mem_util),
         "--max-model-len", str(max_model_len),
         "--enforce-eager",
-        "--disable-log-requests",
     ]
     print("[vlm] starting:", " ".join(cmd), flush=True)
     print(f"[vlm] model={model} mem_util={gpu_mem_util} max_len={max_model_len}", flush=True)
     log_f = open(log_path, "w")
     proc = subprocess.Popen(cmd, env=env, stdout=log_f, stderr=subprocess.STDOUT)
     try:
-        _wait_vlm(timeout_s=900.0, log_path=log_path)
+        _wait_vlm(timeout_s=900.0, log_path=log_path, proc=proc)
     except Exception:
         _stop_vlm(proc)
         raise
