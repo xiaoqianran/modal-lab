@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Pixal3D · demo_sample</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b0d12;
+        --panel: rgba(18, 22, 32, 0.86);
+        --line: rgba(255, 255, 255, 0.08);
+        --text: #f3f5f9;
+        --muted: #9aa3b5;
+        --accent: #7dd3fc;
+        --accent-2: #a78bfa;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        height: 100%;
+        background:
+          radial-gradient(1200px 600px at 20% -10%, rgba(125, 211, 252, 0.12), transparent 55%),
+          radial-gradient(900px 500px at 90% 10%, rgba(167, 139, 250, 0.12), transparent 50%),
+          var(--bg);
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      .app {
+        min-height: 100%;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+      }
+      header, footer {
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(10px);
+        background: var(--panel);
+      }
+      footer {
+        border-bottom: 0;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 13px;
+      }
+      header {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      h1 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 650;
+        letter-spacing: 0.02em;
+      }
+      h1 span {
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .chip {
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.03);
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .chip strong { color: var(--text); font-weight: 600; }
+      .stage {
+        position: relative;
+        min-height: 0;
+      }
+      model-viewer {
+        width: 100%;
+        height: 100%;
+        min-height: min(78vh, 820px);
+        --poster-color: transparent;
+        background: transparent;
+      }
+      .hint {
+        position: absolute;
+        left: 16px;
+        bottom: 16px;
+        z-index: 2;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        pointer-events: none;
+      }
+      .hint .chip { pointer-events: auto; }
+      .side {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: min(220px, calc(100vw - 32px));
+        z-index: 2;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        backdrop-filter: blur(12px);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+      }
+      .side img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+        background: #111;
+      }
+      .side .cap {
+        padding: 10px 12px 12px;
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+      .side .cap b { color: var(--text); }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .progress {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        z-index: 1;
+        color: var(--muted);
+        font-size: 14px;
+        pointer-events: none;
+      }
+      .progress.hidden { display: none; }
+      @media (max-width: 640px) {
+        .side { top: auto; bottom: 64px; right: 12px; left: 12px; width: auto; }
+        .side img { aspect-ratio: 16/7; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <h1>Pixal3D <span>· demo_sample.glb</span></h1>
+        <div class="meta">
+          <div class="chip">GPU <strong>H100</strong></div>
+          <div class="chip">mode <strong>low_vram · 1024</strong></div>
+          <div class="chip">time <strong>~285s</strong></div>
+          <div class="chip">peak VRAM <strong>~15.9 GB</strong></div>
+          <div class="chip">size <strong>39 MB</strong></div>
+          <a class="chip" href="./demo_sample.glb" download>⬇ download GLB</a>
+        </div>
+      </header>
+
+      <main class="stage">
+        <div class="progress" id="progress">Loading 3D model…</div>
+        <model-viewer
+          id="mv"
+          src="./demo_sample.glb" id="mv-src-placeholder"
+          alt="Pixal3D generated mesh"
+          camera-controls
+          touch-action="pan-y"
+          auto-rotate
+          auto-rotate-delay="0"
+          rotation-per-second="18deg"
+          shadow-intensity="0.85"
+          shadow-softness="0.9"
+          exposure="1.05"
+          environment-image="neutral"
+          interaction-prompt="auto"
+          ar
+          ar-modes="webxr scene-viewer quick-look"
+        ></model-viewer>
+
+        <div class="side">
+          <img src="./input.webp" alt="Input image" />
+          <div class="cap">
+            <b>Input</b><br />
+            Official sample (`5_img.webp`) · seed 42
+          </div>
+        </div>
+
+        <div class="hint">
+          <div class="chip">拖动旋转 · 滚轮缩放 · 双指平移</div>
+        </div>
+      </main>
+
+      <footer>
+        Generated with
+        <a href="https://github.com/TencentARC/Pixal3D" target="_blank" rel="noreferrer">TencentARC/Pixal3D</a>
+        on Modal · experiment
+        <code>005-pixal3d</code>
+      </footer>
+    </div>
+
+    <script>
+      const mv = document.getElementById("mv");
+      const progress = document.getElementById("progress");
+      mv.addEventListener("load", () => progress.classList.add("hidden"));
+      mv.addEventListener("error", (e) => {
+        progress.textContent = "Failed to load GLB — open console for details.";
+        console.error(e);
+      });
+    </script>
+  
+    <script>
+      (function(){
+        const p = new URLSearchParams(location.search);
+        const src = p.get('src') || './demo_sample.glb';
+        const mv = document.getElementById('mv');
+        if (mv && src) mv.setAttribute('src', src);
+      })();
+    </script>
+</body>
+</html>

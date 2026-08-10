@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+weights/
+outputs/
+.cache/
+*.glb
+*.safetensors
+*.egg-info/
+.pytest_cache/
+.DS_Store
+viewer/*.glb
+*.log
