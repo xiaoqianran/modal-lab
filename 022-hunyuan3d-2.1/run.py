@@ -1,83 +1,55 @@
 #!/usr/bin/env python3
-"""CLI for 022-hunyuan3d-2.1."""
+"""Small local CLI for the L40S Hunyuan3D-2.1 Modal app."""
 from __future__ import annotations
 
 import argparse
 import subprocess
-import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
-APP = ROOT / "modal_app.py"
-SAMPLE = (
-    "https://raw.githubusercontent.com/VAST-AI-Research/TripoSR/main/examples/chair.png"
-)
+APP = Path(__file__).with_name("modal_app.py")
+SAMPLE = "https://raw.githubusercontent.com/VAST-AI-Research/TripoSR/main/examples/chair.png"
 
 
-def _modal(args: list[str]) -> int:
-    cmd = [sys.executable, "-m", "modal", "run", str(APP), *args]
+def modal_run(*args: str) -> int:
+    cmd = ["modal", "run", str(APP), *args]
     print("+", " ".join(cmd), flush=True)
     return subprocess.call(cmd)
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(description="022 Hunyuan3D-2.1 image→3D")
-    sub = p.add_subparsers(dest="cmd", required=True)
-
+    parser = argparse.ArgumentParser(description="Hunyuan3D-2.1 on Modal L40S")
+    sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("status")
+    sub.add_parser("probe")
 
-    pr = sub.add_parser("probe")
-    pr.add_argument("--gpu", default="L40S", choices=["L40S", "RTX-PRO-6000"])
+    smoke = sub.add_parser("smoke")
+    smoke.add_argument("--i-know-this-costs-money", action="store_true")
+    smoke.add_argument("--image-url", default=SAMPLE)
+    smoke.add_argument("--output-name", default="smoke_l40s")
+    smoke.add_argument("--mode", choices=["shape", "full"], default="full")
+    smoke.add_argument("--seed", type=int, default=42)
+    smoke.add_argument("--max-num-view", type=int, default=6)
+    smoke.add_argument("--paint-resolution", type=int, default=512)
 
-    sm = sub.add_parser("smoke")
-    sm.add_argument("--i-know-this-costs-money", action="store_true")
-    sm.add_argument("--gpu", default="L40S", choices=["L40S", "RTX-PRO-6000"])
-    sm.add_argument("--mode", default="full", choices=["shape", "full"])
-    sm.add_argument("--output-name", default="")
-    sm.add_argument("--image-url", default=SAMPLE)
-    sm.add_argument("--seed", type=int, default=42)
-    sm.add_argument("--max-num-view", type=int, default=6)
-    sm.add_argument("--paint-resolution", type=int, default=512)
-
-    args = p.parse_args()
-    if args.cmd == "status":
-        print("022-hunyuan3d-2.1 · tencent/Hunyuan3D-2.1")
-        print("license: Tencent Hunyuan 3D 2.1 Community License")
-        print("default GPU: L40S · optional RTX-PRO-6000")
-        print("flow: probe → smoke --mode shape|full")
-        print("volumes: modal-lab-hunyuan3d21-weights / -outputs")
+    args = parser.parse_args()
+    if args.command == "status":
+        print("022-hunyuan3d-2.1 · L40S only · torch 2.5.1 / CUDA 12.4 / sm_89")
+        print("commands: probe | smoke")
         return 0
-    if args.cmd == "probe":
-        return _modal(["--action", "probe", "--gpu", args.gpu])
-    if args.cmd == "smoke":
-        if not args.i_know_this_costs_money:
-            print("need --i-know-this-costs-money", file=sys.stderr)
-            return 2
-        tag = "pro6000" if "PRO" in args.gpu.upper() else "l40s"
-        name = args.output_name or (
-            f"smoke_shape_{tag}" if args.mode == "shape" else f"smoke_{tag}"
-        )
-        return _modal(
-            [
-                "--action",
-                "smoke",
-                "--gpu",
-                args.gpu,
-                "--output-name",
-                name,
-                "--image-url",
-                args.image_url,
-                "--mode",
-                args.mode,
-                "--seed",
-                str(args.seed),
-                "--max-num-view",
-                str(args.max_num_view),
-                "--paint-resolution",
-                str(args.paint_resolution),
-            ]
-        )
-    return 1
+    if args.command == "probe":
+        return modal_run("--action", "probe")
+    if not args.i_know_this_costs_money:
+        parser.error("smoke requires --i-know-this-costs-money")
+
+    return modal_run(
+        "--action", "smoke",
+        "--image-url", args.image_url,
+        "--output-name", args.output_name,
+        "--mode", args.mode,
+        "--seed", str(args.seed),
+        "--max-num-view", str(args.max_num_view),
+        "--paint-resolution", str(args.paint_resolution),
+    )
 
 
 if __name__ == "__main__":
