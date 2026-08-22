@@ -42,4 +42,6 @@ modal volume get modal-lab-hunyuan3d21-outputs meshes/smoke_l40s.glb ./viewer/
 
 ## 已有 L40S 基线
 
-当前 L40S smoke（`chair.png`, seed 42）：shape `29.72s`、峰值 `7.63 GiB`；full 为 shape `30.23s` + paint `46.73s`，总计 `110.84s`、峰值 `20.22 GiB`，GLB `1.32 MB`。纹理前处理用 `fast-simplification` 将 mesh 收敛到 40k faces，不依赖 Open3D。旧的 PRO 6000 对照不再属于本目录的运行路径。
+当前 L40S smoke（`chair.png`, seed 42）：shape `29.95s`（request `30.10s`）、峰值 `7.63 GiB`；full 为 shape `31.77s` + paint load `19.71s` + paint `37.66s`，request 总计 `89.43s`、峰值 `20.22 GiB`，GLB `1.28 MB`。纹理前处理直接用 `trimesh` + `fast-simplification` 收敛到 40k faces，不依赖 Open3D/PyVista。
+
+`seconds_total` 和成本估算是 request scope：包含输入预处理和 lazy paint load，不包含 container 启动与 `@modal.enter()` 的 shape 模型加载。

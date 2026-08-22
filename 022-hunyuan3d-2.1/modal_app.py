@@ -52,8 +52,8 @@ PIP = [
     "rembg==2.0.65",
     "realesrgan==0.3.0",
     "basicsr==1.4.2",
-    "trimesh==4.4.7",
     "pymeshlab==2022.2.post3",
+    "trimesh==4.4.7",
     "fast-simplification==0.1.12",
     "pygltflib==1.16.3",
     "xatlas==0.0.9",
@@ -64,8 +64,8 @@ PIP = [
     "psutil==6.0.0",
     "onnxruntime==1.16.3",
     "cupy-cuda12x==13.4.1",
-    "timm",
-    "torchdiffeq",
+    "timm==1.0.11",
+    "torchdiffeq==0.2.5",
 ]
 
 image = (
@@ -203,15 +203,15 @@ class Hunyuan3D21:
         self.shape = Hunyuan3DDiTFlowMatchingPipeline.from_pretrained(MODEL)
         self.shape.to("cuda")
         torch.cuda.synchronize()
+        self.remover = None
         try:
             weights.commit()
-        except Exception:
-            pass
+        except Exception as exc:
+            print(f"[weights] commit warning: {exc}", flush=True)
         print(f"[ready] {json.dumps(info)}", flush=True)
 
     def _load_paint(self, max_num_view: int, resolution: int):
         import fast_simplification
-        import pymeshlab
         import trimesh
         from DifferentiableRenderer import mesh_utils
         from utils import simplify_mesh_utils
@@ -221,11 +221,7 @@ class Hunyuan3D21:
             return True
 
         def remesh_mesh(mesh_path, remesh_path):
-            tmp = str(remesh_path).replace(".glb", ".obj")
-            ms = pymeshlab.MeshSet()
-            ms.load_new_mesh(str(mesh_path), load_in_a_single_layer=True)
-            ms.save_current_mesh(tmp, save_textures=False)
-            mesh = trimesh.load(tmp, force="mesh")
+            mesh = trimesh.load(mesh_path, force="mesh", process=False)
             if len(mesh.faces) > 40_000:
                 vertices, faces = fast_simplification.simplify(
                     mesh.vertices, mesh.faces, target_count=40_000
@@ -251,8 +247,8 @@ class Hunyuan3D21:
         self.paint_key = key
         try:
             weights.commit()
-        except Exception:
-            pass
+        except Exception as exc:
+            print(f"[weights] commit warning: {exc}", flush=True)
         return self.paint
 
     @modal.method()
@@ -284,20 +280,24 @@ class Hunyuan3D21:
         if mode not in {"shape", "full"}:
             raise ValueError("mode must be shape or full")
 
+        request_started = time.perf_counter()
         work = Path("/tmp/hunyuan3d21")
         shutil.rmtree(work, ignore_errors=True)
         work.mkdir(parents=True)
         image_path = work / ".input.png"
-        _fetch(image_url, image_path)
 
+        preprocess_started = time.perf_counter()
+        _fetch(image_url, image_path)
         image = Image.open(image_path).convert("RGBA")
         if min(image.getchannel("A").getextrema()) >= 250:
-            image = BackgroundRemover()(image.convert("RGB"))
+            if self.remover is None:
+                self.remover = BackgroundRemover()
+            image = self.remover(image.convert("RGB"))
         foreground = work / "input.png"
         image.save(foreground)
+        preprocess_seconds = time.perf_counter() - preprocess_started
 
         torch.cuda.reset_peak_memory_stats()
-        started = time.perf_counter()
         shape_started = time.perf_counter()
         mesh = self.shape(
             image=image,
@@ -311,8 +311,11 @@ class Hunyuan3D21:
         result_glb = shape_glb
         paint_seconds = 0.0
 
+        paint_load_seconds = 0.0
         if mode == "full":
+            paint_load_started = time.perf_counter()
             paint = self._load_paint(max_num_view, paint_resolution)
+            paint_load_seconds = time.perf_counter() - paint_load_started
             paint_started = time.perf_counter()
             obj = work / "textured.obj"
             paint(
@@ -329,7 +332,7 @@ class Hunyuan3D21:
         if not result_glb.is_file():
             raise RuntimeError(f"no GLB produced: {result_glb}")
 
-        total_seconds = time.perf_counter() - started
+        total_seconds = time.perf_counter() - request_started
         peak_vram_gb = torch.cuda.max_memory_allocated() / 1024**3
         meta = _publish(
             result_glb,
@@ -343,7 +346,9 @@ class Hunyuan3D21:
                 "seed": seed,
                 "max_num_view": max_num_view if mode == "full" else None,
                 "paint_resolution": paint_resolution if mode == "full" else None,
+                "seconds_preprocess": round(preprocess_seconds, 2),
                 "seconds_shape": round(shape_seconds, 2),
+                "seconds_paint_load": round(paint_load_seconds, 2),
                 "seconds_paint": round(paint_seconds, 2),
                 "seconds_total": round(total_seconds, 2),
                 "peak_vram_gb": round(peak_vram_gb, 2),
