@@ -791,3 +791,463 @@ GLB ~1.32 MB
 如果只是新增功能、正常修 bug、更新版本，而没有产生新的工程认识，则不需要机械追加。
 
 **这份文档的价值不在长度，而在它能否减少下一次重复犯错。**
+
+---
+
+## 24. “我自己的代码不再使用这个依赖”不等于“这个依赖可以从环境删除”
+
+这轮深检时，我看到自己的 remesh 路径已经不再需要 `pymeshlab`：
+
+```text
+GLB
+→ trimesh
+→ fast-simplification
+→ 40k faces
+```
+
+于是自然产生了一个看起来合理的判断：既然我们的代码不再 import `pymeshlab`，就可以把它从 image 依赖里删掉。
+
+真实 L40S probe 立刻否定了这个判断。
+
+失败发生在：
+
+```text
+hy3dshape.postprocessors
+→ import pymeshlab
+→ ModuleNotFoundError
+```
+
+也就是说，`pymeshlab` 已经从**我们的算法路径依赖**退化成了**上游 import contract 依赖**。它不再参与我们自己的 remesh，但仍然是 upstream shape pipeline 启动时必须存在的包。
+
+这类问题很容易在静态“grep 我自己的文件”时漏掉。
+
+### 更早应该检查什么
+
+删依赖前不能只做：
+
+```text
+grep 当前文件有没有 import
+```
+
+至少还要确认：
+
+```text
+当前入口
+→ upstream import graph
+→ transitive imports
+→ lazy imports
+→ optional-looking but top-level-required imports
+```
+
+尤其 Python 项目里，一个包即使只在上游某个 postprocessor 顶层 import，也可能让整个主 pipeline 在真正执行前就失败。
+
+### 永久规则
+
+> 删除依赖前，必须用真实入口做一次 import/probe 验证。"我的代码不用它" 只能证明 direct dependency 消失，不能证明 transitive dependency 消失。
+
+---
+
+## 25. 精简依赖和精简执行路径是两件不同的事
+
+`pymeshlab` 这一轮最终得到的正确状态是：
+
+```text
+环境里保留 pymeshlab
+```
+
+但：
+
+```text
+我们的 remesh 不再经过 pymeshlab
+```
+
+也就是说：
+
+```text
+保留 dependency contract
+≠
+保留冗余 runtime path
+```
+
+这很重要。
+
+之前的实现：
+
+```text
+GLB
+→ pymeshlab MeshSet
+→ 临时 OBJ
+→ trimesh 再读
+→ fast-simplification
+```
+
+新的实现：
+
+```text
+GLB
+→ trimesh 直接读
+→ fast-simplification
+```
+
+真实 shape GLB 已验证：
+
+```text
+343,344 vertices
+686,688 faces
+watertight
+```
+
+`trimesh.load(..., force="mesh", process=False)` 可以直接稳定解析，所以中间 OBJ 往返没有存在价值。
+
+### 永久规则
+
+> 某个依赖暂时不能从 image 删除，也不代表必须继续让它参与主执行路径。先删冗余的数据转换和中间状态，再决定 package 是否还能进一步移除。
+
+---
+
+## 26. Benchmark 字段名必须和计时边界严格一致
+
+上一版 Hunyuan metadata 有：
+
+```text
+seconds_shape
+seconds_paint
+seconds_total
+```
+
+但 `seconds_total` 的实际计时边界是：
+
+- 不包含输入下载；
+- 不包含背景移除；
+- 不包含 `@modal.enter()` 的 shape model load；
+- 但第一次 full 时包含 lazy paint model load。
+
+于是出现：
+
+```text
+shape ~30s
+paint ~47s
+seconds_total ~111s
+```
+
+如果只看字段名，会以为多出来的约 34 秒是“莫名其妙的 overhead”。实际上主要是 paint model load。
+
+这不是单纯的统计不漂亮，而是会影响：
+
+- 性能判断；
+- 成本估算；
+- cold/warm 比较；
+- 后续优化优先级。
+
+### 正确拆法
+
+现在 request scope 明确拆成：
+
+```text
+seconds_preprocess
+seconds_shape
+seconds_paint_load
+seconds_paint
+seconds_total
+```
+
+并明确：
+
+```text
+seconds_total = request scope
+```
+
+它包含：
+
+- input fetch
+- preprocessing
+- shape inference
+- lazy paint load（如果发生）
+- paint
+- export / publish 前后的 request 内工作
+
+但不包含：
+
+- container startup
+- image startup
+- `@modal.enter()` shape model load
+
+### 永久规则
+
+> Timing 字段必须描述实际计时边界，而不是描述“我希望它代表什么”。如果一个阶段可能 lazy-load，就必须单独计时，不要混进笼统 total 后再靠猜解释差值。
+
+---
+
+## 27. 成本估算只有在 scope 明确时才有意义
+
+当前：
+
+```text
+estimated_cost_usd = seconds_total × L40S per-second price
+```
+
+这个数现在只代表 request-scope GPU 时间的近似成本，不代表：
+
+```text
+完整 cold container 成本
+```
+
+因为 container startup 和 `@modal.enter()` 的 shape model load 不在 `seconds_total` 内。
+
+如果未来要比较 cold-start economics，应额外记录：
+
+```text
+seconds_container_ready
+seconds_model_load
+seconds_request
+```
+
+然后再决定“成本”到底采用哪个 scope。
+
+### 永久规则
+
+> 任何 cost 字段都必须附带计费时间范围。没有 scope 的 cost 看起来精确，实际上可能比粗略估算更误导。
+
+---
+
+## 28. “真实 full smoke”是精简改动的最终裁判
+
+这轮修改说明：
+
+```text
+probe 通过
+```
+
+只能证明：
+
+- image build 成功；
+- imports 成功；
+- native extension 可加载；
+- GPU/SM 正确；
+- shape model 能初始化。
+
+它不能证明：
+
+- remesh 路径正确；
+- paint 性能没有退化；
+- GLB 仍有材质；
+- 输出复杂度符合目标；
+- metadata 的字段真实反映运行过程。
+
+因此每次影响 full pipeline 的精简都必须跑：
+
+```text
+shape smoke
++
+full smoke
++
+输出结构解析
+```
+
+这次最终验证结果：
+
+```text
+shape
+preprocess   ~0.11s
+shape        ~29.95s
+request      ~30.10s
+peak VRAM    ~7.63 GiB
+
+full
+preprocess   ~0.26s
+shape        ~31.77s
+paint load   ~19.71s
+paint        ~37.66s
+request      ~89.43s
+peak VRAM    ~20.22 GiB
+```
+
+最终 full GLB：
+
+```text
+1 geometry
+25,356 vertices
+40,000 faces
+material present
+```
+
+shape GLB：
+
+```text
+343,344 vertices
+686,688 faces
+```
+
+这比只看“任务返回 0”强得多。
+
+### 永久规则
+
+> 影响数据路径、依赖、简化、纹理、导出的改动，最终都必须用 full smoke + 输出结构检查验收。不能用 probe 代替 end-to-end 验证。
+
+---
+
+## 29. 输出资产也是代码契约的一部分
+
+这轮检查发现：
+
+```text
+README
+```
+
+已经描述新的 L40S pipeline，但：
+
+```text
+viewer/smoke_l40s.glb
+viewer/smoke_l40s_meta.json
+```
+
+还停留在旧 pipeline。
+
+更明显的是，viewer HTML 已经引用：
+
+```text
+smoke_l40s_shape.glb
+```
+
+但仓库里此前根本没有跟踪这个文件。
+
+这说明“代码已经更新”并不代表演示资产、viewer、metadata 也自动一致。
+
+最终应该把：
+
+```text
+runtime behavior
+README benchmark
+viewer GLB
+viewer metadata
+```
+
+视为一个整体 contract。
+
+### 永久规则
+
+> 如果仓库包含用于展示/验证当前行为的样本产物，那么 pipeline 发生实质变化后，必须检查这些资产是否仍对应当前代码。过期样本会反向误导性能和质量判断。
+
+---
+
+## 30. 版本固定要覆盖“看起来不核心”的依赖
+
+上一版里：
+
+```text
+timm
+
+torchdiffeq
+```
+
+没有 pin。
+
+即使 Torch、CUDA、transformers、diffusers 都固定了，只要 resolver 下次拿到不同版本的 `timm` 或 `torchdiffeq`，同一个 Git commit 仍可能构建出不一样的 image。
+
+这类漂移最危险的地方是：
+
+```text
+平时没事
+→ 某天 rebuild
+→ 行为变化
+→ 很难第一时间联想到两个未 pin 的小依赖
+```
+
+这轮把实际验证过的版本固定为：
+
+```text
+timm==1.0.11
+torchdiffeq==0.2.5
+```
+
+### 永久规则
+
+> 可复现环境里，不要把“不是核心库”当成不 pin 的理由。凡是参与模型加载、数值计算、图像处理或 import graph 的包，都应该有明确版本。
+
+---
+
+## 31. 静默吞异常会把一次明确失败变成长期隐性性能问题
+
+之前权重 Volume commit 使用：
+
+```python
+try:
+    weights.commit()
+except Exception:
+    pass
+```
+
+这很危险。
+
+如果 commit 失败：
+
+```text
+当前请求仍然成功
+```
+
+但下一 container 可能再次下载大模型，表现为：
+
+```text
+冷启动突然变慢
+网络流量增加
+GPU 等待权重
+成本上升
+```
+
+却没有日志解释为什么。
+
+当前至少改成：
+
+```text
+commit failure
+→ warning with exception
+```
+
+这样不会因为非关键 commit 抖动让请求失败，但也不会把问题彻底吞掉。
+
+### 永久规则
+
+> 对性能/缓存/持久化有影响但不一定需要中断请求的异常，至少必须显式记录。`except Exception: pass` 默认视为危险代码。
+
+---
+
+## 32. 缓存对象应该和它真正的生命周期一致
+
+`BackgroundRemover()` 原来在每个 request 中创建。
+
+对于透明 PNG benchmark，看不出明显问题；但普通 JPEG / opaque PNG 会真正触发背景移除，于是每个请求都可能重新初始化 session。
+
+更合理的生命周期是：
+
+```text
+container
+→ lazy initialize BackgroundRemover once
+→ reuse across requests
+```
+
+因此现在放在：
+
+```text
+self.remover
+```
+
+并且只在确实需要去背景时初始化。
+
+### 永久规则
+
+> 昂贵但可复用的推理辅助对象，生命周期应绑定 container，而不是 request；但不要为了“预热”在完全不需要它的输入上提前加载。
+
+---
+
+## 33. 这一轮深检后的新检查顺序
+
+在原来的 12 项自检上，再增加以下几项：
+
+13. **Transitive dependency**：准备删除的包是否仍被 upstream 顶层 import？
+14. **Timing scope**：每个 latency 字段的开始/结束位置是否和字段名一致？
+15. **Output validation**：最终 GLB 是否可解析、geometry 数量/面数/材质是否符合预期？
+16. **Demo asset freshness**：README / viewer / tracked metadata 是否仍对应当前 pipeline？
+17. **Silent failure**：是否存在会掩盖缓存、持久化或性能问题的 `except: pass`？
+18. **Cache lifetime**：辅助模型/session 是否被错误地按 request 重建？
+
+这些检查不是为了把流程变复杂，而是为了更早阻止“看起来更简洁、实际上破坏了隐含 contract”的改动。
