@@ -124,10 +124,22 @@ class TestMerge(unittest.TestCase):
 
 class TestLocalPrereqs(unittest.TestCase):
     def test_upstream_and_assets(self):
-        cfg = merge_run_config(command="demo", demo="i2v")
-        validate_local_prereqs(cfg, upstream=EXP / "LongCat-Video")
-        cfg2 = merge_run_config(command="demo", demo="continuation")
-        validate_local_prereqs(cfg2, upstream=EXP / "LongCat-Video")
+        with tempfile.TemporaryDirectory() as tmp:
+            upstream = Path(tmp)
+            (upstream / "longcat_video").mkdir()
+            (upstream / "assets").mkdir()
+            for relative_path in (
+                "run_demo_image_to_video.py",
+                "run_demo_video_continuation.py",
+                "assets/girl.png",
+                "assets/motorcycle.mp4",
+            ):
+                (upstream / relative_path).touch()
+
+            cfg = merge_run_config(command="demo", demo="i2v")
+            validate_local_prereqs(cfg, upstream=upstream)
+            cfg2 = merge_run_config(command="demo", demo="continuation")
+            validate_local_prereqs(cfg2, upstream=upstream)
 
     def test_demo_specs(self):
         self.assertEqual(get_demo("t2v").script, "run_demo_text_to_video.py")
