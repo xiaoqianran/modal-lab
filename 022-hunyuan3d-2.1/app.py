@@ -1,6 +1,7 @@
 """Hunyuan3D-2.1 image -> 3D on one Modal L40S worker."""
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
@@ -360,30 +361,98 @@ class Hunyuan3D21:
         return meta
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="022 Hunyuan3D-2.1 on Modal L40S",
+        epilog=(
+            "示例:\n"
+            "  python main.py 022 status\n"
+            "  python main.py 022 probe\n"
+            "  python main.py 022 smoke --dry-run\n"
+            "  python main.py 022 smoke --i-know-this-costs-money --mode full"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定栈；纯本地，不启动 GPU")
+    sub.add_parser("probe", help="远程验证 L40S / CUDA 扩展")
+
+    smoke = sub.add_parser("smoke", help="运行 image -> 3D smoke")
+    smoke.add_argument("--i-know-this-costs-money", action="store_true")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--image-url", default=SAMPLE_URL)
+    smoke.add_argument("--output-name", default="smoke_l40s")
+    smoke.add_argument("--mode", choices=["shape", "full"], default="full")
+    smoke.add_argument("--seed", type=int, default=42)
+    smoke.add_argument("--max-num-view", type=int, default=6)
+    smoke.add_argument("--paint-resolution", type=int, default=512)
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict:
+    return {
+        "experiment": "022-hunyuan3d-2.1",
+        "app": APP_NAME,
+        "gpu": GPU,
+        "model": MODEL,
+        "upstream": UPSTREAM,
+        "upstream_commit": UPSTREAM_COMMIT,
+        "cuda": "12.4.1",
+        "torch": "2.5.1",
+        "cuda_arch": "8.9",
+        "weights_volume": "modal-lab-hunyuan3d21-weights",
+        "outputs_volume": "modal-lab-hunyuan3d21-outputs",
+    }
+
+
+def smoke_plan(args: argparse.Namespace) -> dict:
+    return {
+        "action": "smoke",
+        "gpu": GPU,
+        "image_url": args.image_url,
+        "output_name": args.output_name,
+        "mode": args.mode,
+        "seed": args.seed,
+        "max_num_view": args.max_num_view,
+        "paint_resolution": args.paint_resolution,
+    }
+
+
 @app.local_entrypoint()
-def main(
-    action: str = "probe",
-    image_url: str = SAMPLE_URL,
-    output_name: str = "smoke_l40s",
-    mode: str = "full",
-    seed: int = 42,
-    max_num_view: int = 6,
-    paint_resolution: int = 512,
-):
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
+        return
+
     worker = Hunyuan3D21()
-    if action in {"probe", "status"}:
+    if args.command == "probe":
         print(worker.probe.remote())
         return
-    if action in {"smoke", "generate", "i2v"}:
-        print(
-            worker.generate.remote(
-                image_url=image_url,
-                output_name=output_name,
-                mode=mode,
-                seed=seed,
-                max_num_view=max_num_view,
-                paint_resolution=paint_resolution,
-            )
-        )
+
+    plan = smoke_plan(args)
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
         return
-    raise SystemExit(f"unknown action: {action}")
+    if not args.i_know_this_costs_money:
+        raise SystemExit("smoke requires --i-know-this-costs-money")
+
+    print(
+        worker.generate.remote(
+            image_url=args.image_url,
+            output_name=args.output_name,
+            mode=args.mode,
+            seed=args.seed,
+            max_num_view=args.max_num_view,
+            paint_resolution=args.paint_resolution,
+        )
+    )
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])
