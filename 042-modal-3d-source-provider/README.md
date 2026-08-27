@@ -32,6 +32,16 @@ Provider InputConditioner
 Gate：public source contract、duplicate submit 幂等、4/4 模型、conditioning evidence、同源 canonical digest 一致、GLB v2/bytes/SHA-256 全通过。若 041 baseline 在本机存在，则只记录性能/bytes 差异，不要求 GLB digest 完全相同。
 
 
+## 本地环境检查
+
+脚本通过 PEP 723 声明 `modal + Pillow`；根 launcher 优先复用已有实验/root venv，没有 venv 时通过 `uv run --script` 隔离执行。
+
+```bash
+python main.py 042 --check-env
+```
+
+该命令只验证本地依赖，并报告 040/041 baseline 文件是否存在；不连接远端 provider、不启动 GPU。直接 `python main.py 042` 才执行完整 source-image parity 验收。
+
 ## Verified Result — 2026-08-28
 
 ```text

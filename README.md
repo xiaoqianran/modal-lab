@@ -149,7 +149,7 @@ python main.py 022 probe
 # 040/041/042 是 provider/integration 客户端验证脚本，不定义 Modal App
 python main.py 040 --check-env
 python main.py 041 --check-env
-python main.py 042
+python main.py 042 --check-env
 ```
 
 ## 实验一览

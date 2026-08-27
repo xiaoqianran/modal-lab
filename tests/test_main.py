@@ -10,10 +10,12 @@ class TestRootDispatcher(unittest.TestCase):
     def test_entry_archetypes(self):
         self.assertEqual(main.entry_for(main.ROOT / '001-longcat-video').name, 'app.py')
         self.assertEqual(main.entry_for(main.ROOT / '040-modal-2d-provider').name, 'run.py')
+        self.assertEqual(main.entry_for(main.ROOT / '042-modal-3d-source-provider').name, 'run.py')
 
     def test_unique_numeric_prefix(self):
         self.assertEqual(main.resolve_exp_id('001'), '001-longcat-video')
         self.assertEqual(main.resolve_exp_id('040'), '040-modal-2d-provider')
+        self.assertEqual(main.resolve_exp_id('042'), '042-modal-3d-source-provider')
 
     def test_ambiguous_numeric_prefix(self):
         with self.assertRaisesRegex(SystemExit, 'ambiguous experiment'):
@@ -57,6 +59,7 @@ class TestRootDispatcher(unittest.TestCase):
     def test_provider_scripts_are_self_describing(self):
         self.assertTrue(main.has_inline_script_metadata(main.ROOT / '040-modal-2d-provider' / 'run.py'))
         self.assertTrue(main.has_inline_script_metadata(main.ROOT / '041-modal-3d-provider' / 'run.py'))
+        self.assertTrue(main.has_inline_script_metadata(main.ROOT / '042-modal-3d-source-provider' / 'run.py'))
 
     def test_local_invocation_detection(self):
         self.assertTrue(main.is_local_invocation(['status']))

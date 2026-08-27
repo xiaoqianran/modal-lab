@@ -1,3 +1,10 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#   "modal==1.5.4",
+#   "pillow>=11,<13",
+# ]
+# ///
 from __future__ import annotations
 
 import argparse
@@ -23,6 +30,17 @@ MODELS = (
     "hunyuan2.1-plus-plus",
     "pixal3d",
 )
+
+
+def check_env() -> dict[str, object]:
+    return {
+        "ok": True,
+        "modal_version": getattr(modal, "__version__", "unknown"),
+        "pillow_version": getattr(Image, "__version__", "unknown"),
+        "source_result_exists": SOURCE_RESULT.is_file(),
+        "baseline_result_exists": BASELINE_RESULT.is_file(),
+        "models": list(MODELS),
+    }
 
 
 def default_source() -> Path:
@@ -159,9 +177,13 @@ def wait_model(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="042 modal-3D source-image provider parity verification")
     parser.add_argument("--source", type=Path)
+    parser.add_argument("--check-env", action="store_true", help="只验证本地依赖/输入前置，不调用远端")
     args = parser.parse_args()
+    if args.check_env:
+        print(json.dumps(check_env(), separators=(",", ":")))
+        return 0
 
     RESULTS.mkdir(parents=True, exist_ok=True)
     source_path = args.source or default_source()
