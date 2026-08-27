@@ -18,9 +18,11 @@ Code / eval:
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import subprocess
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -602,50 +604,122 @@ def infer_fn(
     return result
 
 
+ATTN_CHOICES = ("sdpa", "flash_attention_2", "eager")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="015 Xiaomi-Robotics-1 RoboCasa365 VLA")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("check", help="远程检查权重 / 最近 runs")
+    sub.add_parser("list-outputs", help="结构化列出远程 run 文件")
+
+    download = sub.add_parser("download", help="CPU 下载 HF 权重到 Volume")
+    download.add_argument("--force", action="store_true")
+    download.add_argument("--dry-run", action="store_true")
+
+    smoke = sub.add_parser("smoke", help="合成三视角 + 固定指令动作生成")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke.add_argument("--instruction", default="close the blender lid")
+    smoke.add_argument("--run-name", default="smoke_close_blender_lid")
+    smoke.add_argument("--attn", choices=ATTN_CHOICES, default="sdpa")
+    smoke.add_argument("--num-steps", type=int, default=NUM_DENOISE_STEPS)
+    smoke.add_argument("--obs-history", type=int, default=OBS_HISTORY)
+
+    infer_cmd = sub.add_parser("infer", help="自定义指令动作生成")
+    infer_cmd.add_argument("--dry-run", action="store_true")
+    infer_cmd.add_argument("--gpu", default=DEFAULT_GPU)
+    infer_cmd.add_argument("--instruction", required=True)
+    infer_cmd.add_argument("--run-name", default="")
+    infer_cmd.add_argument("--attn", choices=ATTN_CHOICES, default="sdpa")
+    infer_cmd.add_argument("--num-steps", type=int, default=NUM_DENOISE_STEPS)
+    infer_cmd.add_argument("--obs-history", type=int, default=OBS_HISTORY)
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "015-xiaomi-robotics-1-robocasa365",
+        "app": APP_NAME,
+        "hf_repo": HF_REPO,
+        "upstream_code": UPSTREAM_CODE,
+        "robot_type": ROBOT_TYPE,
+        "default_gpu": DEFAULT_GPU,
+        "state_dim": STATE_DIM,
+        "action_dim": ACTION_DIM,
+        "obs_history": OBS_HISTORY,
+        "num_denoise_steps": NUM_DENOISE_STEPS,
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+        "scope": "synthetic multi-view VLA smoke/infer; not full RoboCasa365 simulation eval",
+    }
+
+
+def inference_plan(args: argparse.Namespace) -> dict[str, Any]:
+    instruction = args.instruction.strip()
+    if not instruction:
+        raise ValueError("instruction 不能为空")
+    if args.num_steps <= 0:
+        raise ValueError("--num-steps 必须 > 0")
+    if args.obs_history <= 0:
+        raise ValueError("--obs-history 必须 > 0")
+    return {
+        "action": args.command,
+        "gpu": args.gpu,
+        "instruction": instruction,
+        "run_name": args.run_name,
+        "attn": args.attn,
+        "num_steps": args.num_steps,
+        "obs_history": args.obs_history,
+    }
+
+
 @app.local_entrypoint()
-def main(
-    action: str = "status",
-    force_download: bool = False,
-    gpu: str = DEFAULT_GPU,
-    instruction: str = "close the blender lid",
-    run_name: str = "",
-    attn: str = "sdpa",
-    num_steps: int = NUM_DENOISE_STEPS,
-    obs_history: int = OBS_HISTORY,
-) -> None:
-    """
-    modal run modal_app.py --action status|download|smoke|infer|list-outputs
-    """
-    action = action.strip().lower()
-    if action == "status":
-        print(status_fn.remote())
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
         return
-    if action == "download":
-        print(download_weights.remote(force=force_download))
+    if args.command == "check":
+        print(json.dumps(status_fn.remote(), ensure_ascii=False, indent=2))
         return
-    if action == "list-outputs":
-        print(list_outputs_fn.remote())
+    if args.command == "list-outputs":
+        print(json.dumps(list_outputs_fn.remote(), ensure_ascii=False, indent=2))
         return
-    if action in {"smoke", "infer"}:
-        if action == "smoke":
-            instruction = instruction or "close the blender lid"
-            if not run_name:
-                run_name = "smoke_close_blender_lid"
-        fn = infer_fn
-        if gpu and gpu != DEFAULT_GPU:
-            fn = infer_fn.with_options(gpu=gpu)
-        result = fn.remote(
-            instruction=instruction,
-            run_name=run_name,
-            gpu_label=gpu,
-            attn_implementation=attn,
-            num_steps=num_steps,
-            obs_history=obs_history,
-        )
-        print(json.dumps(result, ensure_ascii=False, indent=2))
-        if not result.get("success"):
-            raise SystemExit(1)
+    if args.command == "download":
+        plan = {"action": "download", "force": args.force}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        print(json.dumps(download_weights.remote(force=args.force), ensure_ascii=False, indent=2))
         return
-    raise SystemExit(
-        f"unknown action={action!r}; use status|download|smoke|infer|list-outputs"
+
+    try:
+        plan = inference_plan(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
+        return
+
+    fn = infer_fn if plan["gpu"] == DEFAULT_GPU else infer_fn.with_options(gpu=plan["gpu"])
+    result = fn.remote(
+        instruction=plan["instruction"],
+        run_name=plan["run_name"],
+        gpu_label=plan["gpu"],
+        attn_implementation=plan["attn"],
+        num_steps=plan["num_steps"],
+        obs_history=plan["obs_history"],
     )
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    if not result.get("success"):
+        raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])

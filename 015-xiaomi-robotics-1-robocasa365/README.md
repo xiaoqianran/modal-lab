@@ -1,107 +1,102 @@
-# 015-xiaomi-robotics-1-robocasa365
+# 015 · Xiaomi-Robotics-1 RoboCasa365
 
-在 Modal 上加载小米 **Xiaomi-Robotics-1** 的
-[RoboCasa365](https://huggingface.co/XiaomiRobotics/Xiaomi-Robotics-1-RoboCasa365)
-checkpoint，做 **VLA 动作生成冒烟**。
+在 Modal 上加载 `XiaomiRobotics/Xiaomi-Robotics-1-RoboCasa365`，做 **VLA 动作生成冒烟**。
 
-> 这东西是啥？一句话：  
-> **看厨房多视角画面 + 听人话指令 → 吐出机械臂未来 16 步动作** 的机器人基础策略模型。  
-> 官方在 RoboCasa365 仿真基准上跑到约 **57%** 成功率（当时 SOTA）。
+015 已迁移到 v2：一个 `app.py` 同时拥有 smoke/infer planning、CLI、结构化 run 元数据和 Modal remote functions，不再使用 `run.py -> modal_app.py` 包装层。
 
-完整 2500 episode 仿真评测需要 MuJoCo / RoboCasa365 环境，**不在本实验范围**  
-（见 [UPSTREAM.md](UPSTREAM.md)）。这里只验证：下载权重 → 加载 → 合成观测前向 → 动作张量。
+本实验范围很窄：
 
-## 成本策略（默认）
+```text
+合成三视角历史帧
++ 语言指令
++ proprio state
+        ↓
+Xiaomi-Robotics-1 / MiBoT
+        ↓
+16-step action chunk
+```
 
-| 项 | 选择 | 原因 |
-|---|---|---|
-| GPU | **A100-40GB** | 5.4B bf16 ≈10GB 权重 + 多视角激活，40GB 够用 |
-| 下载 | **CPU only** | ~10GB 落 Volume，复用不计 GPU 费 |
-| smoke | 合成三视角 × 4 帧历史 · 指令 `close the blender lid` | 零仿真依赖 |
-| attn | **sdpa**（可换 `flash_attention_2`） | 镜像冷启动更稳 |
-| 容器 | 无 keep_warm | 跑完放掉 GPU |
+完整 RoboCasa365 MuJoCo 成功率评测不在本实验范围。
 
-可选：`--gpu A100-80GB` / `H100` / `L40S`。
-
-## 快速开始
+## 用法
 
 ```bash
-# 需已 modal token set
 python main.py 015 status
-python main.py 015 download          # CPU 拉 HF 权重 → Volume
-python main.py 015 smoke             # A100-40GB 合成观测 → 动作
-python main.py 015 infer --instruction "open the drawer"
-python main.py 015 ls
-python main.py 015 pull --remote runs/smoke_close_blender_lid
+python main.py 015 check
+python main.py 015 download --dry-run --force
+python main.py 015 download
+
+# 固定 smoke
+python main.py 015 smoke --dry-run
+python main.py 015 smoke --gpu A100-40GB
+
+# 自定义动作生成
+python main.py 015 infer --dry-run \
+  --instruction 'open the drawer' \
+  --gpu L40S \
+  --attn eager \
+  --num-steps 7 \
+  --obs-history 3
+
+# 解析远程 run 目录
+python main.py 015 list-outputs
 ```
 
-或：
+## Smoke 不变量
 
-```bash
-cd 015-xiaomi-robotics-1-robocasa365
-python run.py smoke --gpu A100-40GB
-python run.py infer --instruction "turn on the stove" --run-name stove_on
+默认：
+
+```text
+instruction = close the blender lid
+run_name = smoke_close_blender_lid
+attn = sdpa
+num_steps = 5
+obs_history = 4
+gpu = A100-40GB
 ```
 
-## 远程产物
+`infer` 才用于自由指令和不同 attention / denoise / history 参数。
 
-| Volume | 路径 |
-|---|---|
-| `modal-lab-xr1-robocasa365-weights` | `/Xiaomi-Robotics-1-RoboCasa365/`（完整 HF snapshot） |
-| `modal-lab-xr1-robocasa365-outputs` | `runs/<name>/{actions_*.npy,meta.json,input_views.jpg}` |
+## 输出
+
+`list-outputs` 保留，因为它按 run 返回文件集合；纯文件浏览/拉取直接使用 Modal：
 
 ```bash
 modal volume ls modal-lab-xr1-robocasa365-outputs runs
-modal volume get modal-lab-xr1-robocasa365-outputs runs/smoke_close_blender_lid ./outputs/
+modal volume get \
+  modal-lab-xr1-robocasa365-outputs \
+  runs/smoke_close_blender_lid \
+  ./015-xiaomi-robotics-1-robocasa365/outputs
+```
+
+Volume：
+
+```text
+modal-lab-xr1-robocasa365-weights
+modal-lab-xr1-robocasa365-outputs
 ```
 
 ## 模型要点
 
-| 组件 | 说明 |
-|---|---|
-| 架构 | MiBoT = **Qwen3-VL-4B** + **DiT** action head（MoT 式） |
-| 参数量 | ~5.4B（HF metadata） |
-| 输入 | 左/右 agentview + wrist 视频历史 · 语言指令 · 本体感觉 state |
-| 输出 | `(16, 60)` 归一化动作；RoboCasa365 取前 **12** 维 |
-| robot_type | `robocasa365`（processor `action_config` 键） |
-| 官方 SR | **57.28%** @ target50 / 2500 eps |
-
-数据流（本实验）：
-
 ```text
-合成 RGB 帧 ×3 相机 ×4 历史
-        + 指令文本
-        + state (1,4,60)
-        ↓
-  MiBotProcessor.apply_chat_template
-        ↓
-  MiBoTForActionGeneration (5-step denoise)
-        ↓
-  actions (1,16,60) → decode_action → EE12
+架构        Qwen3-VL-4B + DiT action head
+robot_type  robocasa365
+state_dim   60
+action_dim  前 12 维
+输出        (16, 60) normalized actions
 ```
 
-## 它有什么用？
+默认用 `sdpa` 是为了降低 cold-start 依赖复杂度；`flash_attention_2` / `eager` 可显式选择。
 
-1. **通用家务操作策略**：关盖、开关抽屉/门、操作灶台/微波炉、抓放物体…  
-2. **仿真基准打榜**：RoboCasa365（365 日常任务、2500 厨房场景）是目前家庭移动操作的主战场之一。  
-3. **真机迁移底座**：论文强调 100K+ 小时真实轨迹预训练 → 少样本后训练适配新任务/新本体。  
-4. **研究对照**：和其他 VLA（OpenVLA、π0、GR00T…）比 scaling / 数据配方 / DiT head。
-
-本 015 实验的用途更窄：**在 Modal 上把官方 HF 权重跑通一遍**，确认栈可用，再决定是否接完整 eval 或真机。
-
-## 许可
-
-上游 **Apache-2.0**。生成/部署请自行合规。
-
-## 结果 Gallery
-
-冒烟产物已拉取到 [`gallery/`](gallery/)：
+## 测试
 
 ```bash
-cd 015-xiaomi-robotics-1-robocasa365/gallery
-python -m http.server 8765
-# 打开 http://127.0.0.1:8765/
+python -m unittest discover -s 015-xiaomi-robotics-1-robocasa365/tests -v
+python -m py_compile 015-xiaomi-robotics-1-robocasa365/app.py
+python main.py 015 status
+python main.py 015 smoke --dry-run
 ```
 
-含：合成三视角、EE12 曲线/热力图/数值表、GPU·耗时·显存摘要。
-原始文件：`gallery/data/{meta.json,result.json,actions_*.npy,input_views.jpg}`。
+以上测试不启动付费 GPU。
+
+上游 Apache-2.0。完整评测边界见 [`UPSTREAM.md`](UPSTREAM.md)。
