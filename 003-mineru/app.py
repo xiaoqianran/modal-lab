@@ -3,11 +3,13 @@
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import hashlib
 import json
 import os
 import statistics
+import sys
 import subprocess
 import threading
 import time
@@ -25,7 +27,7 @@ MODEL_DIR = Path("/models")
 DEFAULT_REMOTE_PDF = "/books/EN-算法导论4.pdf"
 DEFAULT_BACKEND = "hybrid-engine"
 DEFAULT_EFFORT = "medium"
-GPU_TYPE = os.environ.get("MODAL_LAB_GPU_TYPE", "H100!")
+DEFAULT_GPU = "H100!"
 
 EXP_DIR = Path(__file__).resolve().parent
 DEFAULT_LOCAL_PDF = EXP_DIR.parent / "books" / "EN-算法导论4.pdf"
@@ -233,7 +235,7 @@ def _output_slug(backend: str, effort: str) -> str:
 
 @app.function(
     image=inference_image,
-    gpu=GPU_TYPE,
+    gpu=DEFAULT_GPU,
     volumes={"/models": model_volume, "/data": data_volume},
     timeout=4 * 60 * 60,
     cpu=16,
@@ -426,59 +428,127 @@ async def _upload_pdf(local_pdf: Path, remote_pdf: str) -> dict[str, Any]:
     return result
 
 
-@app.local_entrypoint()
-async def main(
-    action: str = "info",
-    local_pdf: str = str(DEFAULT_LOCAL_PDF),
-    remote_pdf: str = DEFAULT_REMOTE_PDF,
-    backend: str = DEFAULT_BACKEND,
-    effort: str = DEFAULT_EFFORT,
-    start_page: int = 1,
-    end_page: int = 0,
-    benchmark_pages: int = 100,
-    resume: bool = True,
-) -> None:
-    action = action.strip().lower()
-    if action == "info":
-        print(
-            json.dumps(
-                {
-                    "app": APP_NAME,
-                    "mineru_version": MINERU_VERSION,
-                    "mineru_commit": MINERU_COMMIT,
-                    "default_backend": DEFAULT_BACKEND,
-                    "default_effort": DEFAULT_EFFORT,
-                },
-                ensure_ascii=False,
-                indent=2,
-            )
-        )
+BACKEND_CHOICES = ("hybrid-engine", "pipeline", "vlm-engine")
+EFFORT_CHOICES = ("medium", "high")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="003 MinerU 3.4.4 on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+
+    download = sub.add_parser("download", help="下载 MinerU pipeline + VLM 模型")
+    download.add_argument("--dry-run", action="store_true")
+
+    upload = sub.add_parser("upload", help="上传本地 PDF 到 data Volume，并记录 hash")
+    upload.add_argument("--pdf", type=Path, default=DEFAULT_LOCAL_PDF)
+    upload.add_argument("--remote-pdf", default=DEFAULT_REMOTE_PDF)
+    upload.add_argument("--dry-run", action="store_true")
+
+    for name in ("parse", "benchmark"):
+        cmd = sub.add_parser(name)
+        cmd.add_argument("--pdf", type=Path, default=DEFAULT_LOCAL_PDF)
+        cmd.add_argument("--remote-pdf", default=DEFAULT_REMOTE_PDF)
+        cmd.add_argument("--gpu", default=DEFAULT_GPU)
+        cmd.add_argument("--backend", choices=BACKEND_CHOICES, default=DEFAULT_BACKEND)
+        cmd.add_argument("--effort", choices=EFFORT_CHOICES, default=DEFAULT_EFFORT)
+        cmd.add_argument("--start-page", type=int, default=1)
+        cmd.add_argument("--end-page", type=int, default=0)
+        cmd.add_argument("--no-resume", action="store_true")
+        cmd.add_argument("--dry-run", action="store_true")
+        if name == "benchmark":
+            cmd.add_argument("--pages", type=int, default=100)
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "003-mineru",
+        "app": APP_NAME,
+        "mineru_version": MINERU_VERSION,
+        "mineru_commit": MINERU_COMMIT,
+        "default_gpu": DEFAULT_GPU,
+        "default_backend": DEFAULT_BACKEND,
+        "default_effort": DEFAULT_EFFORT,
+        "default_pdf": str(DEFAULT_LOCAL_PDF),
+        "default_pdf_exists": DEFAULT_LOCAL_PDF.is_file(),
+        "model_volume": "modal-lab-mineru-models",
+        "data_volume": "modal-lab-mineru-data",
+    }
+
+
+def parse_plan(args: argparse.Namespace) -> dict[str, Any]:
+    end_page = args.end_page
+    if args.command == "benchmark":
+        if args.pages <= 0:
+            raise ValueError("--pages 必须 > 0")
+        end_page = args.start_page + args.pages - 1
+    if args.start_page < 1:
+        raise ValueError("--start-page 必须 >= 1")
+    if end_page > 0 and end_page < args.start_page:
+        raise ValueError("--end-page 不能小于 --start-page")
+    return {
+        "action": args.command,
+        "local_pdf": str(args.pdf),
+        "remote_pdf": args.remote_pdf,
+        "gpu": args.gpu,
+        "backend": args.backend,
+        "effort": args.effort,
+        "start_page": args.start_page,
+        "end_page": end_page,
+        "resume": not args.no_resume,
+    }
+
+
+async def cli(argv: list[str] | tuple[str, ...]) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
         return
-    if action == "upload":
-        result = await _upload_pdf(Path(local_pdf), remote_pdf)
-        print(json.dumps(result, ensure_ascii=False, indent=2))
-        return
-    if action == "download":
+    if args.command == "download":
+        plan = {"action": "download"}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
         result = await download_models.remote.aio()
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return
-    if action not in {"parse", "benchmark"}:
-        raise SystemExit(
-            "action 必须是 info、upload、download、parse 或 benchmark"
-        )
+    if args.command == "upload":
+        plan = {
+            "action": "upload",
+            "local_pdf": str(args.pdf),
+            "remote_pdf": args.remote_pdf,
+        }
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        result = await _upload_pdf(args.pdf, args.remote_pdf)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return
 
-    upload = await _upload_pdf(Path(local_pdf), remote_pdf)
+    try:
+        plan = parse_plan(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
+        return
+
+    upload = await _upload_pdf(args.pdf, args.remote_pdf)
     models = await download_models.remote.aio()
-    if action == "benchmark":
-        end_page = start_page + benchmark_pages - 1
-    result = await parse_pdf.remote.aio(
-        remote_pdf=remote_pdf,
-        backend=backend,
-        effort=effort,
-        start_page=start_page,
-        end_page=end_page,
-        mode="benchmark" if action == "benchmark" else "full",
-        resume=resume,
+    fn = parse_pdf.with_options(gpu=args.gpu)
+    result = await fn.remote.aio(
+        remote_pdf=args.remote_pdf,
+        backend=args.backend,
+        effort=args.effort,
+        start_page=plan["start_page"],
+        end_page=plan["end_page"],
+        mode="benchmark" if args.command == "benchmark" else "full",
+        resume=plan["resume"],
     )
     print(
         json.dumps(
@@ -487,3 +557,12 @@ async def main(
             indent=2,
         )
     )
+
+
+@app.local_entrypoint()
+async def main(*argv: str) -> None:
+    await cli(argv)
+
+
+if __name__ == "__main__":
+    asyncio.run(cli(sys.argv[1:]))

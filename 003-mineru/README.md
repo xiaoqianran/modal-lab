@@ -92,18 +92,29 @@ GPU 模型交替工作；瞬时 GPU 已达到 100%。100 页输出包含 1 个 M
 
 ## 运行
 
+003 已迁移到 v2：一个 `app.py` 同时拥有本地 PDF 输入、CLI、Modal image 与远程解析函数，不再使用 `run.py -> modal_app.py`。
+
 ```bash
-# 查看配置
+# 纯本地固定信息，不初始化 Modal App
 python main.py 003 status
 
-# 下载 pipeline + VLM 模型
+# 模型下载 / dry-run
+python main.py 003 download --dry-run
 python main.py 003 download
 
+# 显式上传本地 PDF，并记录 size / SHA256
+python main.py 003 upload --dry-run \
+  --pdf books/EN-算法导论4.pdf
+python main.py 003 upload \
+  --pdf books/EN-算法导论4.pdf
+
 # 先解析前 100 页作基准
+python main.py 003 benchmark --dry-run --pages 100
 python main.py 003 benchmark --pages 100
 
-# 在 RTX PRO 6000 上跑相同基准
-python main.py 003 benchmark --pages 100 --gpu RTX-PRO-6000
+# GPU 选择直接进入 Modal Function.with_options，不再通过环境变量中转
+python main.py 003 benchmark --dry-run \
+  --pages 100 --gpu RTX-PRO-6000
 
 # 解析整本
 python main.py 003 parse
@@ -119,6 +130,18 @@ python main.py 003 benchmark --pages 100 \
 python main.py 003 benchmark --pages 100 --backend pipeline
 ```
 
+本地 PDF 上传保留在 `app.py`，因为这里不只是 `modal volume put`：它还维护远程路径、文件大小和 SHA256 元数据。GPU 选择则彻底去掉旧 `MODAL_LAB_GPU_TYPE` 隐式协议：
+
+```text
+CLI --gpu
+   │
+   ▼
+parse_pdf.with_options(gpu=...)
+   │
+   ▼
+remote()
+```
+
 结果使用独立 Modal Volumes：
 
 ```text
@@ -127,9 +150,18 @@ Data:   modal-lab-mineru-data
 Output: /outputs/EN-算法导论4/hybrid-medium
 ```
 
-完整解析支持结果级续跑：检测到参数一致且状态为 completed 的
-`summary.json` 时直接跳过。MinerU 3.4 本身使用滑动窗口和流式写盘处理
-超长文档。
+完整解析支持结果级续跑：检测到参数一致且状态为 completed 的 `summary.json` 时直接跳过。MinerU 3.4 本身使用滑动窗口和流式写盘处理超长文档。
+
+## 测试
+
+```bash
+python -m unittest discover -s 003-mineru/tests -v
+python -m py_compile 003-mineru/app.py
+python main.py 003 status
+python main.py 003 benchmark --dry-run --pages 100 --gpu RTX-PRO-6000
+```
+
+以上测试不启动付费 GPU。
 
 ## 资源和版本
 
