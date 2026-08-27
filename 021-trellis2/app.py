@@ -10,6 +10,7 @@ we use xformers prebuilt wheels.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
@@ -930,36 +931,139 @@ class Trellis2Pro6000:
         )
 
 
-@app.local_entrypoint()
-def main(
-    action: str = "probe",
-    gpu: str = "L40S",
-    output_name: str = "",
-    image_url: str = SAMPLE_URL,
-    pipeline_type: str = "512",
-    seed: int = 42,
-):
-    g = gpu.upper().replace("_", "-")
-    use_pro = g in {"RTX-PRO-6000", "PRO-6000", "PRO6000"}
-    worker = Trellis2Pro6000() if use_pro else Trellis2L40S()
-    default_name = "smoke_pro6000" if use_pro else "smoke_l40s"
-    name = output_name or default_name
-    if action in {"probe", "status"}:
-        print(worker.probe.remote())
-    elif action in {"build", "build-sm89", "build-sm120"}:
-        print(worker.build.remote())
-    elif action == "verify":
-        print(worker.verify.remote())
-    elif action == "download":
-        print(worker.download.remote())
-    elif action in {"smoke", "i2v"}:
-        print(
-            worker.image_to_3d.remote(
-                image_url=image_url,
-                output_name=name,
-                pipeline_type=pipeline_type,
-                seed=seed,
-            )
+GPU_CHOICES = ("L40S", "RTX-PRO-6000")
+PIPELINE_CHOICES = ("512", "1024", "1024_cascade", "1536_cascade")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="021 TRELLIS.2 image -> 3D")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定栈；纯本地")
+
+    for name, help_text in (
+        ("probe", "远程检查 GPU / CUDA / wheel cache"),
+        ("build", "源码构建当前 GPU 架构扩展"),
+        ("verify", "安装并验证缓存 wheels"),
+    ):
+        cmd = sub.add_parser(name, help=help_text)
+        cmd.add_argument("--gpu", default="L40S", choices=GPU_CHOICES)
+        cmd.add_argument("--dry-run", action="store_true")
+
+    download = sub.add_parser("download", help="下载 TRELLIS.2 + aux 权重")
+    download.add_argument("--gpu", default="L40S", choices=GPU_CHOICES)
+    download.add_argument("--force", action="store_true")
+    download.add_argument("--dry-run", action="store_true")
+
+    for name, help_text in (
+        ("smoke", "样例/指定 URL image -> GLB"),
+        ("i2v", "自定义 image URL -> GLB"),
+    ):
+        cmd = sub.add_parser(name, help=help_text)
+        cmd.add_argument("--i-know-this-costs-money", action="store_true")
+        cmd.add_argument("--dry-run", action="store_true")
+        cmd.add_argument("--gpu", default="L40S", choices=GPU_CHOICES)
+        cmd.add_argument("--output-name", default="")
+        if name == "i2v":
+            cmd.add_argument("--image-url", required=True)
+        else:
+            cmd.add_argument("--image-url", default=SAMPLE_URL)
+        cmd.add_argument("--pipeline-type", default="512", choices=PIPELINE_CHOICES)
+        cmd.add_argument("--seed", type=int, default=42)
+        cmd.add_argument("--texture-size", type=int, default=2048)
+        cmd.add_argument("--decimation-target", type=int, default=500000)
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def _is_pro6000(gpu: str) -> bool:
+    return gpu.upper().replace("_", "-") in {"RTX-PRO-6000", "PRO-6000", "PRO6000"}
+
+
+def worker_for(gpu: str):
+    return Trellis2Pro6000() if _is_pro6000(gpu) else Trellis2L40S()
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "021-trellis2",
+        "app": APP_NAME,
+        "model": HF_MODEL,
+        "license": "MIT",
+        "default_gpu": "L40S",
+        "gpus": list(GPU_CHOICES),
+        "pipelines": list(PIPELINE_CHOICES),
+        "flow": ["probe", "build", "verify", "download", "smoke"],
+        "wheels_volume": VOLUME_WHEELS,
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+    }
+
+
+def command_plan(args: argparse.Namespace) -> dict[str, Any]:
+    plan: dict[str, Any] = {"action": args.command, "gpu": args.gpu}
+    if args.command == "download":
+        plan["force"] = args.force
+    elif args.command in {"smoke", "i2v"}:
+        use_pro = _is_pro6000(args.gpu)
+        plan.update(
+            {
+                "image_url": args.image_url,
+                "output_name": args.output_name or ("smoke_pro6000" if use_pro else "smoke_l40s"),
+                "pipeline_type": args.pipeline_type,
+                "seed": args.seed,
+                "texture_size": args.texture_size,
+                "decimation_target": args.decimation_target,
+            }
         )
-    else:
-        raise SystemExit(f"unknown action: {action}")
+    return plan
+
+
+def require_cost_ack(args: argparse.Namespace) -> None:
+    if not args.i_know_this_costs_money:
+        raise SystemExit(f"{args.command} requires --i-know-this-costs-money")
+
+
+@app.local_entrypoint()
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
+        return
+
+    plan = command_plan(args)
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
+        return
+
+    worker = worker_for(args.gpu)
+    if args.command == "probe":
+        print(worker.probe.remote())
+        return
+    if args.command == "build":
+        print(worker.build.remote())
+        return
+    if args.command == "verify":
+        print(worker.verify.remote())
+        return
+    if args.command == "download":
+        print(worker.download.remote(force=args.force))
+        return
+
+    require_cost_ack(args)
+    print(
+        worker.image_to_3d.remote(
+            image_url=plan["image_url"],
+            output_name=plan["output_name"],
+            pipeline_type=plan["pipeline_type"],
+            seed=plan["seed"],
+            texture_size=plan["texture_size"],
+            decimation_target=plan["decimation_target"],
+        )
+    )
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])

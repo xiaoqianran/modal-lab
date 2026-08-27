@@ -166,6 +166,7 @@ Modal Volume                  future upstream flags
 005-v2-pixal3d-l40s
 005-v3-pixal3d-pro6000
 020-triposr
+021-trellis2
 022-hunyuan3d-2.1
 023-a-spar3d
 023-b-sf3d
