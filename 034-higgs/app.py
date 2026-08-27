@@ -13,6 +13,7 @@ GPU L40S
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
@@ -501,42 +502,116 @@ SMOKE_EXPRESSIVE = (
 )
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="034 Higgs Audio v2 on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("check", help="远程检查权重 / outputs Volume 状态")
+
+    download = sub.add_parser("download", help="下载 pinned model/tokenizer 到 Volume")
+    download.add_argument("--force", action="store_true")
+
+    smoke = sub.add_parser("smoke", help="运行固定文本 smoke")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke.add_argument("--kind", default="en", choices=["en", "expressive"])
+    smoke.add_argument("--run-name", default="")
+    smoke.add_argument("--scene", default="")
+    smoke.add_argument("--temperature", type=float, default=0.3)
+    smoke.add_argument("--max-new-tokens", type=int, default=1024)
+
+    t2s = sub.add_parser("t2s", help="Text-to-Speech")
+    t2s.add_argument("--dry-run", action="store_true")
+    t2s.add_argument("--gpu", default=DEFAULT_GPU)
+    t2s.add_argument("--text", required=True)
+    t2s.add_argument("--scene", default="")
+    t2s.add_argument("--run-name", default="")
+    t2s.add_argument("--temperature", type=float, default=0.3)
+    t2s.add_argument("--max-new-tokens", type=int, default=1024)
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "034-higgs",
+        "app": APP_NAME,
+        "default_gpu": DEFAULT_GPU,
+        "default_model": DEFAULT_MODEL,
+        "model_repo": MODEL_REPO,
+        "model_revision": MODEL_REVISION,
+        "tokenizer_repo": TOKENIZER_REPO,
+        "tokenizer_revision": TOKENIZER_REVISION,
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+        "prompts_volume": VOLUME_PROMPTS,
+    }
+
+
+def smoke_plan(args: argparse.Namespace) -> dict[str, Any]:
+    if args.kind == "expressive":
+        text = SMOKE_EXPRESSIVE
+        run_name = args.run_name or "smoke_expressive"
+        scene = args.scene or "A lively studio with an excited narrator."
+    else:
+        text = SMOKE_EN
+        run_name = args.run_name or "smoke_en"
+        scene = args.scene or "Audio is recorded from a quiet room."
+    return {
+        "action": "smoke",
+        "gpu": args.gpu,
+        "kind": args.kind,
+        "text": text,
+        "run_name": run_name,
+        "scene": scene,
+        "temperature": args.temperature,
+        "max_new_tokens": args.max_new_tokens,
+    }
+
+
+def t2s_plan(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "action": "t2s",
+        "gpu": args.gpu,
+        "text": args.text.strip(),
+        "run_name": args.run_name,
+        "scene": args.scene,
+        "temperature": args.temperature,
+        "max_new_tokens": args.max_new_tokens,
+    }
+
+
 @app.local_entrypoint()
-def main(
-    action: str = "status",
-    gpu: str = DEFAULT_GPU,
-    text: str = "",
-    run_name: str = "",
-    force_download: bool = False,
-    smoke_kind: str = "en",
-    scene: str = "",
-    temperature: float = 0.3,
-    max_new_tokens: int = 1024,
-):
-    if action == "status":
-        status_fn.remote()
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
         return
-    if action == "download":
-        download_weights.remote(force=force_download)
+    if args.command == "check":
+        print(json.dumps(status_fn.remote(), ensure_ascii=False, indent=2))
         return
-    if action == "smoke":
-        kind = smoke_kind.lower().strip()
-        if kind in ("expressive", "emo", "excited"):
-            text_use = SMOKE_EXPRESSIVE
-            run = run_name or "smoke_expressive"
-            scene_use = scene or "A lively studio with an excited narrator."
-        else:
-            text_use = SMOKE_EN
-            run = run_name or "smoke_en"
-            scene_use = scene or "Audio is recorded from a quiet room."
-        download_weights.remote(force=force_download)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            text=text_use,
-            run_name=run,
-            gpu_label=gpu,
-            scene=scene_use,
-            temperature=temperature,
-            max_new_tokens=max_new_tokens,
+    if args.command == "download":
+        print(json.dumps(download_weights.remote(force=args.force), ensure_ascii=False, indent=2))
+        return
+
+    if args.command == "smoke":
+        plan = smoke_plan(args)
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        download_weights.remote(force=False)
+        out = generate_fn.with_options(gpu=args.gpu).remote(
+            text=plan["text"],
+            run_name=plan["run_name"],
+            gpu_label=args.gpu,
+            scene=plan["scene"],
+            temperature=args.temperature,
+            max_new_tokens=args.max_new_tokens,
         )
         print("SMOKE_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
         if not out.get("success"):
@@ -546,20 +621,26 @@ def main(
         if (out.get("audio") or {}).get("rms", 0) < 1e-4:
             raise SystemExit("smoke audio near silent")
         return
-    if action == "t2s":
-        if not text.strip():
-            raise SystemExit("t2s requires --text")
-        download_weights.remote(force=False)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            text=text,
-            run_name=run_name,
-            gpu_label=gpu,
-            scene=scene,
-            temperature=temperature,
-            max_new_tokens=max_new_tokens,
-        )
-        print("T2S_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
+
+    plan = t2s_plan(args)
+    if not plan["text"]:
+        raise SystemExit("t2s requires non-empty --text")
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
         return
-    raise SystemExit(f"unknown action {action!r}")
+    download_weights.remote(force=False)
+    out = generate_fn.with_options(gpu=args.gpu).remote(
+        text=plan["text"],
+        run_name=args.run_name,
+        gpu_label=args.gpu,
+        scene=args.scene,
+        temperature=args.temperature,
+        max_new_tokens=args.max_new_tokens,
+    )
+    print("T2S_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
+    if not out.get("success"):
+        raise SystemExit(2)
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])

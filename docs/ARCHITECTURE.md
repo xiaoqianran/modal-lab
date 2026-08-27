@@ -159,4 +159,15 @@ Modal Volume                  future upstream flags
 - Functional Core / Imperative Shell — 纯规划与副作用边界清晰
 - Monolith First — 先形成自然边界，再物理拆分
 
-001-longcat-video 是 v2 的首个落地样板；022-hunyuan3d-2.1 已按同一原则完成第二个迁移。其他实验逐个迁移，不做机械批量改名。
+当前已迁移到 v2：
+
+```text
+001-longcat-video
+020-triposr
+022-hunyuan3d-2.1
+023-a-spar3d
+023-b-sf3d
+034-higgs
+```
+
+这些实验都已删除 `run.py -> modal_app.py` pass-through 层。其他实验继续逐个迁移，不做机械批量改名。
