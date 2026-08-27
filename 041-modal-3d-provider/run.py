@@ -119,7 +119,7 @@ def main() -> int:
     source_bytes = source.read_bytes()
 
     workspace = Path(os.environ.get("AGENTSCAPE_ROOT", "/workspace/wk/AgentScape"))
-    hub = workspace / "providers" / "modal" / "object3d-agent"
+    hub = workspace / "providers" / "modal" / "inference-hub"
     sys.path.insert(0, str(hub))
     from agent import modal_client, rembg_preprocess  # noqa: PLC0415
 
