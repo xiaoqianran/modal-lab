@@ -8,4 +8,4 @@
 | 集合 | https://huggingface.co/collections/stabilityai/stable-audio-3 |
 | 许可 | Stability AI Community License + Gemma ToU |
 
-镜像 build 时 `git clone` 并 pin commit（见 `modal_app.py` 中 `UPSTREAM_COMMIT`）。
+镜像 build 时 `git clone` 并 pin commit（见 `app.py` 中 `UPSTREAM_COMMIT`）。
