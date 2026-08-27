@@ -169,6 +169,7 @@ Modal Volume                  future upstream flags
 022-hunyuan3d-2.1
 023-a-spar3d
 023-b-sf3d
+026-chatterbox
 027-qwen3-tts
 028-fish-s2
 029-voxcpm2

@@ -12,10 +12,12 @@ Modal 官方例: https://modal.com/docs/examples/chatterbox_tts
 
 from __future__ import annotations
 
+import argparse
 import inspect
 import json
 import os
 import shutil
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -542,78 +544,159 @@ SMOKE_TURBO = (
 )
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="026 Chatterbox on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("check", help="远程检查模型 / prompts / outputs Volume")
+
+    download = sub.add_parser("download", help="下载指定 Chatterbox 模型")
+    download.add_argument("--force", action="store_true")
+    download.add_argument("--dry-run", action="store_true")
+    download.add_argument("--model", default=DEFAULT_MODEL)
+
+    smoke = sub.add_parser("smoke", help="固定 multilingual EN/ZH 或 Turbo smoke")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke.add_argument("--kind", default="mtl_en", choices=["mtl_en", "mtl_zh", "turbo"])
+    smoke.add_argument("--voice", default=DEFAULT_VOICE)
+    smoke.add_argument("--audio-prompt", default="")
+    smoke.add_argument("--exaggeration", type=float, default=0.5)
+    smoke.add_argument("--cfg-weight", type=float, default=0.5)
+    smoke.add_argument("--run-name", default="")
+    smoke.add_argument("--nano", action="store_true")
+
+    t2s = sub.add_parser("t2s", help="通用 Chatterbox TTS")
+    t2s.add_argument("--dry-run", action="store_true")
+    t2s.add_argument("--gpu", default=DEFAULT_GPU)
+    t2s.add_argument("--model", default=DEFAULT_MODEL)
+    t2s.add_argument("--text", required=True)
+    t2s.add_argument("--lang", default=DEFAULT_LANG)
+    t2s.add_argument("--voice", default="")
+    t2s.add_argument("--audio-prompt", default="", help="prompts Volume 内远程 wav 路径/voice 名")
+    t2s.add_argument("--exaggeration", type=float, default=0.5)
+    t2s.add_argument("--cfg-weight", type=float, default=0.5)
+    t2s.add_argument("--run-name", default="")
+    t2s.add_argument("--nano", action="store_true")
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "026-chatterbox",
+        "app": APP_NAME,
+        "default_gpu": DEFAULT_GPU,
+        "default_model": DEFAULT_MODEL,
+        "default_voice": DEFAULT_VOICE,
+        "models": HF_REPOS,
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+        "prompts_volume": VOLUME_PROMPTS,
+        "prompt_note": "本地 inputs/voices/*.wav 使用 modal volume put 上传，不由推理命令隐式修改 Volume",
+    }
+
+
+def smoke_plan(args: argparse.Namespace) -> dict[str, Any]:
+    if args.kind == "mtl_zh":
+        model, text, lang = "multilingual", SMOKE_ZH, "zh"
+        run_name, voice = args.run_name or "smoke_mtl_zh", ""
+    elif args.kind == "turbo":
+        model, text, lang = "turbo", SMOKE_TURBO, "en"
+        run_name, voice = args.run_name or "smoke_turbo_lucy", args.voice or DEFAULT_VOICE
+    else:
+        model, text, lang = "multilingual", SMOKE_EN, "en"
+        run_name, voice = args.run_name or "smoke_mtl_en", ""
+    return {
+        "action": "smoke",
+        "gpu": args.gpu,
+        "kind": args.kind,
+        "model": model,
+        "text": text,
+        "lang": lang,
+        "voice": voice,
+        "audio_prompt": args.audio_prompt,
+        "exaggeration": args.exaggeration,
+        "cfg_weight": args.cfg_weight,
+        "run_name": run_name,
+        "nano": args.nano if model == "turbo" else False,
+    }
+
+
+def t2s_plan(args: argparse.Namespace) -> dict[str, Any]:
+    model = _norm_model(args.model)
+    return {
+        "action": "t2s",
+        "gpu": args.gpu,
+        "model": model,
+        "text": args.text.strip(),
+        "lang": args.lang,
+        "voice": args.voice,
+        "audio_prompt": args.audio_prompt,
+        "exaggeration": args.exaggeration,
+        "cfg_weight": args.cfg_weight,
+        "run_name": args.run_name,
+        "nano": args.nano if model == "turbo" else False,
+    }
+
+
 @app.local_entrypoint()
-def main(
-    action: str = "status",
-    gpu: str = DEFAULT_GPU,
-    model: str = DEFAULT_MODEL,
-    text: str = "",
-    lang: str = DEFAULT_LANG,
-    voice: str = DEFAULT_VOICE,
-    audio_prompt_path: str = "",
-    exaggeration: float = 0.5,
-    cfg_weight: float = 0.5,
-    run_name: str = "",
-    force_download: bool = False,
-    smoke_kind: str = "mtl_en",
-    nano: bool = False,
-):
-    if action == "status":
-        status_fn.remote()
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
         return
-    if action == "download":
-        download_weights.remote(force=force_download, model=model)
+    if args.command == "check":
+        print(json.dumps(status_fn.remote(), ensure_ascii=False, indent=2))
         return
-    if action == "smoke":
-        kind = smoke_kind.lower().strip()
-        if kind in ("zh", "mtl_zh", "chinese"):
-            model_use, text_use, lang_use = "multilingual", SMOKE_ZH, "zh"
-            run, voice_use = run_name or "smoke_mtl_zh", ""
-        elif kind in ("turbo", "turbo_en"):
-            model_use, text_use, lang_use = "turbo", SMOKE_TURBO, "en"
-            run, voice_use = run_name or "smoke_turbo_lucy", voice or "Lucy"
-        else:
-            model_use, text_use, lang_use = "multilingual", SMOKE_EN, "en"
-            run, voice_use = run_name or "smoke_mtl_en", ""
-        download_weights.remote(force=False, model=model_use)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            text=text_use,
-            model=model_use,
-            lang=lang_use,
-            voice=voice_use,
-            audio_prompt_path=audio_prompt_path,
-            exaggeration=exaggeration,
-            cfg_weight=cfg_weight,
-            run_name=run,
-            gpu_label=gpu,
-            nano=nano,
-        )
-        print("SMOKE_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
+    if args.command == "download":
+        try:
+            model = _norm_model(args.model)
+        except ValueError as exc:
+            raise SystemExit(str(exc)) from None
+        plan = {"action": "download", "model": model, "force": args.force}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        print(json.dumps(download_weights.remote(force=args.force, model=model), ensure_ascii=False, indent=2))
+        return
+
+    try:
+        plan = smoke_plan(args) if args.command == "smoke" else t2s_plan(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
+    if not plan["text"]:
+        raise SystemExit("t2s requires non-empty --text")
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
+        return
+
+    download_weights.remote(force=False, model=plan["model"])
+    out = generate_fn.with_options(gpu=args.gpu).remote(
+        text=plan["text"],
+        model=plan["model"],
+        lang=plan["lang"],
+        voice=plan["voice"],
+        audio_prompt_path=plan["audio_prompt"],
+        exaggeration=plan["exaggeration"],
+        cfg_weight=plan["cfg_weight"],
+        run_name=plan["run_name"],
+        gpu_label=args.gpu,
+        nano=plan["nano"],
+    )
+    label = "SMOKE_RESULT" if args.command == "smoke" else "T2S_RESULT"
+    print(label, json.dumps(out, ensure_ascii=False), flush=True)
+    if not out.get("success"):
+        raise SystemExit(2)
+    if args.command == "smoke":
         if (out.get("audio") or {}).get("duration_s", 0) < 0.5:
             raise SystemExit("smoke audio too short")
         if (out.get("audio") or {}).get("rms", 0) < 1e-4:
             raise SystemExit("smoke audio near silent")
-        return
-    if action == "t2s":
-        if not text.strip():
-            raise SystemExit("t2s requires --text")
-        download_weights.remote(force=False, model=model)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            text=text,
-            model=model,
-            lang=lang,
-            voice=voice,
-            audio_prompt_path=audio_prompt_path,
-            exaggeration=exaggeration,
-            cfg_weight=cfg_weight,
-            run_name=run_name,
-            gpu_label=gpu,
-            nano=nano,
-        )
-        print("T2S_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
-        return
-    raise SystemExit(f"unknown action {action!r}")
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])
