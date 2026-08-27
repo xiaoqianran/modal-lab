@@ -1,6 +1,6 @@
 # 005-pixal3d — Pixal3D 单图生成 3D（Modal · 单卡）
 
-[TencentARC/Pixal3D](https://github.com/TencentARC/Pixal3D)（SIGGRAPH 2026）在 Modal 上的可复现实验：  
+[TencentARC/Pixal3D](https://github.com/TencentARC/Pixal3D)（SIGGRAPH 2026）在 Modal 上的可复现实验：
 **一张参考图 → 带 PBR 贴图的 GLB**，输出只写远程 Volume。
 
 005 官版路径已迁移到 v2：一个 `app.py` 同时拥有 natten build、本地图片输入、CLI、结构化输出和 Web 下载端点。
@@ -20,9 +20,9 @@
 
 ## 看模型
 
-- 列表：https://seachenxyt--modal-lab-pixal3d-index.modal.run  
-- 最新：https://seachenxyt--modal-lab-pixal3d-download.modal.run?name=latest  
-- CLI：`modal volume get modal-lab-pixal3d-outputs meshes/latest.glb ./outputs/latest.glb`  
+- 列表：https://seachenxyt--modal-lab-pixal3d-index.modal.run
+- 最新：https://seachenxyt--modal-lab-pixal3d-download.modal.run?name=latest
+- CLI：`modal volume get modal-lab-pixal3d-outputs meshes/latest.glb ./outputs/latest.glb`
 - 本地 HTML 查看器：[`viewer/index.html`](viewer/index.html)（需先 `pull` GLB 到 `viewer/`）
 
 Volume 布局：
@@ -69,11 +69,11 @@ modal volume get modal-lab-pixal3d-outputs meshes/demo_cat.glb 005-pixal3d/viewe
 
 ## 设计取舍
 
-1. **镜像**：CUDA 12.4 + Python 3.10 + 官方 HF demo 预编译 CUDA 扩展。  
-2. **不在镜像 multi-arch 编 natten**：镜像构建慢/易抢占；A100 用 **Volume 缓存轮子**。  
-3. **ATTN_BACKEND=sdpa**：`flash_attn` 与 `flash_attn_3` 包名不一致。  
-4. **rembg**：门禁 `briaai/RMBG-2.0` → 公开 `ZhengPeng7/BiRefNet`。  
-5. **huggingface_hub < 1.0**：兼容 transformers 4.57.3。  
+1. **镜像**：CUDA 12.4 + Python 3.10 + 官方 HF demo 预编译 CUDA 扩展。
+2. **不在镜像 multi-arch 编 natten**：镜像构建慢/易抢占；A100 用 **Volume 缓存轮子**。
+3. **ATTN_BACKEND=sdpa**：`flash_attn` 与 `flash_attn_3` 包名不一致。
+4. **rembg**：门禁 `briaai/RMBG-2.0` → 公开 `ZhengPeng7/BiRefNet`。
+5. **huggingface_hub < 1.0**：兼容 transformers 4.57.3。
 6. **输出只认 Volume**。
 
 ## 许可
