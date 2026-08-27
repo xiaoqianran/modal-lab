@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
@@ -463,72 +464,130 @@ SMOKE_EN = "Hello from IndexTTS-2 on Modal lab. Industrial zero-shot speech with
 SMOKE_EMO = "这些年的时光终究是错付了……我只希望你能过得比我好一点。"
 
 
-@app.local_entrypoint()
-def main(
-    action: str = "status",
-    gpu: str = DEFAULT_GPU,
-    text: str = "",
-    run_name: str = "",
-    force_download: bool = False,
-    smoke_kind: str = "zh",
-    emo_text: str = "",
-    spk_audio: str = "",
-):
-    if action == "status":
-        status_fn.remote()
-        return
-    if action == "download":
-        download_weights.remote(force=force_download)
-        return
-    if action == "smoke":
-        kind = smoke_kind.lower().strip()
-        if kind in ("en", "english"):
-            text_use = SMOKE_EN
-            run = run_name or "smoke_en"
-            emo = ""
-            use_emo = False
-        elif kind in ("emo", "emotion", "sad"):
-            text_use = SMOKE_EMO
-            run = run_name or "smoke_emo"
-            emo = emo_text or "极度悲伤"
-            use_emo = True
-        else:
-            text_use = SMOKE_ZH
-            run = run_name or "smoke_zh"
-            emo = ""
-            use_emo = False
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="032 IndexTTS-2 on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("check", help="远程检查权重 / prompt / outputs Volume")
 
-        download_weights.remote(force=False)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            text=text_use,
-            run_name=run,
-            gpu_label=gpu,
-            spk_audio=spk_audio,
-            emo_text=emo,
-            use_emo_text=use_emo,
-        )
-        print("SMOKE_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
+    download = sub.add_parser("download", help="下载 IndexTTS-2 权重")
+    download.add_argument("--force", action="store_true")
+    download.add_argument("--dry-run", action="store_true")
+
+    smoke = sub.add_parser("smoke", help="固定 ZH / EN / emotion smoke")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke.add_argument("--kind", default="zh", choices=["zh", "en", "emo"])
+    smoke.add_argument("--run-name", default="")
+    smoke.add_argument("--emo-text", default="")
+    smoke.add_argument("--spk-audio", default="", help="prompts Volume 内远程 wav 路径")
+
+    t2s = sub.add_parser("t2s", help="zero-shot Text-to-Speech")
+    t2s.add_argument("--dry-run", action="store_true")
+    t2s.add_argument("--gpu", default=DEFAULT_GPU)
+    t2s.add_argument("--text", required=True)
+    t2s.add_argument("--emo-text", default="")
+    t2s.add_argument("--spk-audio", default="", help="prompts Volume 内远程 wav 路径")
+    t2s.add_argument("--run-name", default="")
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "032-indextts2",
+        "app": APP_NAME,
+        "default_gpu": DEFAULT_GPU,
+        "default_model": DEFAULT_MODEL,
+        "hf_repo": HF_REPO,
+        "prompt_wav": PROMPT_WAV_NAME,
+        "prompt_note": "默认需要 prompts Volume /ref.wav；上传使用 modal volume put",
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+        "prompts_volume": VOLUME_PROMPTS,
+    }
+
+
+def smoke_plan(args: argparse.Namespace) -> dict[str, Any]:
+    if args.kind == "en":
+        text, run_name, emo_text, use_emo = SMOKE_EN, args.run_name or "smoke_en", "", False
+    elif args.kind == "emo":
+        text = SMOKE_EMO
+        run_name = args.run_name or "smoke_emo"
+        emo_text = args.emo_text or "极度悲伤"
+        use_emo = True
+    else:
+        text, run_name, emo_text, use_emo = SMOKE_ZH, args.run_name or "smoke_zh", "", False
+    return {
+        "action": "smoke",
+        "gpu": args.gpu,
+        "kind": args.kind,
+        "text": text,
+        "run_name": run_name,
+        "spk_audio": args.spk_audio,
+        "emo_text": emo_text,
+        "use_emo_text": use_emo,
+    }
+
+
+def t2s_plan(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "action": "t2s",
+        "gpu": args.gpu,
+        "text": args.text.strip(),
+        "run_name": args.run_name,
+        "spk_audio": args.spk_audio,
+        "emo_text": args.emo_text,
+        "use_emo_text": bool(args.emo_text),
+    }
+
+
+@app.local_entrypoint()
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
+        return
+    if args.command == "check":
+        print(json.dumps(status_fn.remote(), ensure_ascii=False, indent=2))
+        return
+    if args.command == "download":
+        plan = {"action": "download", "force": args.force}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        print(json.dumps(download_weights.remote(force=args.force), ensure_ascii=False, indent=2))
+        return
+
+    plan = smoke_plan(args) if args.command == "smoke" else t2s_plan(args)
+    if not plan["text"]:
+        raise SystemExit("t2s requires non-empty --text")
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
+        return
+
+    download_weights.remote(force=False)
+    out = generate_fn.with_options(gpu=args.gpu).remote(
+        text=plan["text"],
+        run_name=plan["run_name"],
+        gpu_label=args.gpu,
+        spk_audio=plan["spk_audio"],
+        emo_text=plan["emo_text"],
+        use_emo_text=plan["use_emo_text"],
+    )
+    label = "SMOKE_RESULT" if args.command == "smoke" else "T2S_RESULT"
+    print(label, json.dumps(out, ensure_ascii=False), flush=True)
+    if not out.get("success"):
+        raise SystemExit(2)
+    if args.command == "smoke":
         if (out.get("audio") or {}).get("duration_s", 0) < 0.5:
             raise SystemExit("smoke audio too short")
         if (out.get("audio") or {}).get("rms", 0) < 1e-4:
             raise SystemExit("smoke audio near silent")
-        return
-    if action == "t2s":
-        if not text.strip():
-            raise SystemExit("t2s requires --text")
-        download_weights.remote(force=False)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            text=text,
-            run_name=run_name,
-            gpu_label=gpu,
-            spk_audio=spk_audio,
-            emo_text=emo_text,
-            use_emo_text=bool(emo_text),
-        )
-        print("T2S_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
-        return
-    raise SystemExit(f"unknown action {action!r}")
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])

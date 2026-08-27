@@ -172,6 +172,7 @@ Modal Volume                  future upstream flags
 027-qwen3-tts
 030-vibevoice
 031-cosyvoice3
+032-indextts2
 033-f5tts
 034-higgs
 ```
