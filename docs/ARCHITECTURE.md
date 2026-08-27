@@ -165,9 +165,16 @@ Modal Volume                  future upstream flags
 
 ```text
 001-longcat-video
+002-unlimited-ocr
+003-mineru
+004-minimax-h3
+005-pixal3d
+005-v2-pixal3d-l40s
+005-v3-pixal3d-pro6000
 006-hunyuanworld-mirror
 007-worldmirror-2.0
 008-hy-pano
+009-hy-worldgen
 010-ace-step-1.5
 011-stable-audio-3
 012-levo-2
@@ -175,10 +182,6 @@ Modal Volume                  future upstream flags
 014-diffrhythm-2
 015-xiaomi-robotics-1-robocasa365
 016-musicgen
-004-minimax-h3
-005-pixal3d
-005-v2-pixal3d-l40s
-005-v3-pixal3d-pro6000
 020-triposr
 021-trellis2
 022-hunyuan3d-2.1

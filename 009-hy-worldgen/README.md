@@ -3,6 +3,8 @@
 [HY-World 2.0](https://github.com/Tencent-Hunyuan/HY-World-2.0) · **World Generation**  
 全景 → 轨迹（**Qwen3-VL-8B**）→ WorldStereo 扩帧 → WorldMirror 对齐 → 3DGS → **3D 世界**
 
+009 已迁移到 v2：一个 `app.py` 同时拥有 pipeline planning、VLM 生命周期、CLI 与 Modal remote functions；`run.py -> modal_app.py` 已删除。
+
 > 前置：  
 > - **007** WorldMirror 2.0（重建权重 / Stage3 对齐）  
 > - **008** HY-Pano（产出 `panorama.png`）  
@@ -61,6 +63,39 @@ python main.py 009 stage12 --gpu H100:2 --vlm-mode split
 # 全 pipeline smoke（含 3–5；Stage3 仍最贵）
 python main.py 009 smoke --gpu RTX-PRO-6000 --nframe 16 --max-steps 4000
 ```
+
+## v2 边界
+
+实验入口只拥有世界生成领域动作：
+
+```text
+status
+prepare
+download
+stage 1..5
+stage12
+smoke
+```
+
+旧 `--detach` 不再作为实验参数，因为它只是 Modal 运行方式。需要 detached execution 时直接：
+
+```bash
+cd 009-hy-worldgen
+modal run --detach app.py stage12 --gpu RTX-PRO-6000 --nframe 16
+```
+
+`stage12` 保留为真实 workflow 边界：Stage1 和 Stage2 共用一次 Qwen3-VL 生命周期；它不是 CLI 包装。
+
+## 无成本验证
+
+```bash
+python -m unittest discover -s 009-hy-worldgen/tests -v
+python -m py_compile 009-hy-worldgen/app.py
+python main.py 009 status
+python main.py 009 smoke --dry-run
+```
+
+以上验证不启动付费 GPU。
 
 ## 官方 flags 对照
 

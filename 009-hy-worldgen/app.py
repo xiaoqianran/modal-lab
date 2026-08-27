@@ -8,10 +8,12 @@ Stage 3–5 unchanged (WorldStereo-dmd → GS).
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
 import subprocess
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -1584,8 +1586,7 @@ def run_stage12(
     return summary
 
 
-@app.function(image=download_image, timeout=60)
-def status() -> dict[str, Any]:
+def status_payload() -> dict[str, Any]:
     return {
         "app": APP_NAME,
         "version": "v8.2",
@@ -1600,11 +1601,11 @@ def status() -> dict[str, Any]:
         "pipeline": [
             "prepare (008 pano)",
             "download vlm | worldstereo-dmd | worldmirror",
-            "1 traj_generate + Qwen3-VL-8B (vLLM)",
+            "1 traj_generate + Qwen3-VL-8B",
             "2 traj_render + VLM captions",
             "3 worldstereo-memory-dmd",
             "4 gen_gs_data",
-            "5 world_gs_trainer → ply",
+            "5 world_gs_trainer -> ply",
         ],
         "stage12": "one VLM lifecycle for stage1+2 (recommended)",
         "smoke_flags": {
@@ -1617,126 +1618,174 @@ def status() -> dict[str, Any]:
             "apply_up_route": True,
             "apply_recon_iteration": False,
         },
+        "detach": "use native: modal run --detach app.py <command> ...",
     }
 
 
+@app.function(image=download_image, timeout=60)
+def status() -> dict[str, Any]:
+    return status_payload()
+
+
+def _add_common_stage_flags(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--gpu", default=DEFAULT_GPU)
+    parser.add_argument("--scene", default="scene_from_008")
+    parser.add_argument("--from-008", default="smoke_qwen", dest="from_008")
+    parser.add_argument("--nframe", type=int, default=16)
+    parser.add_argument("--split-view-num", type=int, default=1)
+    parser.add_argument("--wonder-topk", type=int, default=1)
+    parser.add_argument("--recon-topk", type=int, default=0)
+    parser.add_argument("--force-vlm", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--apply-nav-traj", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--apply-up-route", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--apply-recon-iteration", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--vlm-mode", choices=["share", "split"], default="share")
+    parser.add_argument("--vlm-mem-util", type=float, default=VLM_DEFAULT_MEM_UTIL)
+    parser.add_argument("--vlm-max-model-len", type=int, default=VLM_MAX_MODEL_LEN)
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="009 HY-World 2.0 world generation")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印 pipeline / VLM 固定信息；纯本地")
+
+    prepare = sub.add_parser("prepare", help="把 008 panorama 导入 scene")
+    prepare.add_argument("--from-008", default="smoke_qwen", dest="from_008")
+    prepare.add_argument("--scene", default="scene_from_008")
+    prepare.add_argument("--dry-run", action="store_true")
+
+    download = sub.add_parser("download", help="下载 VLM / WorldStereo / WorldMirror 权重")
+    download.add_argument("--which", default="vlm")
+    download.add_argument("--dry-run", action="store_true")
+
+    stage = sub.add_parser("stage", help="运行单个 stage 1..5")
+    stage.add_argument("n", type=int, choices=[1,2,3,4,5])
+    _add_common_stage_flags(stage)
+    stage.add_argument("--max-steps", type=int, default=4000)
+    stage.add_argument("--keep-vlm", action=argparse.BooleanOptionalAction, default=False)
+
+    stage12 = sub.add_parser("stage12", help="Stage1+2 共用一次 VLM lifecycle")
+    _add_common_stage_flags(stage12)
+
+    smoke = sub.add_parser("smoke", help="prepare + download + stage12 + stage3..5")
+    _add_common_stage_flags(smoke)
+    smoke.add_argument("--max-steps", type=int, default=4000)
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def common_stage_plan(args: argparse.Namespace) -> dict[str, Any]:
+    scene = args.scene.strip()
+    from_008 = args.from_008.strip()
+    if not scene or not from_008:
+        raise ValueError("scene / from-008 不能为空")
+    if args.nframe <= 0 or args.split_view_num <= 0:
+        raise ValueError("nframe / split-view-num 必须 > 0")
+    if args.wonder_topk < 0 or args.recon_topk < 0:
+        raise ValueError("wonder-topk / recon-topk 必须 >= 0")
+    if not 0 < args.vlm_mem_util < 1:
+        raise ValueError("vlm-mem-util 必须在 0..1 之间")
+    if args.vlm_max_model_len <= 0:
+        raise ValueError("vlm-max-model-len 必须 > 0")
+    return {
+        "gpu": args.gpu,
+        "scene": scene,
+        "from_008": from_008,
+        "split_view_num": args.split_view_num,
+        "nframe": args.nframe,
+        "wonder_topk": args.wonder_topk,
+        "recon_topk": args.recon_topk,
+        "force_vlm": args.force_vlm,
+        "apply_nav_traj": args.apply_nav_traj,
+        "apply_up_route": args.apply_up_route,
+        "apply_recon_iteration": args.apply_recon_iteration,
+        "vlm_mode": args.vlm_mode,
+        "vlm_mem_util": args.vlm_mem_util,
+        "vlm_max_model_len": args.vlm_max_model_len,
+    }
+
+
+def stage_plan(args: argparse.Namespace) -> dict[str, Any]:
+    plan = {"action": args.command, **common_stage_plan(args)}
+    if args.command == "stage":
+        if args.max_steps <= 0:
+            raise ValueError("--max-steps 必须 > 0")
+        plan.update(stage=args.n, max_steps=args.max_steps, keep_vlm=args.keep_vlm)
+    elif args.command == "smoke":
+        if args.max_steps <= 0:
+            raise ValueError("--max-steps 必须 > 0")
+        plan["max_steps"] = args.max_steps
+        plan["pipeline"] = ["prepare", "download:vlm", "download:worldstereo-dmd", "stage12", "stage3", "stage4", "stage5"]
+    return plan
+
+
+def _stage12_kwargs(plan: dict[str, Any]) -> dict[str, Any]:
+    return {key: plan[key] for key in (
+        "scene", "from_008", "split_view_num", "nframe", "wonder_topk", "recon_topk",
+        "force_vlm", "apply_nav_traj", "apply_up_route", "apply_recon_iteration",
+        "vlm_mode", "vlm_mem_util", "vlm_max_model_len",
+    )}
+
+
+def _stage_kwargs(plan: dict[str, Any]) -> dict[str, Any]:
+    kwargs = _stage12_kwargs(plan)
+    kwargs.update(stage=plan["stage"], max_steps=plan["max_steps"], keep_vlm=plan["keep_vlm"])
+    return kwargs
+
 
 @app.local_entrypoint()
-def main(
-    action: str = "status",
-    stage: int = 1,
-    scene: str = "scene_from_008",
-    from_008: str = "smoke_qwen",
-    gpu: str = DEFAULT_GPU,
-    which: str = "worldstereo-dmd",
-    max_steps: int = 4000,
-    split_view_num: int = 1,
-    nframe: int = 16,
-    wonder_topk: int = 1,
-    recon_topk: int = 0,
-    force_vlm: bool = True,
-    apply_nav_traj: bool = True,
-    apply_up_route: bool = True,
-    apply_recon_iteration: bool = False,
-    vlm_mode: str = "share",
-    vlm_mem_util: float = VLM_DEFAULT_MEM_UTIL,
-    vlm_max_model_len: int = VLM_MAX_MODEL_LEN,
-    keep_vlm: bool = False,
-):
-    action = action.lower().strip()
-    if action == "status":
-        print(json.dumps(status.remote(), indent=2))
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(status_payload(), ensure_ascii=False, indent=2))
         return
-    if action == "prepare":
-        print(json.dumps(prepare_scene.remote(from_008_run=from_008, scene_name=scene), indent=2))
-        return
-    if action == "download":
-        print(json.dumps(download_weights.remote(which=which), indent=2))
-        return
-    if action in ("stage12", "stage1+2", "s12"):
-        fn = run_stage12.with_options(gpu=gpu)
-        print(json.dumps(fn.remote(
-            scene=scene,
-            from_008=from_008,
-            gpu_label=gpu,
-            split_view_num=split_view_num,
-            nframe=nframe,
-            wonder_topk=wonder_topk,
-            recon_topk=recon_topk,
-            force_vlm=force_vlm,
-            apply_nav_traj=apply_nav_traj,
-            apply_up_route=apply_up_route,
-            apply_recon_iteration=apply_recon_iteration,
-            vlm_mode=vlm_mode,
-            vlm_mem_util=vlm_mem_util,
-            vlm_max_model_len=vlm_max_model_len,
-        ), indent=2))
-        return
-    if action == "stage":
-        fn = run_stage.with_options(gpu=gpu)
-        print(json.dumps(fn.remote(
-            stage=stage,
-            scene=scene,
-            from_008=from_008,
-            gpu_label=gpu,
-            split_view_num=split_view_num,
-            nframe=nframe,
-            wonder_topk=wonder_topk,
-            recon_topk=recon_topk,
-            max_steps=max_steps,
-            force_vlm=force_vlm,
-            apply_nav_traj=apply_nav_traj,
-            apply_up_route=apply_up_route,
-            apply_recon_iteration=apply_recon_iteration,
-            vlm_mode=vlm_mode,
-            vlm_mem_util=vlm_mem_util,
-            vlm_max_model_len=vlm_max_model_len,
-            keep_vlm=keep_vlm,
-        ), indent=2))
-        return
-    if action == "smoke":
-        prepare_scene.remote(from_008_run=from_008, scene_name=scene)
-        download_weights.remote(which="vlm")
-        download_weights.remote(which="worldstereo-dmd")
-        # Stage 1+2 with single VLM lifecycle
-        s12 = run_stage12.with_options(gpu=gpu).remote(
-            scene=scene,
-            from_008=from_008,
-            gpu_label=gpu,
-            split_view_num=split_view_num,
-            nframe=nframe,
-            wonder_topk=wonder_topk,
-            recon_topk=recon_topk,
-            force_vlm=force_vlm,
-            apply_nav_traj=apply_nav_traj,
-            apply_up_route=apply_up_route,
-            apply_recon_iteration=apply_recon_iteration,
-            vlm_mode=vlm_mode,
-            vlm_mem_util=vlm_mem_util,
-            vlm_max_model_len=vlm_max_model_len,
-        )
-        results = [s12]
-        if not s12.get("ok"):
-            print(json.dumps({"pipeline": results}, indent=2))
-            return
-        fn = run_stage.with_options(gpu=gpu)
-        for s in (3, 4, 5):
-            print(f"\n======== STAGE {s} ========", flush=True)
+    if args.command == "prepare":
+        plan = {"action":"prepare", "from_008":args.from_008, "scene":args.scene}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2)); return
+        print(json.dumps(prepare_scene.remote(from_008_run=args.from_008, scene_name=args.scene), ensure_ascii=False, indent=2)); return
+    if args.command == "download":
+        plan = {"action":"download", "which":args.which}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2)); return
+        print(json.dumps(download_weights.remote(which=args.which), ensure_ascii=False, indent=2)); return
+
+    try:
+        plan = stage_plan(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2)); return
+
+    if args.command == "stage12":
+        result = run_stage12.with_options(gpu=plan["gpu"]).remote(gpu_label=plan["gpu"], **_stage12_kwargs(plan))
+        print(json.dumps(result, ensure_ascii=False, indent=2)); return
+    if args.command == "stage":
+        result = run_stage.with_options(gpu=plan["gpu"]).remote(gpu_label=plan["gpu"], **_stage_kwargs(plan))
+        print(json.dumps(result, ensure_ascii=False, indent=2)); return
+
+    prepare_scene.remote(from_008_run=plan["from_008"], scene_name=plan["scene"])
+    download_weights.remote(which="vlm")
+    download_weights.remote(which="worldstereo-dmd")
+    s12 = run_stage12.with_options(gpu=plan["gpu"]).remote(gpu_label=plan["gpu"], **_stage12_kwargs(plan))
+    results = [s12]
+    if s12.get("ok"):
+        fn = run_stage.with_options(gpu=plan["gpu"])
+        for stage_number in (3,4,5):
             meta = fn.remote(
-                stage=s,
-                scene=scene,
-                from_008=from_008,
-                gpu_label=gpu,
-                split_view_num=split_view_num,
-                nframe=nframe,
-                max_steps=max_steps,
+                stage=stage_number, scene=plan["scene"], from_008=plan["from_008"],
+                gpu_label=plan["gpu"], split_view_num=plan["split_view_num"],
+                nframe=plan["nframe"], max_steps=plan["max_steps"],
             )
             results.append(meta)
             if not meta.get("ok"):
                 break
-        print(json.dumps({"pipeline": results}, indent=2))
-        return
-    raise SystemExit(
-        f"unknown action {action}. Use status|prepare|download|stage|stage12|smoke"
-    )
+    print(json.dumps({"pipeline": results}, ensure_ascii=False, indent=2))
 
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])
