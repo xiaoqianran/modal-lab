@@ -16,9 +16,11 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -411,56 +413,118 @@ SMOKE_PROMPT = (
 )
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="016 MusicGen on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("check", help="远程检查权重 / outputs Volume")
+
+    download = sub.add_parser("download", help="下载指定 MusicGen 模型")
+    download.add_argument("--force", action="store_true")
+    download.add_argument("--dry-run", action="store_true")
+    download.add_argument("--model", default=DEFAULT_MODEL)
+
+    smoke = sub.add_parser("smoke", help="固定 lo-fi benchmark")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke.add_argument("--model", default=DEFAULT_MODEL)
+    smoke.add_argument("--duration", type=float, default=15.0)
+    smoke.add_argument("--seed", type=int, default=42)
+    smoke.add_argument("--run-name", default="smoke_lofi")
+    smoke.add_argument("--guidance-scale", type=float, default=3.0)
+    smoke.add_argument("--temperature", type=float, default=1.0)
+
+    t2a = sub.add_parser("t2a", help="Text-to-Audio")
+    t2a.add_argument("--dry-run", action="store_true")
+    t2a.add_argument("--gpu", default=DEFAULT_GPU)
+    t2a.add_argument("--model", default=DEFAULT_MODEL)
+    t2a.add_argument("--prompt", required=True)
+    t2a.add_argument("--duration", type=float, default=15.0)
+    t2a.add_argument("--seed", type=int, default=42)
+    t2a.add_argument("--run-name", default="")
+    t2a.add_argument("--guidance-scale", type=float, default=3.0)
+    t2a.add_argument("--temperature", type=float, default=1.0)
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "016-musicgen",
+        "app": APP_NAME,
+        "default_gpu": DEFAULT_GPU,
+        "default_model": DEFAULT_MODEL,
+        "models": HF_REPOS,
+        "license": "CC-BY-NC 4.0",
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+    }
+
+
+def generation_plan(args: argparse.Namespace) -> dict[str, Any]:
+    model = _norm_model(args.model)
+    prompt = SMOKE_PROMPT if args.command == "smoke" else args.prompt.strip()
+    if not prompt:
+        raise ValueError("prompt 不能为空")
+    return {
+        "action": args.command,
+        "gpu": args.gpu,
+        "model": model,
+        "prompt": prompt,
+        "duration": args.duration,
+        "seed": args.seed,
+        "run_name": args.run_name,
+        "guidance_scale": args.guidance_scale,
+        "temperature": args.temperature,
+    }
+
+
 @app.local_entrypoint()
-def main(
-    action: str = "status",
-    gpu: str = DEFAULT_GPU,
-    model: str = DEFAULT_MODEL,
-    prompt: str = "",
-    duration: float = 15.0,
-    seed: int = 42,
-    run_name: str = "",
-    force_download: bool = False,
-    guidance_scale: float = 3.0,
-    temperature: float = 1.0,
-):
-    if action == "status":
-        status_fn.remote()
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
         return
-    if action == "download":
-        download_weights.remote(force=force_download, model=model)
+    if args.command == "check":
+        print(json.dumps(status_fn.remote(), ensure_ascii=False, indent=2))
         return
-    if action == "smoke":
-        download_weights.remote(force=False, model=model)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            prompt=SMOKE_PROMPT,
-            duration=float(duration),
-            seed=int(seed),
-            model=model,
-            run_name=run_name or "smoke_lofi",
-            gpu_label=gpu,
-            guidance_scale=guidance_scale,
-            temperature=temperature,
-        )
-        print("SMOKE_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
+
+    try:
+        if args.command == "download":
+            model = _norm_model(args.model)
+            plan = {"action": "download", "model": model, "force": args.force}
+            if args.dry_run:
+                print(json.dumps(plan, ensure_ascii=False, indent=2))
+                return
+            print(json.dumps(download_weights.remote(force=args.force, model=model), ensure_ascii=False, indent=2))
+            return
+        plan = generation_plan(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
+
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
         return
-    if action == "t2a":
-        download_weights.remote(force=False, model=model)
-        p = prompt.strip() or SMOKE_PROMPT
-        out = generate_fn.with_options(gpu=gpu).remote(
-            prompt=p,
-            duration=float(duration),
-            seed=int(seed),
-            model=model,
-            run_name=run_name or "",
-            gpu_label=gpu,
-            guidance_scale=guidance_scale,
-            temperature=temperature,
-        )
-        print("T2A_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
-        return
-    raise SystemExit(f"unknown action {action}")
+
+    download_weights.remote(force=False, model=plan["model"])
+    out = generate_fn.with_options(gpu=args.gpu).remote(
+        prompt=plan["prompt"],
+        duration=plan["duration"],
+        seed=plan["seed"],
+        model=plan["model"],
+        run_name=plan["run_name"],
+        gpu_label=args.gpu,
+        guidance_scale=plan["guidance_scale"],
+        temperature=plan["temperature"],
+    )
+    label = "SMOKE_RESULT" if args.command == "smoke" else "T2A_RESULT"
+    print(label, json.dumps(out, ensure_ascii=False), flush=True)
+    if not out.get("success"):
+        raise SystemExit(2)
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])
