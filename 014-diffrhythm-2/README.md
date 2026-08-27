@@ -1,37 +1,62 @@
 # 014 · DiffRhythm 2
 
-ASLP-lab **DiffRhythm 2**（谛韵）— 半自回归扩散全曲生成。Apache 2.0。
+ASLP-lab **DiffRhythm 2**（谛韵）— 半自回归扩散全曲生成 · Apache-2.0 · 默认 L4。
 
-| 项 | 值 |
-|----|-----|
-| 槽位 | **014**（原 MusicGen 计划已迁至 016） |
-| 模型 | `ASLP-lab/DiffRhythm2` + MuQ-MuLan |
-| 默认 GPU | **L4**（快且便宜） |
-| smoke | 60s · 16 steps · text style |
+014 已迁移到 v2：一个 `app.py` 同时拥有本地歌词输入、CLI 与 Modal remote functions，不再使用 `run.py -> modal_app.py` 包装层。
 
-## 快速开始
+## 用法
 
 ```bash
-python run.py download
-python run.py smoke                 # L4 · 60s
-python run.py generate \
-  --lyrics-file examples/smoke_en.lrc \
-  --style "Pop, Piano, Bass, Drums, Happy" \
+python main.py 014 status
+python main.py 014 check
+python main.py 014 download --dry-run --force
+python main.py 014 download
+
+python main.py 014 smoke --dry-run --steps 12 --cfg-strength 1.8
+python main.py 014 smoke
+
+python main.py 014 generate --dry-run \
+  --lyrics-file 014-diffrhythm-2/examples/smoke_en.lrc \
+  --style 'Pop, Piano, Bass, Drums, Happy' \
   --max-secs 120
 ```
 
-## 与其它音乐号
+`generate` 的歌词输入是本地职责，因此由同一个 `app.py` 直接读取：
 
 ```text
-010 ACE · 011 SA3 · 012 LeVo · 013 YuE · 014 DiffRhythm2 · 016 MusicGen
+--lyrics-file PATH
+       或
+--lyrics '...'
 ```
 
-## Gallery
+这不是额外 runner；Modal `local_entrypoint` 本来就在客户端执行，可以直接处理本地文件。
 
-[`gallery/index.html`](gallery/index.html)
+## 生成控制
 
-## Smoke（L4 · 60s）
+```text
+style
+max_secs
+steps
+cfg_strength
+seed
+```
 
-| 墙钟 | 生成 | 估费 | VRAM |
-|------|------|------|------|
-| **70.8 s** | 22.0 s | **~$0.016** | 7.7 GB |
+## Volume
+
+v2 不再包装 `ls/pull`：
+
+```bash
+modal volume ls modal-lab-diffrhythm-2-outputs runs
+modal volume get modal-lab-diffrhythm-2-outputs runs/smoke_en60 ./014-diffrhythm-2/outputs
+```
+
+## 测试
+
+```bash
+python -m unittest discover -s 014-diffrhythm-2/tests -v
+python -m py_compile 014-diffrhythm-2/app.py
+python main.py 014 status
+python main.py 014 smoke --dry-run
+```
+
+以上测试不启动付费 GPU。

@@ -14,9 +14,11 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -579,42 +581,131 @@ def generate_fn(
     )
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="014 DiffRhythm 2 on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("check", help="远程检查权重 / outputs Volume")
+
+    download = sub.add_parser("download", help="下载 DiffRhythm2 + MuQ 权重")
+    download.add_argument("--force", action="store_true")
+    download.add_argument("--dry-run", action="store_true")
+
+    smoke = sub.add_parser("smoke", help="固定 English 60s benchmark")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke.add_argument("--style", default=SMOKE_STYLE)
+    smoke.add_argument("--max-secs", type=float, default=60.0)
+    smoke.add_argument("--steps", type=int, default=16)
+    smoke.add_argument("--cfg-strength", type=float, default=2.0)
+    smoke.add_argument("--seed", type=int, default=42)
+    smoke.add_argument("--run-name", default="smoke_en60")
+
+    generate = sub.add_parser("generate", help="lyrics + style -> full song")
+    generate.add_argument("--dry-run", action="store_true")
+    generate.add_argument("--gpu", default=DEFAULT_GPU)
+    lyrics = generate.add_mutually_exclusive_group(required=True)
+    lyrics.add_argument("--lyrics-file", type=Path)
+    lyrics.add_argument("--lyrics")
+    generate.add_argument("--style", required=True)
+    generate.add_argument("--max-secs", type=float, default=120.0)
+    generate.add_argument("--steps", type=int, default=16)
+    generate.add_argument("--cfg-strength", type=float, default=2.0)
+    generate.add_argument("--seed", type=int, default=42)
+    generate.add_argument("--run-name", default="")
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "014-diffrhythm-2",
+        "app": APP_NAME,
+        "default_gpu": DEFAULT_GPU,
+        "model": REPO_ID,
+        "license": "Apache-2.0",
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+        "smoke": {"max_secs": 60.0, "steps": 16, "cfg_strength": 2.0},
+    }
+
+
+def _lyrics_from_args(args: argparse.Namespace) -> str:
+    if getattr(args, "lyrics_file", None) is not None:
+        try:
+            return args.lyrics_file.read_text(encoding="utf-8").strip()
+        except OSError as exc:
+            raise ValueError(f"无法读取 lyrics file: {args.lyrics_file}: {exc}") from None
+    return (getattr(args, "lyrics", "") or "").replace("\\n", "\n").strip()
+
+
+def generation_plan(args: argparse.Namespace) -> dict[str, Any]:
+    if args.command == "smoke":
+        lyrics = SMOKE_LYRICS
+        style = args.style
+    else:
+        lyrics = _lyrics_from_args(args)
+        style = args.style.strip()
+    if not lyrics:
+        raise ValueError("lyrics 不能为空")
+    if not style:
+        raise ValueError("style 不能为空")
+    return {
+        "action": args.command,
+        "gpu": args.gpu,
+        "lyrics": lyrics,
+        "style_prompt": style,
+        "run_name": args.run_name,
+        "max_secs": args.max_secs,
+        "steps": args.steps,
+        "cfg_strength": args.cfg_strength,
+        "seed": args.seed,
+    }
+
+
 @app.local_entrypoint()
-def main(
-    action: str = "status",
-    gpu: str = DEFAULT_GPU,
-    lyrics: str = "",
-    style_prompt: str = "",
-    run_name: str = "",
-    max_secs: float = 60.0,
-    steps: int = 16,
-    cfg_strength: float = 2.0,
-    seed: int = 42,
-    force_download: bool = False,
-):
-    if action == "status":
-        status_fn.remote()
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
         return
-    if action == "download":
-        download_weights.remote(force=force_download)
+    if args.command == "check":
+        print(json.dumps(status_fn.remote(), ensure_ascii=False, indent=2))
         return
-    if action in ("smoke", "generate"):
-        download_weights.remote(force=False)
-        ly = (lyrics.strip() or SMOKE_LYRICS).replace("\\n", "\n")
-        st = style_prompt.strip() or SMOKE_STYLE
-        rn = run_name or ("smoke_en60" if action == "smoke" else "")
-        out = generate_fn.with_options(gpu=gpu).remote(
-            lyrics=ly,
-            style_prompt=st,
-            run_name=rn,
-            gpu_label=gpu,
-            max_secs=float(max_secs),
-            steps=int(steps),
-            cfg_strength=float(cfg_strength),
-            seed=int(seed),
-        )
-        print("RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
+    if args.command == "download":
+        plan = {"action": "download", "force": args.force}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        print(json.dumps(download_weights.remote(force=args.force), ensure_ascii=False, indent=2))
         return
-    raise SystemExit(f"unknown action {action}")
+
+    try:
+        plan = generation_plan(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
+        return
+
+    download_weights.remote(force=False)
+    out = generate_fn.with_options(gpu=args.gpu).remote(
+        lyrics=plan["lyrics"],
+        style_prompt=plan["style_prompt"],
+        run_name=plan["run_name"],
+        gpu_label=args.gpu,
+        max_secs=plan["max_secs"],
+        steps=plan["steps"],
+        cfg_strength=plan["cfg_strength"],
+        seed=plan["seed"],
+    )
+    print("RESULT", json.dumps(out, ensure_ascii=False), flush=True)
+    if not out.get("success"):
+        raise SystemExit(2)
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])

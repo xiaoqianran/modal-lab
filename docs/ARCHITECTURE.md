@@ -163,6 +163,7 @@ Modal Volume                  future upstream flags
 
 ```text
 001-longcat-video
+014-diffrhythm-2
 005-v2-pixal3d-l40s
 005-v3-pixal3d-pro6000
 020-triposr
