@@ -16,9 +16,11 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -529,70 +531,151 @@ def list_outputs_fn() -> dict[str, Any]:
     return out
 
 
-@app.local_entrypoint()
-def main(
-    action: str = "status",
-    gpu: str = DEFAULT_GPU,
-    prompt: str = "",
-    duration: float = 20.0,
-    steps: int = 8,
-    cfg_scale: float = 1.0,
-    seed: int = 42,
-    model: str = DEFAULT_MODEL,
-    run_name: str = "",
-    audio_format: str = "flac",
-    force_download: bool = False,
-    negative_prompt: str = "",
-):
-    """actions: status | download | smoke | t2a | list-outputs"""
-    action = action.strip().lower().replace("_", "-")
+SMOKE_PROMPT = (
+    "Uplifting house music instrumental, sunny festival energy, "
+    "punchy four-on-the-floor kick, warm pads, 124 BPM"
+)
 
-    if action == "status":
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="011 Stable Audio 3 on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("check", help="远程检查权重 / outputs Volume")
+    sub.add_parser("list-outputs", help="结构化汇总远程 run meta")
+
+    download = sub.add_parser("download", help="下载 gated medium 权重")
+    download.add_argument("--force", action="store_true")
+    download.add_argument("--dry-run", action="store_true")
+
+    smoke = sub.add_parser("smoke", help="固定 20s house · 8 steps benchmark")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke.add_argument("--duration", type=float, default=20.0)
+    smoke.add_argument("--seed", type=int, default=42)
+    smoke.add_argument("--run-name", default="smoke_house")
+
+    t2a = sub.add_parser("t2a", help="Text-to-Audio")
+    t2a.add_argument("--dry-run", action="store_true")
+    t2a.add_argument("--gpu", default=DEFAULT_GPU)
+    t2a.add_argument("--prompt", required=True)
+    t2a.add_argument("--negative-prompt", default="")
+    t2a.add_argument("--duration", type=float, default=30.0)
+    t2a.add_argument("--steps", type=int, default=8)
+    t2a.add_argument("--cfg-scale", type=float, default=1.0)
+    t2a.add_argument("--seed", type=int, default=42)
+    t2a.add_argument("--model", default=DEFAULT_MODEL)
+    t2a.add_argument("--format", dest="audio_format", choices=["flac", "wav"], default="flac")
+    t2a.add_argument("--run-name", default="")
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "011-stable-audio-3",
+        "app": APP_NAME,
+        "default_gpu": DEFAULT_GPU,
+        "default_model": DEFAULT_MODEL,
+        "hf_repo": HF_REPO,
+        "upstream": UPSTREAM,
+        "upstream_commit": UPSTREAM_COMMIT,
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+        "gpu_note": "medium requires FlashAttention 2 / Ampere+; T4 unsupported",
+    }
+
+
+def generation_plan(args: argparse.Namespace) -> dict[str, Any]:
+    if args.duration <= 0:
+        raise ValueError("--duration 必须 > 0")
+    if args.command == "smoke":
+        return {
+            "action": "smoke",
+            "gpu": args.gpu,
+            "prompt": SMOKE_PROMPT,
+            "negative_prompt": "",
+            "duration": args.duration,
+            "steps": 8,
+            "cfg_scale": 1.0,
+            "seed": args.seed,
+            "model": DEFAULT_MODEL,
+            "audio_format": "flac",
+            "run_name": args.run_name,
+        }
+    prompt = args.prompt.strip()
+    if not prompt:
+        raise ValueError("prompt 不能为空")
+    if args.steps <= 0:
+        raise ValueError("--steps 必须 > 0")
+    return {
+        "action": "t2a",
+        "gpu": args.gpu,
+        "prompt": prompt,
+        "negative_prompt": args.negative_prompt,
+        "duration": args.duration,
+        "steps": args.steps,
+        "cfg_scale": args.cfg_scale,
+        "seed": args.seed,
+        "model": args.model,
+        "audio_format": args.audio_format,
+        "run_name": args.run_name,
+    }
+
+
+@app.local_entrypoint()
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
+        return
+    if args.command == "check":
         print(json.dumps(status_fn.remote(), ensure_ascii=False, indent=2))
         return
-
-    if action == "download":
-        print(
-            json.dumps(
-                download_weights.remote(force=force_download),
-                ensure_ascii=False,
-                indent=2,
-            )
-        )
-        return
-
-    if action == "list-outputs":
+    if args.command == "list-outputs":
         print(json.dumps(list_outputs_fn.remote(), ensure_ascii=False, indent=2))
         return
-
-    if action == "smoke":
-        fn = smoke_fn.with_options(gpu=gpu)
-        out = fn.remote(
-            gpu_label=gpu,
-            duration=duration,
-            seed=seed,
-            run_name=run_name or "smoke_house",
-        )
-        print(json.dumps(out, ensure_ascii=False, indent=2))
+    if args.command == "download":
+        plan = {"action": "download", "force": args.force}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        print(json.dumps(download_weights.remote(force=args.force), ensure_ascii=False, indent=2))
         return
 
-    if action in ("t2a", "generate", "t2m"):
-        if not prompt.strip():
-            raise SystemExit("t2a requires --prompt")
-        fn = generate_fn.with_options(gpu=gpu)
-        out = fn.remote(
-            prompt=prompt,
-            duration=duration,
-            steps=steps,
-            cfg_scale=cfg_scale,
-            seed=seed,
-            model_name=model,
-            run_name=run_name,
-            audio_format=audio_format,
-            gpu_label=gpu,
-            negative_prompt=negative_prompt,
-        )
-        print(json.dumps(out, ensure_ascii=False, indent=2))
+    try:
+        plan = generation_plan(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
         return
 
-    raise SystemExit(f"unknown action: {action}")
+    if args.command == "smoke":
+        out = smoke_fn.with_options(gpu=plan["gpu"]).remote(
+            gpu_label=plan["gpu"],
+            duration=plan["duration"],
+            seed=plan["seed"],
+            run_name=plan["run_name"],
+        )
+    else:
+        out = generate_fn.with_options(gpu=plan["gpu"]).remote(
+            prompt=plan["prompt"],
+            duration=plan["duration"],
+            steps=plan["steps"],
+            cfg_scale=plan["cfg_scale"],
+            seed=plan["seed"],
+            model_name=plan["model"],
+            run_name=plan["run_name"],
+            audio_format=plan["audio_format"],
+            gpu_label=plan["gpu"],
+            negative_prompt=plan["negative_prompt"],
+        )
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])
