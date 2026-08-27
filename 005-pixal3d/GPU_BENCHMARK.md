@@ -13,7 +13,7 @@
 | L40S | L40S 44.4GB | sm_89 | — | — | — | — | ❌ |
 
 \* A100 墙钟 2660s **含首次 `build-natten` 源码编译**（~37 min）。  
-纯推理约 460s / ~$0.27。请用 `python run.py build-natten --gpu A100-40GB` 单独编译并正确缓存 wheel（需含 libnatten）。
+纯推理约 460s / ~$0.27。请用 `python main.py 005-pixal3d build-natten --gpu A100-40GB` 单独编译并正确缓存 wheel（需含 libnatten）。
 
 ## 单价
 

@@ -9,11 +9,13 @@ RTX-PRO-6000 / L40S : 当前 torch2.6 栈不可用（见 GPU_BENCHMARK.md）
 
 from __future__ import annotations
 
+import argparse
 import glob
 import json
 import os
 import shutil
 import subprocess
+import sys
 import threading
 import time
 import urllib.request
@@ -91,6 +93,9 @@ WHEEL_NVDIFFREC = (
     "https://github.com/JeffreyXiang/Storages/releases/download/Space_Wheels_251210/"
     "nvdiffrec_render-0.0.0-cp310-cp310-linux_x86_64.whl"
 )
+
+EXP_DIR = Path(__file__).resolve().parent
+DEFAULT_IMAGE = EXP_DIR / "inputs" / "sample.webp"
 
 SAMPLE_IMAGE_URL = (
     "https://raw.githubusercontent.com/TencentARC/Pixal3D/master/assets/images/5_img.webp"
@@ -792,64 +797,148 @@ code{{background:#f4f4f4;padding:2px 6px}}</style></head>
     )
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="005 Pixal3D official-stack image -> GLB")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("list-outputs", help="结构化列出远程 GLB")
+
+    download_cmd = sub.add_parser("download", help="下载主权重 + 辅助模型")
+    download_cmd.add_argument("--force", action="store_true")
+    download_cmd.add_argument("--no-aux", action="store_true")
+    download_cmd.add_argument("--dry-run", action="store_true")
+
+    build_cmd = sub.add_parser("build-natten", help="在目标 GPU 编译/缓存 natten")
+    build_cmd.add_argument("--gpu", default="A100-40GB")
+    build_cmd.add_argument("--dry-run", action="store_true")
+
+    smoke_cmd = sub.add_parser("smoke", help="官方样例图冒烟")
+    smoke_cmd.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke_cmd.add_argument("--dry-run", action="store_true")
+
+    i2v_cmd = sub.add_parser("i2v", help="Image-to-3D -> GLB")
+    i2v_cmd.add_argument("--image", type=Path)
+    i2v_cmd.add_argument("--image-url", default="")
+    i2v_cmd.add_argument("--output-name", default="i2v")
+    i2v_cmd.add_argument("--seed", type=int, default=42)
+    i2v_cmd.add_argument("--resolution", type=int, choices=[1024, 1536], default=1024)
+    i2v_cmd.add_argument("--fov", type=float, default=-1.0)
+    i2v_cmd.add_argument("--full-vram", action="store_true")
+    i2v_cmd.add_argument("--gpu", default=DEFAULT_GPU)
+    i2v_cmd.add_argument("--dry-run", action="store_true")
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "005-pixal3d",
+        "app": APP_NAME,
+        "default_gpu": DEFAULT_GPU,
+        "hf_model": HF_MODEL_REPO,
+        "weights_volume": VOLUME_WEIGHTS_NAME,
+        "outputs_volume": VOLUME_OUTPUTS_NAME,
+        "defaults": {"low_vram": True, "resolution": 1024},
+        "gpu_notes": {
+            "H100": "推荐：HF demo 轮子原生 sm_90",
+            "A100-40GB": "可用；首次 build-natten，之后 Volume 缓存",
+            "RTX-PRO-6000": "当前 torch2.6 栈不可用；见 005-v3",
+            "L40S": "当前 HF natten 栈不可用；见 005-v2",
+        },
+    }
+
+
+def i2v_plan(args: argparse.Namespace) -> dict[str, Any]:
+    output_name = args.output_name.strip()
+    if not output_name:
+        raise ValueError("--output-name 不能为空")
+    local_image = args.image
+    image_url = args.image_url.strip()
+    if local_image is not None and image_url:
+        raise ValueError("--image 与 --image-url 二选一")
+    if local_image is not None:
+        local_image = local_image.expanduser().resolve()
+        if not local_image.is_file():
+            raise ValueError(f"本地图片不存在: {local_image}")
+    elif not image_url:
+        if DEFAULT_IMAGE.is_file():
+            local_image = DEFAULT_IMAGE.resolve()
+        else:
+            image_url = SAMPLE_IMAGE_URL
+    return {
+        "action": "i2v",
+        "local_image": str(local_image) if local_image else "",
+        "image_url": image_url,
+        "output_name": output_name,
+        "seed": args.seed,
+        "low_vram": not args.full_vram,
+        "resolution": args.resolution,
+        "fov": args.fov,
+        "gpu": _normalize_gpu(args.gpu),
+    }
+
+
 @app.local_entrypoint()
-def main(
-    action: str = "status", image: str = "", image_url: str = "",
-    output_name: str = "i2v", seed: int = 42, low_vram: bool = True,
-    resolution: int = 1024, fov: float = -1.0, gpu: str = DEFAULT_GPU,
-    force_download: bool = False, with_aux: bool = True,
-) -> None:
-    gpu = _normalize_gpu(gpu)
-    if action == "status":
-        print(json.dumps({
-            "app": APP_NAME, "default_gpu": DEFAULT_GPU,
-            "gpu_notes": {
-                "H100": "推荐：HF demo 轮子原生 sm_90",
-                "A100-40GB": "可用；首次 build-natten，之后 Volume 缓存",
-                "RTX-PRO-6000": "不可用：torch2.6 无 sm_120",
-                "L40S": "不可用：HF natten 无 sm_89",
-            },
-            "container": {"memory_mb": DEFAULT_MEMORY_MB, "cpu": DEFAULT_CPU},
-            "hf_model": HF_MODEL_REPO,
-            "output_volume": VOLUME_OUTPUTS_NAME,
-            "weights_volume": VOLUME_WEIGHTS_NAME,
-            "defaults": {
-                "low_vram": True, "resolution": 1024, "est_peak_vram_gb": "15-16",
-                "price_per_sec_usd": GPU_PRICE_PER_SEC.get(DEFAULT_GPU),
-            },
-            "benchmarks": "GPU_BENCHMARK.md",
-            "see_meshes": [
-                f"modal volume ls {VOLUME_OUTPUTS_NAME} meshes",
-                "https://seachenxyt--modal-lab-pixal3d-index.modal.run",
-            ],
-        }, ensure_ascii=False, indent=2))
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
         return
-    if action == "download":
-        print(download_weights.remote(force=force_download, with_aux=with_aux))
+    if args.command == "list-outputs":
+        print(json.dumps(list_outputs.remote(), ensure_ascii=False, indent=2))
         return
-    if action in ("build-natten", "build_natten"):
-        print(build_natten.with_options(gpu=gpu).remote(gpu_label=gpu))
+    if args.command == "download":
+        plan = {"action": "download", "force": args.force, "with_aux": not args.no_aux}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        print(json.dumps(download_weights.remote(force=args.force, with_aux=not args.no_aux), ensure_ascii=False, indent=2))
         return
-    if action == "smoke":
-        print(smoke.with_options(gpu=gpu).remote(gpu_label=gpu))
+    if args.command == "build-natten":
+        gpu = _normalize_gpu(args.gpu)
+        plan = {"action": "build-natten", "gpu": gpu}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        print(json.dumps(build_natten.with_options(gpu=gpu).remote(gpu_label=gpu), ensure_ascii=False, indent=2))
         return
-    if action == "list-outputs":
-        print(list_outputs.remote())
+    if args.command == "smoke":
+        gpu = _normalize_gpu(args.gpu)
+        plan = {"action": "smoke", "gpu": gpu}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        print(json.dumps(smoke.with_options(gpu=gpu).remote(gpu_label=gpu), ensure_ascii=False, indent=2))
         return
-    if action in ("i2v", "image-to-3d", "i23d"):
-        image_bytes = None
-        if image.strip():
-            p = Path(image).expanduser().resolve()
-            if not p.is_file():
-                raise SystemExit(f"本地图片不存在: {p}")
-            image_bytes = p.read_bytes()
-            print(f"[local] upload {p} ({len(image_bytes)} bytes)", flush=True)
-        print(image_to_3d.with_options(gpu=gpu).remote(
-            image_bytes=image_bytes, image_url=image_url or None,
-            output_name=output_name, seed=seed, low_vram=low_vram,
-            resolution=resolution, fov=fov, gpu_label=gpu,
-        ))
+
+    try:
+        plan = i2v_plan(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
         return
-    raise SystemExit(
-        f"unknown action={action!r}; use status|download|build-natten|smoke|i2v|list-outputs"
+
+    image_bytes = None
+    if plan["local_image"]:
+        path = Path(plan["local_image"])
+        image_bytes = path.read_bytes()
+        print(f"[local] upload {path} ({len(image_bytes)} bytes)", flush=True)
+    result = image_to_3d.with_options(gpu=plan["gpu"]).remote(
+        image_bytes=image_bytes,
+        image_url=plan["image_url"] or None,
+        output_name=plan["output_name"],
+        seed=plan["seed"],
+        low_vram=plan["low_vram"],
+        resolution=plan["resolution"],
+        fov=plan["fov"],
+        gpu_label=plan["gpu"],
     )
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])

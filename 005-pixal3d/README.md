@@ -3,6 +3,8 @@
 [TencentARC/Pixal3D](https://github.com/TencentARC/Pixal3D)（SIGGRAPH 2026）在 Modal 上的可复现实验：  
 **一张参考图 → 带 PBR 贴图的 GLB**，输出只写远程 Volume。
 
+005 官版路径已迁移到 v2：一个 `app.py` 同时拥有 natten build、本地图片输入、CLI、结构化输出和 Web 下载端点。
+
 | 项 | 选择 |
 |----|------|
 | **默认 GPU** | **`H100`**（HF demo 预编译轮子原生 sm_90） |
@@ -20,7 +22,7 @@
 
 - 列表：https://seachenxyt--modal-lab-pixal3d-index.modal.run  
 - 最新：https://seachenxyt--modal-lab-pixal3d-download.modal.run?name=latest  
-- CLI：`python run.py pull --name latest --dest ./outputs/latest.glb`  
+- CLI：`modal volume get modal-lab-pixal3d-outputs meshes/latest.glb ./outputs/latest.glb`  
 - 本地 HTML 查看器：[`viewer/index.html`](viewer/index.html)（需先 `pull` GLB 到 `viewer/`）
 
 Volume 布局：
@@ -36,23 +38,22 @@ inputs/<name>.*
 ## 用法
 
 ```bash
-python ../main.py 005 status
-python run.py status
+python main.py 005-pixal3d status
 
 # 预拉权重（CPU only）
-python run.py download
+python main.py 005-pixal3d download
 
 # 推荐：H100
-python run.py smoke
-python run.py i2v --image inputs/sample.webp --output-name demo_cat --gpu H100
+python main.py 005-pixal3d smoke
+python main.py 005-pixal3d i2v --image 005-pixal3d/inputs/sample.webp --output-name demo_cat --gpu H100
 
 # 降本：A100-40GB（首次编译 natten）
-python run.py build-natten --gpu A100-40GB
-python run.py i2v --image inputs/sample.webp --output-name demo_a100 --gpu A100-40GB
+python main.py 005-pixal3d build-natten --gpu A100-40GB
+python main.py 005-pixal3d i2v --image 005-pixal3d/inputs/sample.webp --output-name demo_a100 --gpu A100-40GB
 
-# 拉到本地
-python run.py pull --name demo_cat --dest viewer/demo_sample.glb
-python run.py list-outputs
+# 结构化查看 run；文件拉取直接使用 Modal
+python main.py 005-pixal3d list-outputs
+modal volume get modal-lab-pixal3d-outputs meshes/demo_cat.glb 005-pixal3d/viewer/demo_sample.glb
 ```
 
 ## 选卡结论（实测）
@@ -78,3 +79,15 @@ python run.py list-outputs
 ## 许可
 
 上游 **MIT**（见 [UPSTREAM.md](UPSTREAM.md)）。
+
+
+## 测试
+
+```bash
+python -m unittest discover -s 005-pixal3d/tests -v
+python -m py_compile 005-pixal3d/app.py
+python main.py 005-pixal3d status
+python main.py 005-pixal3d i2v --dry-run
+```
+
+以上测试不启动付费 GPU。

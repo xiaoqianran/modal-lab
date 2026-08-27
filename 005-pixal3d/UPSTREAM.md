@@ -9,7 +9,7 @@
 | 相机估计 | [microsoft/MoGe](https://github.com/microsoft/MoGe) · `Ruicheng/moge-2-vitl` | 无 `--fov` 时自动估计 |
 | 图像条件 | `camenduru/dinov3-vitl16-pretrain-lvd1689m` + [valeoai/NAF](https://github.com/valeoai/NAF) | DinoV3ProjFeatureExtractor |
 | 去背景 | `briaai/RMBG-2.0`（pipeline.json `rembg_model`） | BiRefNet 封装 |
-| 预编译轮子 | LDYang694 / JeffreyXiang Storages releases | 见 `modal_app.py` 顶部 URL |
+| 预编译轮子 | LDYang694 / JeffreyXiang Storages releases | 见 `app.py` 顶部 URL |
 | 论文 | [arXiv:2605.10922](https://arxiv.org/abs/2605.10922) | SIGGRAPH 2026 |
 | 项目页 | https://ldyang694.github.io/projects/pixal3d/ | |
 | 在线 Demo | https://huggingface.co/spaces/TencentARC/Pixal3D | |

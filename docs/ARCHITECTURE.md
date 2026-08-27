@@ -175,6 +175,7 @@ Modal Volume                  future upstream flags
 015-xiaomi-robotics-1-robocasa365
 016-musicgen
 004-minimax-h3
+005-pixal3d
 005-v2-pixal3d-l40s
 005-v3-pixal3d-pro6000
 020-triposr
