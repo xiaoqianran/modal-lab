@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
@@ -618,96 +619,162 @@ SMOKE_CLONE = (
 )
 
 
-@app.local_entrypoint()
-def main(
-    action: str = "status",
-    gpu: str = DEFAULT_GPU,
-    text: str = "",
-    run_name: str = "",
-    force_download: bool = False,
-    smoke_kind: str = "en",
-    ref_audio_path: str = "",
-    ref_text: str = "",
-    voice: str = "",
-    temperature: float = 0.8,
-    top_p: float = 0.8,
-    repetition_penalty: float = 1.1,
-    max_new_tokens: int = 1024,
-    chunk_length: int = 200,
-    seed: int = 42,
-    compile_model: bool = False,
-):
-    if action == "status":
-        status_fn.remote()
-        return
-    if action == "download":
-        download_weights.remote(force=force_download)
-        return
-    if action == "smoke":
-        kind = smoke_kind.lower().strip()
-        ref_a, ref_t = ref_audio_path, ref_text
-        if kind in ("zh", "chinese"):
-            text_use = SMOKE_ZH
-            run = run_name or "smoke_zh"
-        elif kind in ("tags", "emotion", "instruct"):
-            text_use = SMOKE_TAGS
-            run = run_name or "smoke_tags"
-        elif kind in ("clone", "clone_en"):
-            text_use = SMOKE_CLONE
-            run = run_name or "smoke_clone_en"
-            if not ref_a:
-                ref_a = DEFAULT_CLONE_URL
-            if not ref_t:
-                ref_t = DEFAULT_CLONE_TEXT
-        else:
-            text_use = SMOKE_EN
-            run = run_name or "smoke_en"
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="028 Fish Audio S2 Pro on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("check", help="远程检查权重 / prompts / outputs Volume")
 
-        download_weights.remote(force=False)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            text=text_use,
-            run_name=run,
-            gpu_label=gpu,
-            ref_audio_path=ref_a,
-            ref_text=ref_t,
-            voice=voice,
-            temperature=temperature,
-            top_p=top_p,
-            repetition_penalty=repetition_penalty,
-            max_new_tokens=max_new_tokens,
-            chunk_length=chunk_length,
-            seed=seed,
-            compile_model=compile_model,
-        )
-        print("SMOKE_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
+    download = sub.add_parser("download", help="下载 S2-Pro 权重")
+    download.add_argument("--force", action="store_true")
+    download.add_argument("--dry-run", action="store_true")
+
+    smoke = sub.add_parser("smoke", help="固定 EN / ZH / tags / clone smoke")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke.add_argument("--kind", default="en", choices=["en", "zh", "tags", "clone"])
+    smoke.add_argument("--run-name", default="")
+    smoke.add_argument("--ref-audio", default="")
+    smoke.add_argument("--ref-text", default="")
+    smoke.add_argument("--voice", default="")
+    smoke.add_argument("--temperature", type=float, default=0.8)
+    smoke.add_argument("--top-p", type=float, default=0.8)
+    smoke.add_argument("--repetition-penalty", type=float, default=1.1)
+    smoke.add_argument("--max-new-tokens", type=int, default=1024)
+    smoke.add_argument("--chunk-length", type=int, default=200)
+    smoke.add_argument("--seed", type=int, default=42)
+    smoke.add_argument("--compile", action="store_true")
+
+    t2s = sub.add_parser("t2s", help="通用 Fish S2 TTS")
+    t2s.add_argument("--dry-run", action="store_true")
+    t2s.add_argument("--gpu", default=DEFAULT_GPU)
+    t2s.add_argument("--text", required=True)
+    t2s.add_argument("--ref-audio", default="")
+    t2s.add_argument("--ref-text", default="")
+    t2s.add_argument("--voice", default="")
+    t2s.add_argument("--temperature", type=float, default=0.8)
+    t2s.add_argument("--top-p", type=float, default=0.8)
+    t2s.add_argument("--repetition-penalty", type=float, default=1.1)
+    t2s.add_argument("--max-new-tokens", type=int, default=1024)
+    t2s.add_argument("--chunk-length", type=int, default=200)
+    t2s.add_argument("--seed", type=int, default=42)
+    t2s.add_argument("--run-name", default="")
+    t2s.add_argument("--compile", action="store_true")
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "028-fish-s2",
+        "app": APP_NAME,
+        "default_gpu": DEFAULT_GPU,
+        "default_model": DEFAULT_MODEL,
+        "hf_repo": HF_REPO,
+        "upstream": FISH_REPO,
+        "documented_upstream_commit": FISH_COMMIT,
+        "license": "Fish Audio Research License",
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+        "prompts_volume": VOLUME_PROMPTS,
+    }
+
+
+def _generation_fields(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "gpu": args.gpu,
+        "ref_audio": args.ref_audio,
+        "ref_text": args.ref_text,
+        "voice": args.voice,
+        "temperature": args.temperature,
+        "top_p": args.top_p,
+        "repetition_penalty": args.repetition_penalty,
+        "max_new_tokens": args.max_new_tokens,
+        "chunk_length": args.chunk_length,
+        "seed": args.seed,
+        "compile": args.compile,
+    }
+
+
+def smoke_plan(args: argparse.Namespace) -> dict[str, Any]:
+    fields = _generation_fields(args)
+    if args.kind == "zh":
+        text, run_name = SMOKE_ZH, args.run_name or "smoke_zh"
+    elif args.kind == "tags":
+        text, run_name = SMOKE_TAGS, args.run_name or "smoke_tags"
+    elif args.kind == "clone":
+        text, run_name = SMOKE_CLONE, args.run_name or "smoke_clone_en"
+        if not fields["ref_audio"]:
+            fields["ref_audio"] = DEFAULT_CLONE_URL
+        if not fields["ref_text"]:
+            fields["ref_text"] = DEFAULT_CLONE_TEXT
+    else:
+        text, run_name = SMOKE_EN, args.run_name or "smoke_en"
+    return {"action": "smoke", "kind": args.kind, "text": text, "run_name": run_name, **fields}
+
+
+def t2s_plan(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "action": "t2s",
+        "text": args.text.strip(),
+        "run_name": args.run_name,
+        **_generation_fields(args),
+    }
+
+
+@app.local_entrypoint()
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
+        return
+    if args.command == "check":
+        print(json.dumps(status_fn.remote(), ensure_ascii=False, indent=2))
+        return
+    if args.command == "download":
+        plan = {"action": "download", "force": args.force}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        print(json.dumps(download_weights.remote(force=args.force), ensure_ascii=False, indent=2))
+        return
+
+    plan = smoke_plan(args) if args.command == "smoke" else t2s_plan(args)
+    if not plan["text"]:
+        raise SystemExit("t2s requires non-empty --text")
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
+        return
+
+    download_weights.remote(force=False)
+    out = generate_fn.with_options(gpu=args.gpu).remote(
+        text=plan["text"],
+        run_name=plan["run_name"],
+        gpu_label=args.gpu,
+        ref_audio_path=plan["ref_audio"],
+        ref_text=plan["ref_text"],
+        voice=plan["voice"],
+        temperature=plan["temperature"],
+        top_p=plan["top_p"],
+        repetition_penalty=plan["repetition_penalty"],
+        max_new_tokens=plan["max_new_tokens"],
+        chunk_length=plan["chunk_length"],
+        seed=plan["seed"],
+        compile_model=plan["compile"],
+    )
+    label = "SMOKE_RESULT" if args.command == "smoke" else "T2S_RESULT"
+    print(label, json.dumps(out, ensure_ascii=False), flush=True)
+    if not out.get("success"):
+        raise SystemExit(2)
+    if args.command == "smoke":
         if (out.get("audio") or {}).get("duration_s", 0) < 0.5:
             raise SystemExit("smoke audio too short")
         if (out.get("audio") or {}).get("rms", 0) < 1e-4:
             raise SystemExit("smoke audio near silent")
-        return
-    if action == "t2s":
-        if not text.strip():
-            raise SystemExit("t2s requires --text")
-        download_weights.remote(force=False)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            text=text,
-            run_name=run_name,
-            gpu_label=gpu,
-            ref_audio_path=ref_audio_path,
-            ref_text=ref_text,
-            voice=voice,
-            temperature=temperature,
-            top_p=top_p,
-            repetition_penalty=repetition_penalty,
-            max_new_tokens=max_new_tokens,
-            chunk_length=chunk_length,
-            seed=seed,
-            compile_model=compile_model,
-        )
-        print("T2S_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
-        return
-    raise SystemExit(f"unknown action {action!r}")
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])

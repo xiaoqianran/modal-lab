@@ -1,59 +1,73 @@
 # 028 · Fish Audio S2 Pro（TTS Tier S4）
 
-[Fish Audio S2 Pro](https://huggingface.co/fishaudio/s2-pro) · **Research License**  
-代码：[fishaudio/fish-speech](https://github.com/fishaudio/fish-speech)
+[Fish Audio S2 Pro](https://huggingface.co/fishaudio/s2-pro) · Research License · 默认 **L40S**。
 
-| 项 | 值 |
-|----|-----|
-| 槽位 | **028**（见 [TTS_ROADMAP.md](../TTS_ROADMAP.md)） |
-| 默认模型 | **S2-Pro 4B** Dual-AR |
-| 默认 GPU | **L40S**（峰值 ~22GB VRAM） |
-| 许可 | **Fish Audio Research**（非商用；商用需授权） |
-| 排名 | AA Elo 开源 **#1 (1121)** · GH ~32k · HF ~428k |
-| smoke 估费 | **~$0.05–0.07** / 次（L40S 冷启动） |
+028 已迁移到 v2：一个 `app.py` 同时拥有实验 CLI 与 Modal remote functions，不再使用 `run.py -> modal_app.py` 包装层。
 
-## 快速开始
+## 用法
 
 ```bash
-cd 028-fish-s2
+python main.py 028 status                 # 纯本地
+python main.py 028 check                  # 远程权重 / prompts / outputs
+python main.py 028 download --dry-run
+python main.py 028 download
 
-python run.py download
-python run.py status
+python main.py 028 smoke --dry-run --kind en
+python main.py 028 smoke --kind zh
+python main.py 028 smoke --kind tags
+python main.py 028 smoke --kind clone
 
-python run.py smoke --kind en      # 英文 · 随机音色
-python run.py smoke --kind zh      # 中文
-python run.py smoke --kind tags    # [excited] / [whisper]
-python run.py smoke --kind clone   # 参考音克隆
-
-python run.py t2s --text "Hello [laughing], how are you?"
-python run.py pull --remote runs/smoke_en
+python main.py 028 t2s --dry-run \
+  --text 'Hello [laughing], how are you?' \
+  --temperature 0.7 --top-p 0.9 --chunk-length 160 --seed 7
 ```
 
-## 能力
+`clone` 默认使用公开参考音频和对应 transcript；显式 `--ref-audio/--ref-text` 会覆盖。
 
-| 模式 | 说明 |
-|------|------|
-| 随机音色 | `references=[]` |
-| 行内标签 | `[excited]` `[whisper]` `[chuckle]` 等 free-form |
-| 克隆 | ref wav + 对齐 transcript |
-| 多语 | 80+（中英日为核心） |
+真正的生成参数直接由 `app.py` 管理：
+
+```text
+ref_audio
+ref_text
+voice
+temperature
+top_p
+repetition_penalty
+max_new_tokens
+chunk_length
+seed
+compile
+```
+
+旧 wrapper 没有暴露 `chunk_length`；v2 已直接纳入唯一 CLI。
+
+## Smoke 场景
+
+```text
+en     -> 英文随机音色
+zh     -> 中文随机音色
+tags   -> 固定 [excited] / [chuckle] / [whisper] benchmark
+clone  -> 参考音克隆
+```
 
 ## Volume
 
-| 名 | 用途 |
-|----|------|
-| `modal-lab-fish-s2-weights` | `checkpoints/s2-pro`（~11GB） |
-| `modal-lab-fish-s2-prompts` | 克隆参考 wav |
-| `modal-lab-fish-s2-outputs` | `runs/<name>/audio.wav` |
+v2 不再包装 `ls/pull`：
 
-## Gallery
+```bash
+modal volume ls modal-lab-fish-s2-outputs runs
+modal volume get modal-lab-fish-s2-outputs runs/smoke_en ./028-fish-s2/outputs
+```
 
-[`gallery/index.html`](gallery/index.html) · 实测见 [`COST_BENCHMARK.md`](COST_BENCHMARK.md)
+## 测试
 
-## 许可脚注
+```bash
+python -m unittest discover -s 028-fish-s2/tests -v
+python -m py_compile 028-fish-s2/app.py
+python main.py 028 status
+python main.py 028 smoke --dry-run --kind clone
+```
 
-本实验仅用于 **研究 / 评估**。部署到产品或收费服务前请取得 Fish Audio 商业许可。
+以上测试不启动付费 GPU。
 
-## 下一条
-
-**TTS Tier S 线收官。** 第二波：`029-voxcpm2` · `030-vibevoice` · `031-cosyvoice3` · …
+许可：Fish Audio Research License，研究/非商用；商用需单独授权。
