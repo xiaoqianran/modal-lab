@@ -144,11 +144,12 @@ python main.py 005-v3-pixal3d-pro6000 status
 python main.py 008 status
 python main.py 020 status
 python main.py 021 status
-python main.py 022 probe --gpu L40S
+python main.py 022 probe
 
 # 040/041/042 是 provider/integration 客户端验证脚本，不定义 Modal App
-python main.py 040
-python main.py 041
+python main.py 040 --check-env
+python main.py 041 --check-env
+python main.py 042
 ```
 
 ## 实验一览

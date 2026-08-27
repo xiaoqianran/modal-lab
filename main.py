@@ -6,8 +6,8 @@
 
 示例：
   python main.py 001 status
-  python main.py 022 probe --gpu L40S
-  python main.py 040                    # provider validation script
+  python main.py 022 probe
+  python main.py 040 --check-env        # provider 环境检查，不调用远端
 """
 
 from __future__ import annotations
@@ -75,6 +75,38 @@ def resolve_experiment(argv: list[str]) -> tuple[Path, list[str], str]:
     return entry, rest, exp_id
 
 
+def root_help() -> str:
+    return """modal-lab workspace launcher
+
+Usage:
+  python main.py --list
+  python main.py <experiment-id> [experiment args...]
+
+Examples:
+  python main.py 001 status
+  python main.py 005-pixal3d status
+  python main.py 040 --check-env
+
+Notes:
+  - unique numeric prefixes such as 001/022 are accepted
+  - ambiguous prefixes such as 005 require the full experiment id
+  - experiment-specific help: python main.py <experiment-id> --help
+"""
+
+
+def handle_root_cli(argv: list[str]) -> bool:
+    """处理 workspace 自己的参数；返回 True 表示已完成，不再分发实验。"""
+    if not argv:
+        print(root_help(), end="")
+        return True
+    if argv == ["--list"]:
+        print("\n".join(list_experiments()))
+        return True
+    if argv and argv[0] in {"-h", "--help"}:
+        print(root_help(), end="")
+        return True
+    return False
+
 def venv_python(exp_dir: Path) -> Path | None:
     relative = Path("Scripts/python.exe") if sys.platform == "win32" else Path("bin/python")
     path = exp_dir / ".venv" / relative
@@ -122,33 +154,49 @@ def is_local_invocation(argv: list[str]) -> bool:
     return "--dry-run" in argv
 
 
+def has_inline_script_metadata(entry: Path) -> bool:
+    try:
+        head = entry.read_text(errors="ignore")[:2048]
+    except OSError:
+        return False
+    return "# /// script" in head and "# dependencies =" in head
+
+
 def run_script_entry(entry: Path, rest: list[str], exp_id: str) -> None:
     """执行不定义 Modal App 的 standalone provider/integration 脚本。"""
     exp_dir = entry.parent
     exp_python = venv_python(exp_dir)
-    if exp_python is not None and Path(sys.executable).resolve() != exp_python.resolve():
+    root_python = venv_python(ROOT)
+    current = Path(sys.executable).resolve()
+
+    if exp_python is not None and current != exp_python.resolve():
         os.execv(
             str(exp_python),
             [str(exp_python), str(ROOT / "main.py"), exp_id, *rest],
         )
 
-    root_python = venv_python(ROOT)
-    if (
-        exp_python is None
-        and root_python is not None
-        and Path(sys.executable).resolve() != root_python.resolve()
-    ):
+    if exp_python is None and root_python is not None and current != root_python.resolve():
         os.execv(
             str(root_python),
             [str(root_python), str(ROOT / "main.py"), exp_id, *rest],
         )
+
+    # 已进入用户现有 venv 时直接复用；没有 venv 才使用脚本自描述依赖。
+    if exp_python is None and root_python is None and has_inline_script_metadata(entry):
+        uv = shutil.which("uv")
+        if not uv:
+            raise SystemExit(f"{entry} 声明了 inline dependencies，但找不到 uv")
+        os.execv(uv, [uv, "run", "--script", str(entry), *rest])
 
     sys.argv = [str(entry), *rest]
     runpy.run_path(str(entry), run_name="__main__")
 
 
 def main() -> None:
-    entry, rest, exp_id = resolve_experiment(sys.argv[1:])
+    argv = sys.argv[1:]
+    if handle_root_cli(argv):
+        return
+    entry, rest, exp_id = resolve_experiment(argv)
 
     if entry.name == "app.py":
         modal = modal_executable(entry.parent)

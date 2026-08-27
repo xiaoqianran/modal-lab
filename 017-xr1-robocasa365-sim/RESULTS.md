@@ -55,7 +55,7 @@ Modal：`ap-NV2oCu4r1R6zwlrO11n4lF`
 
 1. **默认 horizon=100**（`DEFAULT_POLICY_HORIZON`）  
 2. **输入 320×256** 修 Qwen-VL shape  
-3. **资产**：优先 volume symlink；全量 20GB 拷贝默认关闭（`CACHE_FULL_ASSETS=0`，避免卡死）  
+3. **资产**：优先 volume symlink；全量约 20GB 拷贝默认关闭；只有显式 `download-assets --full-cache` 才写入完整 Volume 镜像
 4. 进度日志：每 10 步 / 每次 replan
 
 ## 随机对照

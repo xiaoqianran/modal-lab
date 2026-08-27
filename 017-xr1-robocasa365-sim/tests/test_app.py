@@ -27,6 +27,7 @@ class TestCli(unittest.TestCase):
         self.assertEqual(s['default_task'],'CloseBlenderLid')
         self.assertEqual(s['policy_horizon'],100)
         self.assertIn('closed-loop RoboCasa simulation',s['scope'])
+        self.assertFalse(s['assets_full_cache_default'])
 
     def test_random_plan(self):
         p=app.random_plan(app.parse_cli(['smoke-random','--steps','80','--seed','9','--gpu','L40S']))
@@ -72,7 +73,9 @@ class TestCli(unittest.TestCase):
 
     def test_dry_run(self):
         self.assertTrue(app.parse_cli(['download-weights','--dry-run']).dry_run)
-        self.assertTrue(app.parse_cli(['download-assets','--dry-run']).dry_run)
+        assets = app.parse_cli(['download-assets','--full-cache','--dry-run'])
+        self.assertTrue(assets.dry_run)
+        self.assertTrue(assets.full_cache)
         self.assertTrue(app.parse_cli(['smoke-policy','--dry-run']).dry_run)
         self.assertTrue(app.parse_cli(['eval-mini','--dry-run']).dry_run)
 

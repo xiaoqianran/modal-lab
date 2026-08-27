@@ -61,7 +61,7 @@ ASSETS_MOUNT = "/assets"
 OUTPUTS_MOUNT = "/outputs"
 MODEL_DIR = Path(WEIGHTS_MOUNT) / "Xiaomi-Robotics-1-RoboCasa365"
 # Volume keeps a marker + optional partial cache. Full ~20GB tree copy is
-# optional (CACHE_FULL_ASSETS) because shutil.copytree of that size is very slow.
+# optional via explicit --full-cache because copying that size is very slow.
 ASSETS_CACHE_DIR = Path(ASSETS_MOUNT) / "models_assets"
 ASSETS_VOL_DIR = Path(ASSETS_MOUNT) / "kitchen_assets_marker"
 # Fixed install path in sim_image — used to symlink BEFORE import robocasa.
@@ -71,8 +71,6 @@ VOLUME_WEIGHTS = "modal-lab-xr1-robocasa365-weights"
 
 VOLUME_ASSETS = "modal-lab-xr1-robocasa365-sim-assets"
 VOLUME_OUTPUTS = "modal-lab-xr1-robocasa365-sim-outputs"
-# Set True only when you intentionally want multi-GB volume mirror.
-CACHE_FULL_ASSETS = os.environ.get("CACHE_FULL_ASSETS", "0") == "1"
 
 DOWNLOAD_TIMEOUT = 3 * 60 * 60
 SIM_TIMEOUT = 5 * 60 * 60
@@ -403,12 +401,12 @@ def _rebuild_obj_cat_mjcf_paths() -> dict[str, Any]:
     return info
 
 
-def _write_assets_marker(extra: dict[str, Any] | None = None) -> None:
+def _write_assets_marker(full_cache: bool, extra: dict[str, Any] | None = None) -> None:
     ASSETS_VOL_DIR.mkdir(parents=True, exist_ok=True)
     payload = {
         "ready_package_hint": True,
         "utc": datetime.now(timezone.utc).isoformat(),
-        "full_cache": CACHE_FULL_ASSETS,
+        "full_cache": full_cache,
     }
     if extra:
         payload.update(extra)
@@ -418,11 +416,11 @@ def _write_assets_marker(extra: dict[str, Any] | None = None) -> None:
     assets_vol.commit()
 
 
-def _cache_package_assets_to_volume() -> dict[str, Any]:
+def _cache_package_assets_to_volume(full_cache: bool) -> dict[str, Any]:
     """Optional full mirror. Default OFF — 20GB copytree was hanging cold starts."""
-    if not CACHE_FULL_ASSETS:
-        _write_assets_marker({"note": "full cache disabled; package assets used in-container"})
-        return {"ok": True, "skipped": True, "reason": "CACHE_FULL_ASSETS=0"}
+    if not full_cache:
+        _write_assets_marker(False, {"note": "full cache disabled; package assets used in-container"})
+        return {"ok": True, "skipped": True, "reason": "full_cache=false"}
 
     base = _robocasa_assets_base()
     cache = ASSETS_CACHE_DIR
@@ -441,7 +439,7 @@ def _cache_package_assets_to_volume() -> dict[str, Any]:
         "wall_s": round(time.time() - t0, 2),
         "cache": _dir_info(cache),
     }
-    _write_assets_marker({"cache": info})
+    _write_assets_marker(True, {"cache": info})
     print(f"cache done in {info['wall_s']}s", flush=True)
     return info
 
@@ -483,7 +481,7 @@ def _nvidia_smi() -> dict[str, Any] | None:
     }
 
 
-def _download_assets_impl(force: bool = False) -> dict[str, Any]:
+def _download_assets_impl(force: bool = False, full_cache: bool = False) -> dict[str, Any]:
     """
     Ensure kitchen assets are on disk and ObjCat path caches are populated.
 
@@ -548,7 +546,7 @@ def _download_assets_impl(force: bool = False) -> dict[str, Any]:
             results[name] = repr(e)
 
     print("downloads finished; writing marker (full volume mirror optional)", flush=True)
-    cache_info = _cache_package_assets_to_volume()
+    cache_info = _cache_package_assets_to_volume(full_cache=full_cache)
     # Volume may now have assets — ensure package path points at them
     _link_package_assets_to_cache()
     rebuild = _rebuild_obj_cat_mjcf_paths()
@@ -785,8 +783,8 @@ def download_weights(force: bool = False) -> dict[str, Any]:
     cpu=4,
     memory=16384,
 )
-def download_assets(force: bool = False) -> dict[str, Any]:
-    return _download_assets_impl(force=force)
+def download_assets(force: bool = False, full_cache: bool = False) -> dict[str, Any]:
+    return _download_assets_impl(force=force, full_cache=full_cache)
 
 
 @app.function(
@@ -1333,10 +1331,6 @@ def eval_mini_fn(
     os.environ.setdefault("MUJOCO_GL", "egl")
     smi_before = _nvidia_smi()
     processor, model, attn_used = _load_policy(MODEL_DIR, attn=attn)
-    load_s = round(time.time() - t0, 2)  # includes assets; refined below
-    # re-time load only approximately
-    load_s = round(time.time() - t0, 2)
-
     episodes: list[dict[str, Any]] = []
     task_stats: dict[str, Any] = {}
 
@@ -1499,6 +1493,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     da = sub.add_parser("download-assets", help="下载 RoboCasa kitchen assets")
     da.add_argument("--force", action="store_true")
+    da.add_argument("--full-cache", action="store_true", help="显式把约 20GB assets 全量镜像进 Volume")
     da.add_argument("--dry-run", action="store_true")
 
     rnd = sub.add_parser("smoke-random", help="随机策略闭环 → mp4")
@@ -1567,6 +1562,7 @@ def local_status() -> dict[str, Any]:
         "assets_volume": VOLUME_ASSETS,
         "outputs_volume": VOLUME_OUTPUTS,
         "scope": "closed-loop RoboCasa simulation; full 2500-episode eval intentionally out of scope",
+        "assets_full_cache_default": False,
     }
 
 
@@ -1662,10 +1658,10 @@ def main(*argv: str) -> None:
             print(json.dumps(plan, ensure_ascii=False, indent=2)); return
         print(json.dumps(download_weights.remote(force=args.force), ensure_ascii=False, indent=2)); return
     if args.command == "download-assets":
-        plan = {"action": "download-assets", "force": args.force}
+        plan = {"action": "download-assets", "force": args.force, "full_cache": args.full_cache}
         if args.dry_run:
             print(json.dumps(plan, ensure_ascii=False, indent=2)); return
-        print(json.dumps(download_assets.remote(force=args.force), ensure_ascii=False, indent=2)); return
+        print(json.dumps(download_assets.remote(force=args.force, full_cache=args.full_cache), ensure_ascii=False, indent=2)); return
 
     try:
         if args.command == "smoke-random":

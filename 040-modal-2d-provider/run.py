@@ -1,5 +1,10 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["modal==1.5.4"]
+# ///
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import struct
@@ -16,6 +21,20 @@ MODELS = ("sana-sprint-0.6b", "sana-sprint-1.6b")
 SEEDS = (42, 73)
 RESULTS = Path(__file__).parent / "results"
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="040 modal-2D provider verification")
+    parser.add_argument("--check-env", action="store_true", help="只验证本地 Python 依赖，不调用远端")
+    return parser.parse_args()
+
+
+def check_env() -> dict[str, object]:
+    return {
+        "ok": True,
+        "modal_version": getattr(modal, "__version__", "unknown"),
+        "models": list(MODELS),
+    }
 
 
 def verify_png(data: bytes) -> tuple[int, int]:
@@ -92,4 +111,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    args = parse_args()
+    if args.check_env:
+        print(json.dumps(check_env(), separators=(",", ":")))
+        raise SystemExit(0)
     raise SystemExit(main())

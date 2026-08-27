@@ -1,5 +1,17 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#   "modal[api-proxy-support]==1.5.4",
+#   "pillow>=11,<13",
+#   "numpy>=1.26,<3",
+#   "scipy>=1.12,<2",
+#   "onnxruntime>=1.23.2,<1.26; sys_platform != 'win32'",
+#   "onnxruntime-gpu>=1.24,<1.25; sys_platform == 'win32'",
+# ]
+# ///
 from __future__ import annotations
 
+import argparse
 import concurrent.futures
 import hashlib
 import io
@@ -22,6 +34,35 @@ MODELS = (
     "hunyuan2.1-plus-plus",
     "pixal3d",
 )
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="041 modal-3D provider verification")
+    parser.add_argument("--check-env", action="store_true", help="只验证本地依赖与 AgentScape 模块，不调用远端")
+    return parser.parse_args()
+
+
+def agent_hub() -> Path:
+    workspace = Path(os.environ.get("AGENTSCAPE_ROOT", "/workspace/wk/AgentScape"))
+    return workspace / "providers" / "modal" / "inference-hub"
+
+
+def check_env() -> dict[str, object]:
+    hub = agent_hub()
+    if not hub.is_dir():
+        raise RuntimeError(f"AgentScape inference hub not found: {hub}")
+    sys.path.insert(0, str(hub))
+    import onnxruntime as ort
+    from agent import modal_client, rembg_preprocess
+    return {
+        "ok": True,
+        "hub": str(hub),
+        "modal_module": modal_client.__name__,
+        "rembg_module": rembg_preprocess.__name__,
+        "onnxruntime_version": ort.__version__,
+        "onnxruntime_providers": list(ort.get_available_providers()),
+        "models": list(MODELS),
+    }
 
 
 def wait_for_source(timeout_seconds: int = 900) -> Path:
@@ -118,10 +159,9 @@ def main() -> int:
     source = wait_for_source()
     source_bytes = source.read_bytes()
 
-    workspace = Path(os.environ.get("AGENTSCAPE_ROOT", "/workspace/wk/AgentScape"))
-    hub = workspace / "providers" / "modal" / "inference-hub"
+    hub = agent_hub()
     sys.path.insert(0, str(hub))
-    from agent import modal_client, rembg_preprocess  # noqa: PLC0415
+    from agent import modal_client, rembg_preprocess
 
     client = modal.Client.from_env()
     client.hello()
@@ -196,4 +236,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    args = parse_args()
+    if args.check_env:
+        print(json.dumps(check_env(), separators=(",", ":")))
+        raise SystemExit(0)
     raise SystemExit(main())

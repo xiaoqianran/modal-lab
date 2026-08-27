@@ -66,7 +66,9 @@ Modal 单价量级（2026 公开价，仅 GPU 秒费，不含镜像构建）：
 python main.py 017 status           # 纯本地固定信息
 python main.py 017 check            # 远程 readiness / 最近 runs
 python main.py 017 download-weights   # 可与 015 共用 weights Volume
-python main.py 017 download-assets    # ~10GB 厨房资产
+python main.py 017 download-assets    # 默认只确保容器 assets + marker，不做 20GB 全量 Volume 镜像
+# 只有明确需要跨冷启动复用完整资产树时：
+python main.py 017 download-assets --full-cache
 python main.py 017 smoke-random       # 随机乱动 → mp4
 python main.py 017 smoke-policy       # XR-1 闭环 → mp4（默认 L40S）
 python main.py 017 eval-mini          # 5×5 @ h=200 + CBL long @ h=500

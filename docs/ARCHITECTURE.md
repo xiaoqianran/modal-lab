@@ -202,7 +202,7 @@ Modal Volume                  future upstream flags
 
 上述 34 个 Modal 实验均已删除 `run.py -> modal_app.py` pass-through 层。仓库中 `modal_app.py` 已清零。
 
-040/041/042 不定义 Modal App，而是 provider/integration 的客户端验证脚本，因此保留 `run.py`。这是不同的入口类型，不是 legacy 兼容：
+040/041/042 不定义 Modal App，而是 provider/integration 的客户端验证脚本，因此保留 `run.py`。040/041 已通过 PEP 723 声明脚本依赖；042 保留其独立 provider 验证职责。根 launcher 优先复用已有 venv，无 venv 时可对自描述脚本使用 `uv run --script`。这是不同的入口类型，不是 legacy 兼容。
 
 ```text
 普通实验                Provider / integration 验证

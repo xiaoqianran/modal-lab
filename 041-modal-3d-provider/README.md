@@ -22,6 +22,16 @@ GLB Artifact
 Volume stream / glTF v2 / bytes / SHA-256
 ```
 
+## 本地环境检查
+
+脚本使用 PEP 723 声明最小依赖；根 launcher 优先复用已有实验/root venv；没有 venv 时通过 `uv run --script` 创建隔离运行环境，不修改全局 Python。
+
+```bash
+python main.py 041 --check-env
+```
+
+该命令验证本地依赖、AgentScape 模块和 ONNX Runtime provider，不连接远端 provider、不启动 GPU。直接 `python main.py 041` 才会执行完整 provider 验收。
+
 ## 验收
 
 - rembg 必须产生非空 foreground 与有效 alpha。
