@@ -1,69 +1,59 @@
 # 025 · Kokoro-82M（TTS 用量榜 #1）
 
-[hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) · 推理库 [kokoro](https://github.com/hexgrad/kokoro)
+[hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) · Apache-2.0 · 默认 T4。
 
-| 项 | 值 |
-|----|-----|
-| 槽位 | **025** · TTS 线起点（见 [TTS_ROADMAP.md](../TTS_ROADMAP.md)） |
-| 默认模型 | **v1** `hexgrad/Kokoro-82M` |
-| 可选 | **v1.1-zh** 更好中文（100 speakers） |
-| 默认音色 | **af_heart**（美式女声 · grade A） |
-| 默认 GPU | **T4**（$0.000164/s · 82M 用不完） |
-| 许可 | **Apache-2.0** |
-| 采样率 | 24 kHz mono WAV |
-| 排名 | HF TTS downloads **#1 ~11.5M** · AA open-weights Elo **~1056** |
+025 已迁移到 v2：一个 `app.py` 同时拥有实验 CLI 与 Modal remote functions，不再使用 `run.py -> modal_app.py` 包装层。
 
-## 实测 smoke（2026-08-11）
-
-| run | GPU | 墙钟 | 生成 | VRAM | 估费 | 音频 |
-|-----|-----|------|------|------|------|------|
-| EN · af_heart | T4 | **7.44 s** | 1.97 s | **0.79 GB** | **$0.0012** | 11.1 s |
-| ZH · zf_001 · v1.1-zh | T4 | **9.94 s** | 2.72 s | 0.79 GB | **$0.0016** | 11.0 s |
-
-试听：[`gallery/index.html`](gallery/index.html)
-
-## 快速开始
+## 用法
 
 ```bash
-cd 025-kokoro
-# 或: python ../main.py 025 status
+python main.py 025 status
+python main.py 025 check
+python main.py 025 download --dry-run --model v1.1-zh
+python main.py 025 download --model v1
 
-python run.py status
-python run.py download                 # CPU · v1 权重 → Volume
-python run.py smoke                    # T4 · 英文 af_heart
-python run.py smoke --lang zh          # 自动切 v1.1-zh · zf_001
-python run.py t2s --text "Hello from modal-lab." --voice af_bella
-python run.py voices
-python run.py pull --remote runs/smoke_en_heart
+python main.py 025 voices --dry-run --model v1
+python main.py 025 voices --model v1
+
+python main.py 025 smoke --dry-run
+python main.py 025 smoke --lang zh --speed 1.1
+
+python main.py 025 t2s --dry-run \
+  --text 'Hello from Kokoro.' --voice af_bella --speed 0.95
 ```
 
-换卡：`--gpu L4`（通常更贵没必要）。
+中文 smoke 保留一个明确不变量：
 
-## 远程产物
+```text
+lang=zh
+  -> model=v1.1-zh
+  -> 默认 voice=zf_001
+  -> Kokoro lang_code=z
+```
 
-| Volume | 路径 |
-|--------|------|
-| `modal-lab-kokoro-weights` | `/weights/models/{v1,v1.1-zh}` + HF hub cache |
-| `modal-lab-kokoro-outputs` | `runs/<name>/audio.wav` + `meta.json` |
+显式传入中文 voice 会覆盖 `zf_001`。
+
+`voices` 是模型自身的真实领域能力，因此继续保留；`ls/pull` 则回归 Modal Volume CLI：
+
+```bash
+modal volume ls modal-lab-kokoro-outputs runs
+modal volume get modal-lab-kokoro-outputs runs/smoke_en_heart ./025-kokoro/outputs
+```
 
 ## 模型
 
-| key | HF repo | 用途 |
-|-----|---------|------|
-| `v1` | [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) | 默认 · 54 音色 · 8 语 |
-| `v1.1-zh` | [Kokoro-82M-v1.1-zh](https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh) | 中文加强 · 会丢掉部分旧音色 |
+| key | HF repo |
+|---|---|
+| `v1` | `hexgrad/Kokoro-82M` |
+| `v1.1-zh` | `hexgrad/Kokoro-82M-v1.1-zh` |
 
-语言代码（音色前缀）：`a` 美英 · `b` 英英 · `z` 中文 · `j` 日语 · …
+## 测试
 
-## 成本
+```bash
+python -m unittest discover -s 025-kokoro/tests -v
+python -m py_compile 025-kokoro/app.py
+python main.py 025 status
+python main.py 025 smoke --dry-run --lang zh
+```
 
-见 [COST_BENCHMARK.md](COST_BENCHMARK.md)。
-
-## 许可
-
-- 权重与代码：**Apache-2.0**
-- 生成内容请自行合规。
-
-## 下一条
-
-按 [TTS_ROADMAP.md](../TTS_ROADMAP.md)：`026-chatterbox` → `027-qwen3-tts` → `028-fish-s2`。
+以上测试不启动付费 GPU。

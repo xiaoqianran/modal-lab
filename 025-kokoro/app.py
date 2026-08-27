@@ -12,9 +12,11 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -511,73 +513,156 @@ SMOKE_ZH = (
 )
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="025 Kokoro-82M on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("check", help="远程检查权重 / outputs Volume")
+
+    download = sub.add_parser("download", help="下载指定 Kokoro 模型")
+    download.add_argument("--force", action="store_true")
+    download.add_argument("--dry-run", action="store_true")
+    download.add_argument("--model", default=DEFAULT_MODEL)
+
+    voices = sub.add_parser("voices", help="列出指定模型 voice")
+    voices.add_argument("--model", default=DEFAULT_MODEL)
+    voices.add_argument("--dry-run", action="store_true")
+
+    smoke = sub.add_parser("smoke", help="固定 EN / ZH smoke")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke.add_argument("--model", default=DEFAULT_MODEL)
+    smoke.add_argument("--voice", default=DEFAULT_VOICE)
+    smoke.add_argument("--lang", default="en", help="en | zh")
+    smoke.add_argument("--speed", type=float, default=1.0)
+    smoke.add_argument("--run-name", default="")
+
+    t2s = sub.add_parser("t2s", help="Text-to-Speech")
+    t2s.add_argument("--dry-run", action="store_true")
+    t2s.add_argument("--gpu", default=DEFAULT_GPU)
+    t2s.add_argument("--model", default=DEFAULT_MODEL)
+    t2s.add_argument("--text", required=True)
+    t2s.add_argument("--voice", default=DEFAULT_VOICE)
+    t2s.add_argument("--lang", default="", help="override Kokoro lang_code")
+    t2s.add_argument("--speed", type=float, default=1.0)
+    t2s.add_argument("--run-name", default="")
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "025-kokoro",
+        "app": APP_NAME,
+        "default_gpu": DEFAULT_GPU,
+        "default_model": DEFAULT_MODEL,
+        "default_voice": DEFAULT_VOICE,
+        "models": HF_REPOS,
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+        "sample_rate": 24000,
+    }
+
+
+def smoke_plan(args: argparse.Namespace) -> dict[str, Any]:
+    zh = args.lang.lower().startswith("zh") or args.lang.lower() == "z"
+    if zh:
+        model = "v1.1-zh"
+        voice = "zf_001" if args.voice == DEFAULT_VOICE else args.voice
+        text = SMOKE_ZH
+        run_name = args.run_name or "smoke_zh"
+        lang = "z"
+    else:
+        model = _norm_model(args.model)
+        voice = args.voice or DEFAULT_VOICE
+        text = SMOKE_EN
+        run_name = args.run_name or "smoke_en_heart"
+        lang = args.lang
+    return {
+        "action": "smoke",
+        "gpu": args.gpu,
+        "model": model,
+        "text": text,
+        "voice": voice,
+        "lang": lang,
+        "speed": args.speed,
+        "run_name": run_name,
+    }
+
+
+def t2s_plan(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "action": "t2s",
+        "gpu": args.gpu,
+        "model": _norm_model(args.model),
+        "text": args.text.strip(),
+        "voice": args.voice,
+        "lang": args.lang,
+        "speed": args.speed,
+        "run_name": args.run_name,
+    }
+
+
 @app.local_entrypoint()
-def main(
-    action: str = "status",
-    gpu: str = DEFAULT_GPU,
-    model: str = DEFAULT_MODEL,
-    text: str = "",
-    voice: str = DEFAULT_VOICE,
-    lang: str = "",
-    speed: float = 1.0,
-    run_name: str = "",
-    force_download: bool = False,
-    smoke_lang: str = "en",
-):
-    if action == "status":
-        status_fn.remote()
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
         return
-    if action == "download":
-        download_weights.remote(force=force_download, model=model)
+    if args.command == "check":
+        print(json.dumps(status_fn.remote(), ensure_ascii=False, indent=2))
         return
-    if action == "voices":
-        list_voices_fn.remote(model=model)
+
+    try:
+        if args.command == "download":
+            model = _norm_model(args.model)
+            plan = {"action": "download", "model": model, "force": args.force}
+            if args.dry_run:
+                print(json.dumps(plan, ensure_ascii=False, indent=2))
+                return
+            print(json.dumps(download_weights.remote(force=args.force, model=model), ensure_ascii=False, indent=2))
+            return
+        if args.command == "voices":
+            model = _norm_model(args.model)
+            plan = {"action": "voices", "model": model}
+            if args.dry_run:
+                print(json.dumps(plan, ensure_ascii=False, indent=2))
+                return
+            print(json.dumps(list_voices_fn.remote(model=model), ensure_ascii=False, indent=2))
+            return
+        plan = smoke_plan(args) if args.command == "smoke" else t2s_plan(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
+
+    if not plan["text"]:
+        raise SystemExit("t2s requires non-empty --text")
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
         return
-    if action == "smoke":
-        if smoke_lang.lower().startswith("zh") or smoke_lang.lower() == "z":
-            model = "v1.1-zh"
-            voice = voice if voice != DEFAULT_VOICE else "zf_001"
-            text_use = SMOKE_ZH
-            run = run_name or "smoke_zh"
-        else:
-            model = model or DEFAULT_MODEL
-            if model == "v1":
-                voice = voice or "af_heart"
-            text_use = SMOKE_EN
-            run = run_name or "smoke_en_heart"
-        download_weights.remote(force=False, model=model)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            text=text_use,
-            voice=voice,
-            model=model,
-            lang=lang,
-            speed=float(speed),
-            run_name=run,
-            gpu_label=gpu,
-        )
-        print("SMOKE_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
+
+    download_weights.remote(force=False, model=plan["model"])
+    out = generate_fn.with_options(gpu=args.gpu).remote(
+        text=plan["text"],
+        voice=plan["voice"],
+        model=plan["model"],
+        lang=plan["lang"],
+        speed=plan["speed"],
+        run_name=plan["run_name"],
+        gpu_label=args.gpu,
+    )
+    label = "SMOKE_RESULT" if args.command == "smoke" else "T2S_RESULT"
+    print(label, json.dumps(out, ensure_ascii=False), flush=True)
+    if not out.get("success"):
+        raise SystemExit(2)
+    if args.command == "smoke":
         if (out.get("audio") or {}).get("duration_s", 0) < 0.5:
             raise SystemExit("smoke audio too short")
         if (out.get("audio") or {}).get("rms", 0) < 1e-4:
             raise SystemExit("smoke audio near silent")
-        return
-    if action == "t2s":
-        if not text.strip():
-            raise SystemExit("t2s requires --text")
-        download_weights.remote(force=False, model=model)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            text=text,
-            voice=voice,
-            model=model,
-            lang=lang,
-            speed=float(speed),
-            run_name=run_name,
-            gpu_label=gpu,
-        )
-        print("T2S_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
-        return
-    raise SystemExit(f"unknown action {action!r}")
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])
