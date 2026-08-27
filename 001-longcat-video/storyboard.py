@@ -467,7 +467,10 @@ def _parse_args():
     p.add_argument("--guidance_scale", type=float, default=4.0)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--output_prefix", type=str, default="output_storyboard")
-    p.add_argument("--spatial_refine_only", action="store_true")
+    p.set_defaults(spatial_refine_only=True)
+    refine = p.add_mutually_exclusive_group()
+    refine.add_argument("--spatial_refine_only", action="store_true", dest="spatial_refine_only")
+    refine.add_argument("--full_refine", action="store_false", dest="spatial_refine_only")
     p.add_argument("--skip_refine", action="store_true")
     return p.parse_args()
 

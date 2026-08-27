@@ -1,6 +1,6 @@
 # modal-lab
 
-Modal 实验台：按 `NNN-topic` 编号做可复现实验。
+Modal 实验台：按 `NNN-topic` 编号做可复现实验。架构约定见 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)。
 
 ## Gallery (GitHub Pages) — 请把 HTML 结果挂上来
 
@@ -58,10 +58,10 @@ Modal 实验台：按 `NNN-topic` 编号做可复现实验。
 ## 结构
 
 ```text
-main.py                 # 入口，调度到 001 / 002 / …
+main.py                 # 仓库级 dispatcher；v2 app.py 优先，legacy run.py 兼容
 gpu-gallery/            # L40S × PRO 6000 Image→3D 对照预览（020/021/005）
 I2V_GPU_ROADMAP.md      # image→3D 卡池约定与结论
-001-longcat-video/      # 美团 LongCat-Video 视频生成复现
+001-longcat-video/      # LongCat-Video；v2 单入口 app.py 样板
 002-unlimited-ocr/      # 百度 Unlimited-OCR 文档解析
 003-mineru/             # OpenDataLab MinerU 文档解析
 004-minimax-h3/         # MiniMax H3 文生/图生视频（Comfy headless · PRO 6000）
@@ -131,8 +131,11 @@ python main.py 012 smoke          # LeVo 2（L40S · v2-medium）
 python main.py 016 smoke          # MusicGen small（T4 · 15s）
 python main.py 015 smoke          # Xiaomi-Robotics-1 RoboCasa365 动作冒烟（A100-40GB）
 
-# 也可直接进目录
-cd 001-longcat-video && python run.py status
+# 001 已迁移到 v2；本地状态 / dry-run 从根 launcher 进入，不触发镜像构建
+python main.py 001 status
+python main.py 001 t2v --dry-run
+
+# 其余未迁移实验仍可直接进目录
 cd 005-pixal3d && python run.py smoke
 cd 005-v2-pixal3d-l40s && python run.py status
 cd 005-v3-pixal3d-pro6000 && python run.py status

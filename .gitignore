@@ -17,6 +17,7 @@ books/*.pdf
 **/LongCat-Video/.git/
 
 # 本地缓存
+**/.codegraph/
 .cache/
 *.egg-info/
 .pytest_cache/
