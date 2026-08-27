@@ -125,6 +125,7 @@ run.py
 
 ```text
 001 -> 001-longcat-video
+002-unlimited-ocr
 003-mineru
 022 -> 022-hunyuan3d-2.1
 ```

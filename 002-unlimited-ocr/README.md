@@ -4,6 +4,8 @@
 在 Modal H100 / RTX PRO 6000 上识别
 `books/EN-算法导论4.pdf`（1677 页）。
 
+002 已迁移到 v2：一个 `app.py` 同时拥有本地 PDF 上传、并发 planning、SGLang Class 与 Modal CLI 入口；GPU 不再通过环境变量中转。
+
 ## 当前方案
 
 - 后端：百度仓库自带的 SGLang wheel，使用 continuous batching。
@@ -99,38 +101,52 @@ Volume 中已核对 `raw.md`、清理后的 `.md` 和 `.json` 各 1677 个；
 python main.py 002 parse
 ```
 
-或：
-
-```bash
-cd 002-unlimited-ocr
-python run.py parse
-```
-
 复现 5 分钟吞吐测试：
 
 ```bash
-python run.py benchmark --seconds 300 --concurrencies 24
+python main.py 002 benchmark --seconds 300 --concurrencies 24
 ```
 
 切换到 RTX PRO 6000：
 
 ```bash
-python run.py benchmark --seconds 300 \
+python main.py 002 benchmark --seconds 300 \
   --concurrencies 16,24,32 --gpu RTX-PRO-6000
 ```
 
 并行比较多个并发档位：
 
 ```bash
-python run.py benchmark --seconds 300 --concurrencies 4,8,16
+python main.py 002 benchmark --seconds 300 --concurrencies 4,8,16
 ```
 
 拉取完整结果：
 
 ```bash
-python run.py pull \
-  --remote /outputs/EN-算法导论4/full-c24-gundam-dpi200 \
-  --dest ./outputs
+modal volume get modal-lab-unlimited-ocr-data \
+  outputs/EN-算法导论4/full-c24-gundam-dpi200 \
+  ./002-unlimited-ocr/outputs
+```
+
+GPU 选择现在是显式调用链：
+
+```text
+CLI --gpu
+   │
+   ▼
+UnlimitedOCR.with_options(gpu=...)()
+   │
+   ▼
+benchmark / parse_pdf
+```
+
+不再使用 `MODAL_LAB_GPU_TYPE` 环境变量协议。
+
+本地 PDF 上传也作为独立命令暴露：
+
+```bash
+python main.py 002 upload --dry-run --pdf books/EN-算法导论4.pdf
+python main.py 002 upload --pdf books/EN-算法导论4.pdf
 ```
 
 Modal 资源：
@@ -141,3 +157,14 @@ Weights: modal-lab-unlimited-ocr-weights
 Data:    modal-lab-unlimited-ocr-data
 Output:  /outputs/EN-算法导论4/full-c24-gundam-dpi200
 ```
+
+## 测试
+
+```bash
+python -m unittest discover -s 002-unlimited-ocr/tests -v
+python -m py_compile 002-unlimited-ocr/app.py
+python main.py 002 status
+python main.py 002 benchmark --dry-run --concurrencies 16,24,32 --gpu RTX-PRO-6000
+```
+
+以上测试不启动付费 GPU。

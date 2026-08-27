@@ -126,7 +126,7 @@ GPU 采样聚合：
 推荐运行：
 
 ```bash
-python run.py benchmark --seconds 300 --concurrencies 24
+python main.py 002 benchmark --seconds 300 --concurrencies 24
 ```
 
 结果目录：

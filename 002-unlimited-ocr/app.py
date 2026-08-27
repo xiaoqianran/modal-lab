@@ -3,14 +3,15 @@
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import base64
 import hashlib
 import json
-import os
 import queue
 import re
 import statistics
+import sys
 import subprocess
 import threading
 import time
@@ -28,7 +29,7 @@ MODEL_DIR = Path("/models/Unlimited-OCR")
 DATA_DIR = Path("/data")
 DEFAULT_REMOTE_PDF = "/books/EN-算法导论4.pdf"
 DEFAULT_CONCURRENCY = 24
-GPU_TYPE = os.environ.get("MODAL_LAB_GPU_TYPE", "H100!")
+DEFAULT_GPU = "H100!"
 SERVER_URL = "http://127.0.0.1:10000"
 SERVED_MODEL_NAME = "Unlimited-OCR"
 SGLANG_WHEEL = (
@@ -195,7 +196,7 @@ def _summarize_gpu(samples: list[dict[str, float]]) -> dict[str, Any]:
 
 @app.cls(
     image=sglang_image,
-    gpu=GPU_TYPE,
+    gpu=DEFAULT_GPU,
     volumes={"/models": model_volume, "/data": data_volume},
     timeout=45 * 60,
     cpu=8,
@@ -922,93 +923,191 @@ async def _upload_pdf(local_pdf: Path, remote_pdf: str) -> dict[str, Any]:
     return result
 
 
-@app.local_entrypoint()
-async def main(
-    action: str = "parse",
-    local_pdf: str = str(DEFAULT_LOCAL_PDF),
-    remote_pdf: str = DEFAULT_REMOTE_PDF,
-    runtime_seconds: int = 300,
-    start_page: int = 1,
-    end_page: int = 0,
-    dpi: int = 200,
-    max_tokens: int = 4096,
-    concurrencies: str = str(DEFAULT_CONCURRENCY),
-    image_mode: str = "gundam",
-    retries: int = 3,
-    resume: bool = True,
-) -> None:
-    action = action.strip().lower()
-    if action == "upload":
-        print(
-            json.dumps(
-                await _upload_pdf(Path(local_pdf), remote_pdf),
-                ensure_ascii=False,
-                indent=2,
-            )
-        )
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="002 Unlimited-OCR on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+
+    download = sub.add_parser("download", help="下载固定 revision 模型")
+    download.add_argument("--dry-run", action="store_true")
+
+    upload = sub.add_parser("upload", help="上传本地 PDF 到 data Volume，并记录 hash")
+    upload.add_argument("--pdf", type=Path, default=DEFAULT_LOCAL_PDF)
+    upload.add_argument("--remote-pdf", default=DEFAULT_REMOTE_PDF)
+    upload.add_argument("--dry-run", action="store_true")
+
+    benchmark = sub.add_parser("benchmark", help="固定时间窗口吞吐 benchmark")
+    benchmark.add_argument("--pdf", type=Path, default=DEFAULT_LOCAL_PDF)
+    benchmark.add_argument("--remote-pdf", default=DEFAULT_REMOTE_PDF)
+    benchmark.add_argument("--seconds", type=int, default=300)
+    benchmark.add_argument("--start-page", type=int, default=1)
+    benchmark.add_argument("--dpi", type=int, default=200)
+    benchmark.add_argument("--max-tokens", type=int, default=4096)
+    benchmark.add_argument("--concurrencies", default=str(DEFAULT_CONCURRENCY))
+    benchmark.add_argument("--image-mode", default="gundam")
+    benchmark.add_argument("--gpu", default=DEFAULT_GPU)
+    benchmark.add_argument("--dry-run", action="store_true")
+
+    parse = sub.add_parser("parse", help="完整/区间解析")
+    parse.add_argument("--pdf", type=Path, default=DEFAULT_LOCAL_PDF)
+    parse.add_argument("--remote-pdf", default=DEFAULT_REMOTE_PDF)
+    parse.add_argument("--start-page", type=int, default=1)
+    parse.add_argument("--end-page", type=int, default=0)
+    parse.add_argument("--dpi", type=int, default=200)
+    parse.add_argument("--max-tokens", type=int, default=4096)
+    parse.add_argument("--concurrency", type=int, default=DEFAULT_CONCURRENCY)
+    parse.add_argument("--image-mode", default="gundam")
+    parse.add_argument("--retries", type=int, default=3)
+    parse.add_argument("--no-resume", action="store_true")
+    parse.add_argument("--gpu", default=DEFAULT_GPU)
+    parse.add_argument("--dry-run", action="store_true")
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "002-unlimited-ocr",
+        "app": APP_NAME,
+        "model_id": MODEL_ID,
+        "model_revision": MODEL_REVISION,
+        "default_gpu": DEFAULT_GPU,
+        "default_concurrency": DEFAULT_CONCURRENCY,
+        "default_pdf": str(DEFAULT_LOCAL_PDF),
+        "default_pdf_exists": DEFAULT_LOCAL_PDF.is_file(),
+        "model_volume": "modal-lab-unlimited-ocr-weights",
+        "data_volume": "modal-lab-unlimited-ocr-data",
+        "gpu_selection": "explicit Modal Cls.with_options; no environment-variable protocol",
+    }
+
+
+def _parse_concurrencies(raw: str) -> list[int]:
+    try:
+        values = [int(part.strip()) for part in raw.split(",") if part.strip()]
+    except ValueError:
+        raise ValueError("--concurrencies 必须是逗号分隔整数") from None
+    if not values or any(value <= 0 for value in values):
+        raise ValueError("concurrency 必须 > 0")
+    return values
+
+
+def benchmark_plan(args: argparse.Namespace) -> dict[str, Any]:
+    values = _parse_concurrencies(args.concurrencies)
+    if args.seconds <= 0:
+        raise ValueError("--seconds 必须 > 0")
+    if args.start_page < 1:
+        raise ValueError("--start-page 必须 >= 1")
+    if args.dpi <= 0 or args.max_tokens <= 0:
+        raise ValueError("--dpi / --max-tokens 必须 > 0")
+    return {
+        "action": "benchmark",
+        "local_pdf": str(args.pdf),
+        "remote_pdf": args.remote_pdf,
+        "gpu": args.gpu,
+        "runtime_seconds": args.seconds,
+        "start_page": args.start_page,
+        "dpi": args.dpi,
+        "max_tokens": args.max_tokens,
+        "concurrencies": values,
+        "image_mode": args.image_mode,
+    }
+
+
+def parse_plan(args: argparse.Namespace) -> dict[str, Any]:
+    if args.start_page < 1:
+        raise ValueError("--start-page 必须 >= 1")
+    if args.end_page > 0 and args.end_page < args.start_page:
+        raise ValueError("--end-page 不能小于 --start-page")
+    if args.dpi <= 0 or args.max_tokens <= 0 or args.concurrency <= 0:
+        raise ValueError("--dpi / --max-tokens / --concurrency 必须 > 0")
+    if args.retries < 0:
+        raise ValueError("--retries 必须 >= 0")
+    return {
+        "action": "parse",
+        "local_pdf": str(args.pdf),
+        "remote_pdf": args.remote_pdf,
+        "gpu": args.gpu,
+        "start_page": args.start_page,
+        "end_page": args.end_page,
+        "dpi": args.dpi,
+        "max_tokens": args.max_tokens,
+        "concurrency": args.concurrency,
+        "image_mode": args.image_mode,
+        "retries": args.retries,
+        "resume": not args.no_resume,
+    }
+
+
+async def cli(argv: list[str] | tuple[str, ...]) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
         return
-    if action == "download":
-        print(
-            json.dumps(
-                await download_model.remote.aio(),
-                ensure_ascii=False,
-                indent=2,
-            )
-        )
+    if args.command == "download":
+        if args.dry_run:
+            print(json.dumps({"action": "download"}, ensure_ascii=False, indent=2))
+            return
+        print(json.dumps(await download_model.remote.aio(), ensure_ascii=False, indent=2))
+        return
+    if args.command == "upload":
+        plan = {"action": "upload", "local_pdf": str(args.pdf), "remote_pdf": args.remote_pdf}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        print(json.dumps(await _upload_pdf(args.pdf, args.remote_pdf), ensure_ascii=False, indent=2))
         return
 
-    upload = await _upload_pdf(Path(local_pdf), remote_pdf)
+    try:
+        plan = benchmark_plan(args) if args.command == "benchmark" else parse_plan(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
+        return
+
+    upload = await _upload_pdf(args.pdf, args.remote_pdf)
     model = await download_model.remote.aio()
-    service = UnlimitedOCR()
-    if action == "benchmark":
-        values = [int(value) for value in concurrencies.split(",")]
+    service = UnlimitedOCR.with_options(gpu=plan["gpu"])()
+    if args.command == "benchmark":
         results = await asyncio.gather(
             *[
                 service.benchmark.remote.aio(
                     concurrency=value,
-                    runtime_seconds=runtime_seconds,
-                    remote_pdf=remote_pdf,
-                    start_page=start_page,
-                    dpi=dpi,
-                    max_tokens=max_tokens,
-                    image_mode=image_mode,
+                    runtime_seconds=plan["runtime_seconds"],
+                    remote_pdf=plan["remote_pdf"],
+                    start_page=plan["start_page"],
+                    dpi=plan["dpi"],
+                    max_tokens=plan["max_tokens"],
+                    image_mode=plan["image_mode"],
                 )
-                for value in values
+                for value in plan["concurrencies"]
             ]
         )
-        compact = [
-            {key: value for key, value in result.items() if key != "pages"}
-            for result in results
-        ]
-        print(
-            json.dumps(
-                {"upload": upload, "model": model, "benchmarks": compact},
-                ensure_ascii=False,
-                indent=2,
-            )
-        )
+        compact = [{key: value for key, value in result.items() if key != "pages"} for result in results]
+        print(json.dumps({"upload": upload, "model": model, "benchmarks": compact}, ensure_ascii=False, indent=2))
         return
-    if action == "parse":
-        values = [int(value) for value in concurrencies.split(",")]
-        if len(values) != 1:
-            raise ValueError("完整解析只能指定一个 concurrency")
-        result = await service.parse_pdf.remote.aio(
-            concurrency=values[0],
-            remote_pdf=remote_pdf,
-            start_page=start_page,
-            end_page=end_page,
-            dpi=dpi,
-            max_tokens=max_tokens,
-            image_mode=image_mode,
-            retries=retries,
-            resume=resume,
-        )
-        print(
-            json.dumps(
-                {"upload": upload, "model": model, "parse": result},
-                ensure_ascii=False,
-                indent=2,
-            )
-        )
-        return
-    raise SystemExit("action 必须是 upload、download、benchmark 或 parse")
+
+    result = await service.parse_pdf.remote.aio(
+        concurrency=plan["concurrency"],
+        remote_pdf=plan["remote_pdf"],
+        start_page=plan["start_page"],
+        end_page=plan["end_page"],
+        dpi=plan["dpi"],
+        max_tokens=plan["max_tokens"],
+        image_mode=plan["image_mode"],
+        retries=plan["retries"],
+        resume=plan["resume"],
+    )
+    print(json.dumps({"upload": upload, "model": model, "parse": result}, ensure_ascii=False, indent=2))
+
+
+@app.local_entrypoint()
+async def main(*argv: str) -> None:
+    await cli(argv)
+
+
+if __name__ == "__main__":
+    asyncio.run(cli(sys.argv[1:]))
