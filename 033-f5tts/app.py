@@ -11,9 +11,11 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
+import sys
 import time
 import urllib.request
 from datetime import datetime, timezone
@@ -431,42 +433,116 @@ SMOKE_EN = (
 SMOKE_ZH = "你好，这是 modal-lab 第零三三号 F5-TTS 实验。零样本克隆，中英皆可。"
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="033 F5-TTS on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("check", help="远程检查权重 / outputs / prompts Volume")
+
+    download = sub.add_parser("download", help="下载权重与参考音频")
+    download.add_argument("--force", action="store_true")
+
+    smoke = sub.add_parser("smoke", help="运行固定 EN / ZH clone smoke")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke.add_argument("--kind", default="en", choices=["en", "zh"])
+    smoke.add_argument("--run-name", default="")
+    smoke.add_argument("--nfe-step", type=int, default=32)
+
+    t2s = sub.add_parser("t2s", help="zero-shot Text-to-Speech")
+    t2s.add_argument("--dry-run", action="store_true")
+    t2s.add_argument("--gpu", default=DEFAULT_GPU)
+    t2s.add_argument("--text", required=True)
+    t2s.add_argument("--lang", default="en")
+    t2s.add_argument("--run-name", default="")
+    t2s.add_argument("--ref-audio", default="")
+    t2s.add_argument("--ref-text", default="")
+    t2s.add_argument("--nfe-step", type=int, default=32)
+    t2s.add_argument("--seed", type=int, default=42)
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "033-f5tts",
+        "app": APP_NAME,
+        "default_gpu": DEFAULT_GPU,
+        "default_model": DEFAULT_MODEL,
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+        "prompts_volume": VOLUME_PROMPTS,
+        "refs": {
+            "en": REF_EN,
+            "zh": REF_ZH,
+        },
+    }
+
+
+def smoke_plan(args: argparse.Namespace) -> dict[str, Any]:
+    if args.kind == "zh":
+        text = SMOKE_ZH
+        run_name = args.run_name or "smoke_zh"
+        lang = "zh"
+    else:
+        text = SMOKE_EN
+        run_name = args.run_name or "smoke_en"
+        lang = "en"
+    return {
+        "action": "smoke",
+        "gpu": args.gpu,
+        "kind": args.kind,
+        "text": text,
+        "run_name": run_name,
+        "lang": lang,
+        "nfe_step": args.nfe_step,
+    }
+
+
+def t2s_plan(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "action": "t2s",
+        "gpu": args.gpu,
+        "text": args.text.strip(),
+        "run_name": args.run_name,
+        "lang": args.lang,
+        "ref_audio": args.ref_audio,
+        "ref_text": args.ref_text,
+        "nfe_step": args.nfe_step,
+        "seed": args.seed,
+    }
+
+
 @app.local_entrypoint()
-def main(
-    action: str = "status",
-    gpu: str = DEFAULT_GPU,
-    text: str = "",
-    run_name: str = "",
-    force_download: bool = False,
-    smoke_kind: str = "en",
-    lang: str = "en",
-    ref_audio: str = "",
-    ref_text: str = "",
-    nfe_step: int = 32,
-):
-    if action == "status":
-        status_fn.remote()
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
         return
-    if action == "download":
-        download_weights.remote(force=force_download)
+    if args.command == "check":
+        print(json.dumps(status_fn.remote(), ensure_ascii=False, indent=2))
         return
-    if action == "smoke":
-        kind = smoke_kind.lower().strip()
-        if kind in ("zh", "chinese"):
-            text_use = SMOKE_ZH
-            run = run_name or "smoke_zh"
-            lang_use = "zh"
-        else:
-            text_use = SMOKE_EN
-            run = run_name or "smoke_en"
-            lang_use = "en"
+    if args.command == "download":
+        print(json.dumps(download_weights.remote(force=args.force), ensure_ascii=False, indent=2))
+        return
+
+    if args.command == "smoke":
+        plan = smoke_plan(args)
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
         download_weights.remote(force=False)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            text=text_use,
-            run_name=run,
-            gpu_label=gpu,
-            lang=lang_use,
-            nfe_step=nfe_step,
+        out = generate_fn.with_options(gpu=args.gpu).remote(
+            text=plan["text"],
+            run_name=plan["run_name"],
+            gpu_label=args.gpu,
+            lang=plan["lang"],
+            nfe_step=args.nfe_step,
         )
         print("SMOKE_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
         if not out.get("success"):
@@ -476,21 +552,28 @@ def main(
         if (out.get("audio") or {}).get("rms", 0) < 1e-4:
             raise SystemExit("smoke audio near silent")
         return
-    if action == "t2s":
-        if not text.strip():
-            raise SystemExit("t2s requires --text")
-        download_weights.remote(force=False)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            text=text,
-            run_name=run_name,
-            gpu_label=gpu,
-            lang=lang,
-            ref_audio=ref_audio,
-            ref_text=ref_text,
-            nfe_step=nfe_step,
-        )
-        print("T2S_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
+
+    plan = t2s_plan(args)
+    if not plan["text"]:
+        raise SystemExit("t2s requires non-empty --text")
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
         return
-    raise SystemExit(f"unknown action {action!r}")
+    download_weights.remote(force=False)
+    out = generate_fn.with_options(gpu=args.gpu).remote(
+        text=plan["text"],
+        run_name=args.run_name,
+        gpu_label=args.gpu,
+        lang=args.lang,
+        ref_audio=args.ref_audio,
+        ref_text=args.ref_text,
+        nfe_step=args.nfe_step,
+        seed=args.seed,
+    )
+    print("T2S_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
+    if not out.get("success"):
+        raise SystemExit(2)
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])
