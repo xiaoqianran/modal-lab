@@ -51,7 +51,7 @@ def verify_canonical(data: bytes) -> tuple[int, int, tuple[int, int]]:
 
 
 def upload(volume: modal.Volume, data: bytes, sha256: str) -> str:
-    path = f"experiments/041/{sha256}.png"
+    path = f"client-inputs/{sha256}.png"
     with volume.batch_upload(force=True) as batch:
         batch.put_file(io.BytesIO(data), path)
     return path
