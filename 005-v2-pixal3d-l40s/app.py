@@ -5,6 +5,7 @@ Gates: build-sm89 → verify → smoke/i2v.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
@@ -647,33 +648,132 @@ class Pixal3DL40S:
         return result
 
 
-@app.local_entrypoint()
-def main(
-    action: str = "status",
-    output_name: str = "demo_l40s",
-    seed: int = 42,
-    low_vram: bool = True,
-    resolution: int = 1024,
-):
-    worker = Pixal3DL40S()
-    if action == "status":
-        print(worker.status.remote())
-    elif action == "build-sm89":
-        print(worker.build_sm89.remote())
-    elif action == "verify":
-        print(worker.install_wheels_and_verify.remote())
-    elif action == "download":
-        print(worker.download_weights.remote())
-    elif action in {"smoke", "i2v"}:
-        print(
-            worker.image_to_3d.remote(
-                image_bytes=None,
-                image_url=SAMPLE_IMAGE_URL,
-                output_name=output_name if action == "i2v" else "smoke_l40s",
-                seed=seed,
-                low_vram=low_vram,
-                resolution=resolution,
-            )
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="005-v2 Pixal3D L40S / sm_89")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    sub.add_parser("status", help="打印固定栈；纯本地")
+    sub.add_parser("check", help="远程检查 L40S / wheel cache / model 状态")
+
+    for name, help_text in (
+        ("build-sm89", "源码编译并缓存 sm_89 wheels"),
+        ("verify", "安装缓存 wheels 并运行 verify_sm89"),
+        ("download", "下载 Pixal3D 权重到 Volume"),
+    ):
+        cmd = sub.add_parser(name, help=help_text)
+        cmd.add_argument("--i-know-this-costs-money", action="store_true")
+        cmd.add_argument("--dry-run", action="store_true")
+
+    smoke = sub.add_parser("smoke", help="官方样例图 end-to-end -> GLB")
+    smoke.add_argument("--i-know-this-costs-money", action="store_true")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--output-name", default="smoke_l40s")
+    smoke.add_argument("--seed", type=int, default=42)
+    smoke.add_argument("--resolution", type=int, default=1024)
+    smoke.add_argument("--fov", type=float, default=-1.0)
+    low_vram = smoke.add_mutually_exclusive_group()
+    low_vram.add_argument("--low-vram", action="store_true", dest="low_vram")
+    low_vram.add_argument("--no-low-vram", action="store_false", dest="low_vram")
+    smoke.set_defaults(low_vram=True)
+
+    i2v = sub.add_parser("i2v", help="自定义图片 URL -> GLB")
+    i2v.add_argument("--i-know-this-costs-money", action="store_true")
+    i2v.add_argument("--dry-run", action="store_true")
+    i2v.add_argument("--image-url", required=True)
+    i2v.add_argument("--output-name", default="demo_l40s")
+    i2v.add_argument("--seed", type=int, default=42)
+    i2v.add_argument("--resolution", type=int, default=1024)
+    i2v.add_argument("--fov", type=float, default=-1.0)
+    low_vram_i2v = i2v.add_mutually_exclusive_group()
+    low_vram_i2v.add_argument("--low-vram", action="store_true", dest="low_vram")
+    low_vram_i2v.add_argument("--no-low-vram", action="store_false", dest="low_vram")
+    i2v.set_defaults(low_vram=True)
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "005-v2-pixal3d-l40s",
+        "app": APP_NAME,
+        "plan": "A",
+        "gpu": DEFAULT_GPU,
+        "cuda_arch": CUDA_ARCH,
+        "natten_arch": NATTEN_ARCH,
+        "torch_index": TORCH_INDEX,
+        "model": HF_MODEL_REPO,
+        "wheels_volume": VOLUME_WHEELS,
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+        "sample_image_url": SAMPLE_IMAGE_URL,
+    }
+
+
+def paid_plan(args: argparse.Namespace) -> dict[str, Any]:
+    plan: dict[str, Any] = {"action": args.command, "gpu": DEFAULT_GPU}
+    if args.command in {"smoke", "i2v"}:
+        plan.update(
+            {
+                "image_url": SAMPLE_IMAGE_URL if args.command == "smoke" else args.image_url,
+                "output_name": args.output_name,
+                "seed": args.seed,
+                "low_vram": args.low_vram,
+                "resolution": args.resolution,
+                "fov": args.fov,
+            }
         )
-    else:
-        raise SystemExit(f"unknown action: {action}")
+    return plan
+
+
+def require_cost_ack(args: argparse.Namespace) -> None:
+    if not args.i_know_this_costs_money:
+        raise SystemExit(f"{args.command} requires --i-know-this-costs-money")
+
+
+@app.local_entrypoint()
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
+        return
+
+    worker = Pixal3DL40S()
+    if args.command == "check":
+        print(worker.status.remote())
+        return
+
+    plan = paid_plan(args)
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
+        return
+    require_cost_ack(args)
+
+    if args.command == "build-sm89":
+        print(worker.build_sm89.remote())
+        return
+    if args.command == "verify":
+        print(worker.install_wheels_and_verify.remote())
+        return
+    if args.command == "download":
+        print(worker.download_weights.remote())
+        return
+
+    print(
+        worker.image_to_3d.remote(
+            image_bytes=None,
+            image_url=plan["image_url"],
+            output_name=plan["output_name"],
+            seed=plan["seed"],
+            low_vram=plan["low_vram"],
+            resolution=plan["resolution"],
+            fov=plan["fov"],
+        )
+    )
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])
