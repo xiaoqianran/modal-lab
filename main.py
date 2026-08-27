@@ -1,12 +1,13 @@
 """Workspace launcher — 只负责把实验 ID 分发到实验入口。
 
-新实验默认使用 ``app.py``，由 Modal 原生 ``local_entrypoint`` 接管 CLI；尚未迁移的实验
-临时兼容旧 ``run.py``。等所有实验迁移完成后即可删除 legacy 分支。
+普通 Modal 实验使用 ``app.py`` + ``local_entrypoint``；少数 provider / integration
+验证目录（040/041）是纯客户端脚本，保留独立 ``run.py``。两者是不同入口类型，
+不是迁移前后关系。
 
 示例：
   python main.py 001 status
-  python main.py 001 t2v --profile pro6000-2
-  python main.py 022 probe --gpu L40S      # legacy experiment
+  python main.py 022 probe --gpu L40S
+  python main.py 040                    # provider validation script
 """
 
 from __future__ import annotations
@@ -22,7 +23,7 @@ DEFAULT_EXP = "001-longcat-video"
 
 
 def entry_for(exp_dir: Path) -> Path | None:
-    """新架构优先 app.py；run.py 仅作为迁移期兼容。"""
+    """优先 Modal app.py；run.py 仅用于独立 provider/integration 客户端脚本。"""
     for name in ("app.py", "run.py"):
         entry = exp_dir / name
         if entry.is_file():
@@ -121,8 +122,8 @@ def is_local_invocation(argv: list[str]) -> bool:
     return "--dry-run" in argv
 
 
-def run_legacy(entry: Path, rest: list[str], exp_id: str) -> None:
-    """迁移期兼容旧 run.py；新代码不要依赖这里。"""
+def run_script_entry(entry: Path, rest: list[str], exp_id: str) -> None:
+    """执行不定义 Modal App 的 standalone provider/integration 脚本。"""
     exp_dir = entry.parent
     exp_python = venv_python(exp_dir)
     if exp_python is not None and Path(sys.executable).resolve() != exp_python.resolve():
@@ -156,7 +157,7 @@ def main() -> None:
             os.execv(python, [python, str(entry), *rest])
         os.execv(modal, [modal, "run", str(entry), *rest])
 
-    run_legacy(entry, rest, exp_id)
+    run_script_entry(entry, rest, exp_id)
 
 
 if __name__ == "__main__":

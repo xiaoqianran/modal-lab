@@ -113,12 +113,12 @@ export HF_TOKEN=...   # 可选：门禁模型
 ```bash
 python main.py 001 status
 python main.py 004 t2v --prompt "..."
-python main.py 005 i2v --image 005-pixal3d/inputs/sample.webp --gpu H100
-python main.py 005 build-natten --gpu A100-40GB   # A100 首次
-cd 005-v2-pixal3d-l40s && python run.py smoke --i-know-this-costs-money  # L40S
-cd 005-v3-pixal3d-pro6000 && python run.py smoke --i-know-this-costs-money  # PRO 6000
-cd 020-triposr && python run.py smoke --i-know-this-costs-money --gpu L40S
-cd 021-trellis2 && python run.py build --gpu L40S && python run.py smoke --i-know-this-costs-money --gpu L40S
+python main.py 005-pixal3d i2v --image 005-pixal3d/inputs/sample.webp --gpu H100
+python main.py 005-pixal3d build-natten --gpu A100-40GB   # A100 首次
+python main.py 005-v2-pixal3d-l40s smoke --i-know-this-costs-money  # L40S
+python main.py 005-v3-pixal3d-pro6000 smoke --i-know-this-costs-money  # PRO 6000
+python main.py 020 smoke --i-know-this-costs-money --gpu L40S
+python main.py 021 build --gpu L40S && python main.py 021 smoke --i-know-this-costs-money --gpu L40S
 python main.py 006 smoke          # HunyuanWorld-Mirror 最低成本冒烟
 python main.py 007 smoke          # WorldMirror 2.0 recon（T4）
 python main.py 008 smoke          # HY-Pano 轻量 Qwen（PRO 6000）
@@ -135,14 +135,20 @@ python main.py 015 smoke          # Xiaomi-Robotics-1 RoboCasa365 动作冒烟�
 python main.py 001 status
 python main.py 001 t2v --dry-run
 
-# 其余未迁移实验仍可直接进目录
-cd 005-pixal3d && python run.py smoke
-cd 005-v2-pixal3d-l40s && python run.py status
-cd 005-v3-pixal3d-pro6000 && python run.py status
-cd 008-hy-pano && python run.py status
-cd 020-triposr && python run.py status
-cd 021-trellis2 && python run.py status
-cd 022-hunyuan3d-2.1 && python run.py probe --gpu L40S
+# 005 有三个版本，必须使用完整 ID
+python main.py 005-pixal3d status
+python main.py 005-v2-pixal3d-l40s status
+python main.py 005-v3-pixal3d-pro6000 status
+
+# 其他 v2 实验统一从根 launcher 进入
+python main.py 008 status
+python main.py 020 status
+python main.py 021 status
+python main.py 022 probe --gpu L40S
+
+# 040/041 是 provider/integration 客户端验证脚本，不定义 Modal App
+python main.py 040
+python main.py 041
 ```
 
 ## 实验一览

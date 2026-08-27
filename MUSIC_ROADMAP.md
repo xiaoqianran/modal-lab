@@ -43,7 +43,7 @@
 
 ## 审计检查清单（2026-08-10）
 
-- [x] 六号均有 `modal_app.py` + `run.py` + `README` + `gallery`
+- [x] 六号均已收敛为 `app.py` 单入口，并保留 `README` + `gallery`
 - [x] Modal volumes 均存在且有权重
 - [x] 本地 gallery 音频可播（非空）
 - [x] 016 误混入的 CloseBlenderLid 仿真 mp4 **已删除**

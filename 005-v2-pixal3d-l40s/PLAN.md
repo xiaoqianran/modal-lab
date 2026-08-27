@@ -18,7 +18,7 @@
 ## 关键命令
 
 ```bash
-python run.py build-sm89 --i-know-this-costs-money
-python run.py verify --i-know-this-costs-money
-python run.py smoke --i-know-this-costs-money
+python main.py 005-v2-pixal3d-l40s build-sm89 --i-know-this-costs-money
+python main.py 005-v2-pixal3d-l40s verify --i-know-this-costs-money
+python main.py 005-v2-pixal3d-l40s smoke --i-know-this-costs-money
 ```

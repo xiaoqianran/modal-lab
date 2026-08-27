@@ -9,6 +9,6 @@
 | P2 smoke EN | ✅ | T4 · af_heart · **7.44s · $0.0012 · 0.79GB** |
 | P3 smoke ZH | ✅ | v1.1-zh · zf_001 · **9.94s · $0.0016** |
 | P4 gallery + COST | ✅ | assets 已 pull · COST_BENCHMARK 已填 |
-| P5 t2s 多样音色 | 可选 | `python run.py t2s --voice af_bella --text "..."` |
+| P5 t2s 多样音色 | 可选 | `python main.py 025 t2s --voice af_bella --text "..."` |
 
 默认：**T4 · v1 · af_heart** · 无 keep_warm · scaledown 30s。

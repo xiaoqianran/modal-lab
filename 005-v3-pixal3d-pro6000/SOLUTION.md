@@ -46,4 +46,4 @@
 
 ## 4. 参考
 
-见 `GPU_BENCHMARK.md` · `modal_app.py` · `viewer/`
+见 `GPU_BENCHMARK.md` · `app.py` · `viewer/`

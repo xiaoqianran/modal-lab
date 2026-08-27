@@ -200,4 +200,15 @@ Modal Volume                  future upstream flags
 034-higgs
 ```
 
-这些实验都已删除 `run.py -> modal_app.py` pass-through 层。其他实验继续逐个迁移，不做机械批量改名。
+上述 34 个 Modal 实验均已删除 `run.py -> modal_app.py` pass-through 层。仓库中 `modal_app.py` 已清零。
+
+040/041 不定义 Modal App，而是 provider/integration 的客户端验证脚本，因此保留 `run.py`。这是不同的入口类型，不是 legacy 兼容：
+
+```text
+普通实验                Provider / integration 验证
+experiment/app.py       040|041/run.py
+       │                       │
+Modal local_entrypoint         └── Modal Client / Function.from_name
+       │
+       └── remote functions
+```

@@ -236,9 +236,9 @@ lab 只做 **可自托管权重** 行。
 
 ```text
 NNN-<model>/
+  app.py            # 唯一入口：App · Image · Volume · CLI · remote functions
   PLAN.md | README.md | UPSTREAM.md
-  modal_app.py      # App · Image · Volume · download/smoke/t2s
-  run.py
+  tests/test_app.py # 本地 planning / CLI，不连接 Modal
   examples/  inputs/voices/  gallery/
   COST_BENCHMARK.md
 ```

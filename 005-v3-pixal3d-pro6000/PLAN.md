@@ -13,8 +13,8 @@
 ## 用法
 
 ```bash
-python run.py probe
-python run.py build-sm120 --i-know-this-costs-money
-python run.py verify --i-know-this-costs-money
-python run.py smoke --i-know-this-costs-money
+python main.py 005-v3-pixal3d-pro6000 probe
+python main.py 005-v3-pixal3d-pro6000 build-sm120 --i-know-this-costs-money
+python main.py 005-v3-pixal3d-pro6000 verify --i-know-this-costs-money
+python main.py 005-v3-pixal3d-pro6000 smoke --i-know-this-costs-money
 ```
