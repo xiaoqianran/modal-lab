@@ -14,10 +14,12 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
 import subprocess
+import sys
 import threading
 import time
 from datetime import datetime, timezone
@@ -594,38 +596,110 @@ def status() -> dict[str, Any]:
     return out
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="006 HunyuanWorld-Mirror on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("check", help="远程检查权重 / outputs Volume")
+
+    download = sub.add_parser("download", help="CPU 下载 HF 权重到 Volume")
+    download.add_argument("--force", action="store_true")
+    download.add_argument("--dry-run", action="store_true")
+
+    smoke = sub.add_parser("smoke", help="最低成本 Bright_Room·2图")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke.add_argument("--max-images", type=int, default=2)
+
+    infer_cmd = sub.add_parser("infer", help="对示例目录做推理")
+    infer_cmd.add_argument("--dry-run", action="store_true")
+    infer_cmd.add_argument("--example", default="Bright_Room")
+    infer_cmd.add_argument("--max-images", type=int, default=2)
+    infer_cmd.add_argument("--target-size", type=int, default=518)
+    infer_cmd.add_argument("--run-name", default="")
+    infer_cmd.add_argument("--gpu", default=DEFAULT_GPU)
+    infer_cmd.add_argument("--save-gs", action="store_true")
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "006-hunyuanworld-mirror",
+        "app": APP_NAME,
+        "default_gpu": DEFAULT_GPU,
+        "hf_repo": HF_REPO,
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+        "smoke": {"example": "Bright_Room", "max_images": 2, "target_size": 518, "save_gs": False},
+    }
+
+
+def inference_plan(args: argparse.Namespace) -> dict[str, Any]:
+    if args.command == "smoke":
+        return {
+            "action": "smoke",
+            "example": "Bright_Room",
+            "max_images": min(max(1, args.max_images), 2),
+            "target_size": 518,
+            "run_name": "smoke_bright_room",
+            "gpu": args.gpu,
+            "save_gs": False,
+        }
+    if args.max_images <= 0:
+        raise ValueError("--max-images 必须 > 0")
+    if args.target_size <= 0:
+        raise ValueError("--target-size 必须 > 0")
+    return {
+        "action": "infer",
+        "example": args.example,
+        "max_images": args.max_images,
+        "target_size": args.target_size,
+        "run_name": args.run_name,
+        "gpu": args.gpu,
+        "save_gs": args.save_gs,
+    }
+
+
 @app.local_entrypoint()
-def main(
-    action: str = "status",
-    example: str = "Bright_Room",
-    max_images: int = 2,
-    target_size: int = 518,
-    run_name: str = "",
-    gpu: str = DEFAULT_GPU,
-    force_download: bool = False,
-    save_gs: bool = False,
-) -> None:
-    if action == "status":
-        print(status.remote())
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
         return
-    if action == "download":
-        print(download_weights.remote(force=force_download))
+    if args.command == "check":
+        print(json.dumps(status.remote(), ensure_ascii=False, indent=2))
         return
-    if action in {"smoke", "infer"}:
-        if action == "smoke":
-            example = "Bright_Room"
-            max_images = min(max_images, 2)
-            run_name = run_name or "smoke_bright_room"
-            save_gs = False
-        print(
-            infer.with_options(gpu=gpu).remote(
-                example=example,
-                max_images=max_images,
-                target_size=target_size,
-                run_name=run_name,
-                gpu_label=gpu,
-                save_gs=save_gs,
-            )
+    if args.command == "download":
+        plan = {"action": "download", "force": args.force}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        print(json.dumps(download_weights.remote(force=args.force), ensure_ascii=False, indent=2))
+        return
+
+    try:
+        plan = inference_plan(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
+        return
+
+    print(
+        infer.with_options(gpu=plan["gpu"]).remote(
+            example=plan["example"],
+            max_images=plan["max_images"],
+            target_size=plan["target_size"],
+            run_name=plan["run_name"],
+            gpu_label=plan["gpu"],
+            save_gs=plan["save_gs"],
         )
-        return
-    raise SystemExit(f"unknown action={action!r}")
+    )
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])

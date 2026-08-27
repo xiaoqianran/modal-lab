@@ -164,6 +164,7 @@ Modal Volume                  future upstream flags
 
 ```text
 001-longcat-video
+006-hunyuanworld-mirror
 007-worldmirror-2.0
 008-hy-pano
 013-yue
