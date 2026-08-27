@@ -15,10 +15,12 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
 import subprocess
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -564,48 +566,159 @@ def generate_fn(
     )
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="013 YuE full-song generation on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("check", help="远程检查权重 / outputs Volume")
+
+    download = sub.add_parser("download", help="下载指定 Stage1 + Stage2 + codec")
+    download.add_argument("--force", action="store_true")
+    download.add_argument("--dry-run", action="store_true")
+    download.add_argument("--stage1", default=DEFAULT_STAGE1)
+
+    smoke = sub.add_parser("smoke", help="固定 2-segment English CoT smoke")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke.add_argument("--stage1", default=DEFAULT_STAGE1)
+    smoke.add_argument("--run-n-segments", type=int, default=2)
+    smoke.add_argument("--max-new-tokens", type=int, default=3000)
+    smoke.add_argument("--stage2-batch-size", type=int, default=2)
+    smoke.add_argument("--seed", type=int, default=42)
+    smoke.add_argument("--repetition-penalty", type=float, default=1.1)
+    smoke.add_argument("--run-name", default="smoke_en")
+
+    generate = sub.add_parser("generate", help="genre + lyrics -> full song")
+    generate.add_argument("--dry-run", action="store_true")
+    generate.add_argument("--gpu", default=DEFAULT_GPU)
+    generate.add_argument("--stage1", default=DEFAULT_STAGE1)
+    generate.add_argument("--genre", required=True)
+    lyrics = generate.add_mutually_exclusive_group(required=True)
+    lyrics.add_argument("--lyrics-file", type=Path)
+    lyrics.add_argument("--lyrics")
+    generate.add_argument("--run-n-segments", type=int, default=2)
+    generate.add_argument("--max-new-tokens", type=int, default=3000)
+    generate.add_argument("--stage2-batch-size", type=int, default=2)
+    generate.add_argument("--seed", type=int, default=42)
+    generate.add_argument("--repetition-penalty", type=float, default=1.1)
+    generate.add_argument("--run-name", default="")
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "013-yue",
+        "app": APP_NAME,
+        "default_gpu": DEFAULT_GPU,
+        "default_stage1": DEFAULT_STAGE1,
+        "stage1_variants": STAGE1_VARIANTS,
+        "stage2": STAGE2_REPO,
+        "codec": XCODEC_REPO,
+        "upstream": UPSTREAM,
+        "upstream_commit": UPSTREAM_COMMIT,
+        "license": "Apache-2.0",
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+    }
+
+
+def _lyrics_from_args(args: argparse.Namespace) -> str:
+    path = getattr(args, "lyrics_file", None)
+    if path is not None:
+        try:
+            return path.read_text(encoding="utf-8").strip()
+        except OSError as exc:
+            raise ValueError(f"无法读取 lyrics file: {path}: {exc}") from None
+    return (getattr(args, "lyrics", "") or "").replace("\\n", "\n").strip()
+
+
+def generation_plan(args: argparse.Namespace) -> dict[str, Any]:
+    stage1_repo = _stage1_id(args.stage1)
+    if args.command == "smoke":
+        genre = SMOKE_GENRE
+        lyrics = SMOKE_LYRICS
+    else:
+        genre = args.genre.strip()
+        lyrics = _lyrics_from_args(args)
+    if not genre:
+        raise ValueError("genre 不能为空")
+    if not lyrics:
+        raise ValueError("lyrics 不能为空")
+    if args.run_n_segments <= 0:
+        raise ValueError("--run-n-segments 必须 > 0")
+    if args.max_new_tokens <= 0:
+        raise ValueError("--max-new-tokens 必须 > 0")
+    if args.stage2_batch_size <= 0:
+        raise ValueError("--stage2-batch-size 必须 > 0")
+    return {
+        "action": args.command,
+        "gpu": args.gpu,
+        "stage1": args.stage1,
+        "stage1_repo": stage1_repo,
+        "genre": genre,
+        "lyrics": lyrics,
+        "run_name": args.run_name,
+        "run_n_segments": args.run_n_segments,
+        "max_new_tokens": args.max_new_tokens,
+        "stage2_batch_size": args.stage2_batch_size,
+        "seed": args.seed,
+        "repetition_penalty": args.repetition_penalty,
+    }
+
+
 @app.local_entrypoint()
-def main(
-    action: str = "status",
-    gpu: str = DEFAULT_GPU,
-    stage1: str = DEFAULT_STAGE1,
-    genre: str = "",
-    lyrics: str = "",
-    run_name: str = "",
-    run_n_segments: int = 2,
-    max_new_tokens: int = 3000,
-    stage2_batch_size: int = 2,
-    seed: int = 42,
-    force_download: bool = False,
-    repetition_penalty: float = 1.1,
-):
-    if action == "status":
-        status_fn.remote()
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
         return
-    if action == "download":
-        download_weights.remote(force=force_download, stage1=stage1)
+    if args.command == "check":
+        print(json.dumps(status_fn.remote(), ensure_ascii=False, indent=2))
         return
-    if action in ("smoke", "generate"):
-        download_weights.remote(force=False, stage1=stage1)
-        g = genre.strip() or SMOKE_GENRE
-        ly = lyrics.strip() or SMOKE_LYRICS
-        # allow \n escapes from CLI
-        ly = ly.replace("\\n", "\n")
-        rn = run_name or ("smoke_en" if action == "smoke" else "")
-        out = generate_fn.with_options(gpu=gpu).remote(
-            genre=g,
-            lyrics=ly,
-            run_name=rn,
-            gpu_label=gpu,
-            stage1=stage1,
-            run_n_segments=int(run_n_segments),
-            max_new_tokens=int(max_new_tokens),
-            stage2_batch_size=int(stage2_batch_size),
-            seed=int(seed),
-            repetition_penalty=float(repetition_penalty),
-        )
-        print("RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
+
+    try:
+        if args.command == "download":
+            stage1_repo = _stage1_id(args.stage1)
+            plan = {
+                "action": "download",
+                "stage1": args.stage1,
+                "stage1_repo": stage1_repo,
+                "force": args.force,
+            }
+            if args.dry_run:
+                print(json.dumps(plan, ensure_ascii=False, indent=2))
+                return
+            print(json.dumps(download_weights.remote(force=args.force, stage1=args.stage1), ensure_ascii=False, indent=2))
+            return
+        plan = generation_plan(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
+
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
         return
-    raise SystemExit(f"unknown action {action}")
+
+    download_weights.remote(force=False, stage1=plan["stage1"])
+    out = generate_fn.with_options(gpu=args.gpu).remote(
+        genre=plan["genre"],
+        lyrics=plan["lyrics"],
+        run_name=plan["run_name"],
+        gpu_label=args.gpu,
+        stage1=plan["stage1"],
+        run_n_segments=plan["run_n_segments"],
+        max_new_tokens=plan["max_new_tokens"],
+        stage2_batch_size=plan["stage2_batch_size"],
+        seed=plan["seed"],
+        repetition_penalty=plan["repetition_penalty"],
+    )
+    print("RESULT", json.dumps(out, ensure_ascii=False), flush=True)
+    if not out.get("success"):
+        raise SystemExit(2)
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])
