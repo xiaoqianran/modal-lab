@@ -16,10 +16,12 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
 import subprocess
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -553,73 +555,138 @@ def generate_fn(
     )
 
 
-@app.local_entrypoint()
-def main(
-    action: str = "status",
-    gpu: str = DEFAULT_GPU,
-    model: str = DEFAULT_MODEL,
-    run_name: str = "",
-    force_download: bool = False,
-    low_mem: bool = False,
-    no_flash: bool = False,
-    generate_type: str = "mixed",
-    lyrics: str = "",
-    descriptions: str = "",
-    idx: str = "gen",
-):
-    if action == "status":
-        status_fn.remote()
-        return
+GENERATE_TYPES = ("mixed", "bgm", "vocal", "separate")
 
-    if action == "download":
-        download_weights.remote(force=force_download, model=model)
-        return
 
-    if action == "smoke":
-        download_weights.remote(force=False, model=model)
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="012 LeVo 2 / SongGeneration v2 on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("check", help="远程检查 runtime / model / outputs Volume")
+
+    download = sub.add_parser("download", help="下载 Runtime + 指定模型")
+    download.add_argument("--force", action="store_true")
+    download.add_argument("--dry-run", action="store_true")
+    download.add_argument("--model", default=DEFAULT_MODEL)
+
+    smoke = sub.add_parser("smoke", help="固定短英文结构歌词 benchmark")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke.add_argument("--model", default=DEFAULT_MODEL)
+    smoke.add_argument("--run-name", default="smoke_en")
+    smoke.add_argument("--low-mem", action="store_true")
+    smoke.add_argument("--no-flash", action="store_true")
+    smoke.add_argument("--generate-type", choices=GENERATE_TYPES, default="mixed")
+
+    t2a = sub.add_parser("t2a", help="歌词/描述 -> 全曲")
+    t2a.add_argument("--dry-run", action="store_true")
+    t2a.add_argument("--gpu", default=DEFAULT_GPU)
+    t2a.add_argument("--model", default=DEFAULT_MODEL)
+    t2a.add_argument("--lyrics", default="")
+    t2a.add_argument("--descriptions", default="")
+    t2a.add_argument("--idx", default="gen")
+    t2a.add_argument("--run-name", default="")
+    t2a.add_argument("--low-mem", action="store_true")
+    t2a.add_argument("--no-flash", action="store_true")
+    t2a.add_argument("--generate-type", choices=GENERATE_TYPES, default="mixed")
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "012-levo-2",
+        "app": APP_NAME,
+        "default_gpu": DEFAULT_GPU,
+        "default_model": DEFAULT_MODEL,
+        "models": HF_MODELS,
+        "runtime_repo": HF_RUNTIME,
+        "license": "research/academic/education only",
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+    }
+
+
+def _auto_low_mem(gpu: str, model: str, requested: bool) -> bool:
+    key = _norm_model(model)
+    return requested or (gpu in {"L4", "T4", "A10"} and key == "v2-large")
+
+
+def generation_plan(args: argparse.Namespace) -> dict[str, Any]:
+    model = _norm_model(args.model)
+    if args.command == "smoke":
         item = _default_smoke_item()
-        rn = run_name or "smoke_en"
-        use_low = low_mem or (
-            gpu in ("L4", "T4", "A10") and _norm_model(model) == "v2-large"
-        )
-        out = generate_fn.with_options(gpu=gpu).remote(
-            lyrics_item=item,
-            model=model,
-            run_name=rn,
-            gpu_label=gpu,
-            use_flash_attn=not no_flash,
-            low_mem=use_low,
-            generate_type=generate_type,
-        )
-        print("SMOKE_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
-        return
-
-    if action == "t2a":
-        download_weights.remote(force=False, model=model)
-        if lyrics.strip():
-            item = {"idx": idx or "gen", "gt_lyric": lyrics}
-            if descriptions.strip():
-                item["descriptions"] = descriptions
+        run_name = args.run_name or "smoke_en"
+        low_mem = _auto_low_mem(args.gpu, model, args.low_mem)
+    else:
+        if args.lyrics.strip():
+            item = {"idx": args.idx or "gen", "gt_lyric": args.lyrics.replace("\\n", "\n")}
+            if args.descriptions.strip():
+                item["descriptions"] = args.descriptions
         else:
             item = _default_smoke_item()
-            item["idx"] = idx or "gen"
-            if descriptions.strip():
-                item["descriptions"] = descriptions
-        rn = run_name or f"t2a_{idx or 'gen'}"
-        out = generate_fn.with_options(gpu=gpu).remote(
-            lyrics_item=item,
-            model=model,
-            run_name=rn,
-            gpu_label=gpu,
-            use_flash_attn=not no_flash,
-            low_mem=low_mem,
-            generate_type=generate_type,
-        )
-        print("T2A_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
+            item["idx"] = args.idx or "gen"
+            if args.descriptions.strip():
+                item["descriptions"] = args.descriptions
+        run_name = args.run_name or f"t2a_{args.idx or 'gen'}"
+        low_mem = args.low_mem
+    return {
+        "action": args.command,
+        "gpu": args.gpu,
+        "model": model,
+        "run_name": run_name,
+        "lyrics_item": item,
+        "use_flash_attn": not args.no_flash,
+        "low_mem": low_mem,
+        "generate_type": args.generate_type,
+    }
+
+
+@app.local_entrypoint()
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
+        return
+    if args.command == "check":
+        print(json.dumps(status_fn.remote(), ensure_ascii=False, indent=2))
         return
 
-    raise SystemExit(f"unknown action {action}")
+    try:
+        if args.command == "download":
+            model = _norm_model(args.model)
+            plan = {"action": "download", "model": model, "force": args.force}
+            if args.dry_run:
+                print(json.dumps(plan, ensure_ascii=False, indent=2))
+                return
+            print(json.dumps(download_weights.remote(force=args.force, model=model), ensure_ascii=False, indent=2))
+            return
+        plan = generation_plan(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
+
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
+        return
+
+    download_weights.remote(force=False, model=plan["model"])
+    out = generate_fn.with_options(gpu=plan["gpu"]).remote(
+        lyrics_item=plan["lyrics_item"],
+        model=plan["model"],
+        run_name=plan["run_name"],
+        gpu_label=plan["gpu"],
+        use_flash_attn=plan["use_flash_attn"],
+        low_mem=plan["low_mem"],
+        generate_type=plan["generate_type"],
+    )
+    label = "SMOKE_RESULT" if args.command == "smoke" else "T2A_RESULT"
+    print(label, json.dumps(out, ensure_ascii=False), flush=True)
+    if not out.get("success"):
+        raise SystemExit(2)
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])
