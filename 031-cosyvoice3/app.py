@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
@@ -461,57 +462,130 @@ SMOKE_DIALECT = "收到好友从远方寄来的生日礼物，那份意外的惊
 SMOKE_EN = "Hello from CosyVoice3 on Modal lab. This is a zero-shot multilingual speech synthesis demo."
 
 
-@app.local_entrypoint()
-def main(
-    action: str = "status",
-    gpu: str = DEFAULT_GPU,
-    text: str = "",
-    run_name: str = "",
-    force_download: bool = False,
-    smoke_kind: str = "zh",
-    mode: str = "zero_shot",
-    instruct: str = "",
-    prompt_text: str = "",
-    prompt_wav: str = "",
-):
-    if action == "status":
-        status_fn.remote()
-        return
-    if action == "download":
-        download_weights.remote(force=force_download)
-        return
-    if action == "smoke":
-        kind = smoke_kind.lower().strip()
-        if kind in ("dialect", "sichuan", "instruct"):
-            text_use = SMOKE_DIALECT
-            run = run_name or "smoke_dialect"
-            mode_use = "instruct"
-            ins = instruct or "You are a helpful assistant. 请用四川话说这句话。<|endofprompt|>"
-        elif kind in ("en", "english"):
-            text_use = SMOKE_EN
-            run = run_name or "smoke_en"
-            mode_use = "en"
-            ins = ""
-        elif kind in ("tongue", "zh_tongue"):
-            text_use = SMOKE_TONGUE
-            run = run_name or "smoke_tongue"
-            mode_use = "zero_shot"
-            ins = ""
-        else:
-            text_use = SMOKE_ZH
-            run = run_name or "smoke_zh"
-            mode_use = "zero_shot"
-            ins = ""
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="031 CosyVoice3 on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
 
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("check", help="远程检查权重 / outputs / prompts Volume")
+
+    download = sub.add_parser("download", help="下载权重与默认 prompt wav")
+    download.add_argument("--force", action="store_true")
+
+    smoke = sub.add_parser("smoke", help="运行固定文本 smoke")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke.add_argument("--kind", default="zh", choices=["zh", "tongue", "dialect", "en"])
+    smoke.add_argument("--run-name", default="")
+    smoke.add_argument("--instruct", default="")
+    smoke.add_argument("--prompt-text", default="")
+    smoke.add_argument("--prompt-wav", default="")
+
+    t2s = sub.add_parser("t2s", help="Text-to-Speech")
+    t2s.add_argument("--dry-run", action="store_true")
+    t2s.add_argument("--gpu", default=DEFAULT_GPU)
+    t2s.add_argument("--text", required=True)
+    t2s.add_argument("--mode", default="zero_shot")
+    t2s.add_argument("--instruct", default="")
+    t2s.add_argument("--prompt-text", default="")
+    t2s.add_argument("--prompt-wav", default="")
+    t2s.add_argument("--run-name", default="")
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "031-cosyvoice3",
+        "app": APP_NAME,
+        "default_gpu": DEFAULT_GPU,
+        "default_model": DEFAULT_MODEL,
+        "hf_repo": HF_REPO,
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+        "prompts_volume": VOLUME_PROMPTS,
+        "prompt_wav": PROMPT_WAV_NAME,
+    }
+
+
+def smoke_plan(args: argparse.Namespace) -> dict[str, Any]:
+    if args.kind == "dialect":
+        text = SMOKE_DIALECT
+        run_name = args.run_name or "smoke_dialect"
+        mode = "instruct"
+        instruct = args.instruct or "You are a helpful assistant. 请用四川话说这句话。<|endofprompt|>"
+    elif args.kind == "en":
+        text = SMOKE_EN
+        run_name = args.run_name or "smoke_en"
+        mode = "en"
+        instruct = ""
+    elif args.kind == "tongue":
+        text = SMOKE_TONGUE
+        run_name = args.run_name or "smoke_tongue"
+        mode = "zero_shot"
+        instruct = ""
+    else:
+        text = SMOKE_ZH
+        run_name = args.run_name or "smoke_zh"
+        mode = "zero_shot"
+        instruct = ""
+    return {
+        "action": "smoke",
+        "gpu": args.gpu,
+        "kind": args.kind,
+        "text": text,
+        "run_name": run_name,
+        "mode": mode,
+        "instruct": instruct,
+        "prompt_text": args.prompt_text,
+        "prompt_wav": args.prompt_wav,
+    }
+
+
+def t2s_plan(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "action": "t2s",
+        "gpu": args.gpu,
+        "text": args.text.strip(),
+        "run_name": args.run_name,
+        "mode": args.mode,
+        "instruct": args.instruct,
+        "prompt_text": args.prompt_text,
+        "prompt_wav": args.prompt_wav,
+    }
+
+
+@app.local_entrypoint()
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
+        return
+    if args.command == "check":
+        print(json.dumps(status_fn.remote(), ensure_ascii=False, indent=2))
+        return
+    if args.command == "download":
+        print(json.dumps(download_weights.remote(force=args.force), ensure_ascii=False, indent=2))
+        return
+
+    if args.command == "smoke":
+        plan = smoke_plan(args)
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
         download_weights.remote(force=False)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            text=text_use,
-            run_name=run,
-            gpu_label=gpu,
-            mode=mode_use,
-            instruct=ins,
-            prompt_text=prompt_text,
-            prompt_wav=prompt_wav,
+        out = generate_fn.with_options(gpu=args.gpu).remote(
+            text=plan["text"],
+            run_name=plan["run_name"],
+            gpu_label=args.gpu,
+            mode=plan["mode"],
+            instruct=plan["instruct"],
+            prompt_text=args.prompt_text,
+            prompt_wav=args.prompt_wav,
         )
         print("SMOKE_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
         if not out.get("success"):
@@ -521,21 +595,27 @@ def main(
         if (out.get("audio") or {}).get("rms", 0) < 1e-4:
             raise SystemExit("smoke audio near silent")
         return
-    if action == "t2s":
-        if not text.strip():
-            raise SystemExit("t2s requires --text")
-        download_weights.remote(force=False)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            text=text,
-            run_name=run_name,
-            gpu_label=gpu,
-            mode=mode,
-            instruct=instruct,
-            prompt_text=prompt_text,
-            prompt_wav=prompt_wav,
-        )
-        print("T2S_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
+
+    plan = t2s_plan(args)
+    if not plan["text"]:
+        raise SystemExit("t2s requires non-empty --text")
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
         return
-    raise SystemExit(f"unknown action {action!r}")
+    download_weights.remote(force=False)
+    out = generate_fn.with_options(gpu=args.gpu).remote(
+        text=plan["text"],
+        run_name=args.run_name,
+        gpu_label=args.gpu,
+        mode=args.mode,
+        instruct=args.instruct,
+        prompt_text=args.prompt_text,
+        prompt_wav=args.prompt_wav,
+    )
+    print("T2S_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
+    if not out.get("success"):
+        raise SystemExit(2)
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])
