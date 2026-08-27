@@ -10,6 +10,8 @@
 | 许可 | Stability AI Community |
 | 状态 | ✅ L40S + PRO 6000 smoke 已出 GLB |
 
+023-b 已迁移到 v2：单入口 `app.py`，不再使用 `run.py -> modal_app.py` 翻译层。
+
 ## 实测（smoke · chair.png）
 
 | GPU | 总时 | 推理 | 峰值 VRAM | 估费 | 输出 |
@@ -22,12 +24,22 @@
 ## 用法
 
 ```bash
-python run.py status
-python run.py probe --gpu L40S
-python run.py smoke --i-know-this-costs-money --gpu L40S
-python run.py smoke --i-know-this-costs-money --gpu RTX-PRO-6000
-# 官版门禁（需 HF 已同意）
-# modal run modal_app.py --action smoke --gpu L40S --hf-model stabilityai/stable-fast-3d
+# 本地状态，不启动 GPU
+python main.py 023-b-sf3d status
+
+# 远程 probe
+python main.py 023-b-sf3d probe --gpu L40S
+
+# 无成本 dry-run
+python main.py 023-b-sf3d smoke --dry-run --gpu RTX-PRO-6000
+
+# 真正 smoke
+python main.py 023-b-sf3d smoke --i-know-this-costs-money --gpu L40S
+python main.py 023-b-sf3d smoke --i-know-this-costs-money --gpu RTX-PRO-6000
+
+# 官方 gated 权重（需 HF 已同意）
+python main.py 023-b-sf3d smoke --i-know-this-costs-money \
+  --hf-model stabilityai/stable-fast-3d
 ```
 
 拉结果：
@@ -53,3 +65,14 @@ modal volume get modal-lab-sf3d-outputs meshes/smoke_pro6000.glb ./viewer/
 | **023-a** | SPAR3D | 中速 · 点云条件背面 |
 | **021** | TRELLIS.2 | 质量 / MIT |
 | 005 | Pixal3D | 慢·高对齐 |
+
+## 测试
+
+```bash
+python -m unittest discover -s 023-b-sf3d/tests -v
+python -m py_compile 023-b-sf3d/app.py
+python main.py 023-b-sf3d status
+python main.py 023-b-sf3d smoke --dry-run
+```
+
+以上测试不启动付费 GPU。
