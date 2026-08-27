@@ -77,7 +77,7 @@ Volume 里 **其实有** fridges / sinks / objects（~24GB 完整包）。但：
 3. 扫描时目录还是空的 → `mjcf_paths=[]` 被冻住
 4. Fixture 按 YAML **运行时**读盘（所以 Mixer 正常）；需要放置可抓物体的任务（关冰箱、开水龙头周围）走空的 object zoo → NaN
 
-### 修复（已写入 `modal_app.py`）
+### 修复（已写入 `app.py`）
 
 1. **先**把 Volume 资产 symlink 到 `/opt/robocasa/.../assets`（不 import）
 2. **再** `import robocasa`（各 entrypoint 也改成 assets → import）

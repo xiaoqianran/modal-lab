@@ -2,6 +2,8 @@
 
 在 Modal 上跑 **RoboCasa365 仿真**，并尽量产出 **episode `.mp4` 回放**。
 
+017 已迁移到 v2：一个 `app.py` 同时拥有仿真 planning、资产/权重生命周期、CLI 与 Modal remote functions；`run.py -> modal_app.py` 已删除。
+
 > **016 是 MusicGen**，所以仿真开成 **017**。
 
 相对 [015](../015-xiaomi-robotics-1-robocasa365)（只吐动作数字）：
@@ -61,13 +63,14 @@ Modal 单价量级（2026 公开价，仅 GPU 秒费，不含镜像构建）：
 ## 用法
 
 ```bash
-python main.py 017 status
+python main.py 017 status           # 纯本地固定信息
+python main.py 017 check            # 远程 readiness / 最近 runs
 python main.py 017 download-weights   # 可与 015 共用 weights Volume
 python main.py 017 download-assets    # ~10GB 厨房资产
 python main.py 017 smoke-random       # 随机乱动 → mp4
 python main.py 017 smoke-policy       # XR-1 闭环 → mp4（默认 L40S）
 python main.py 017 eval-mini          # 5×5 @ h=200 + CBL long @ h=500
-python main.py 017 pull --remote runs/<name>
+modal volume get modal-lab-xr1-robocasa365-sim-outputs runs/<name> ./017-xr1-robocasa365-sim/outputs
 ```
 
 产物 Volume：`modal-lab-xr1-robocasa365-sim-outputs`  
@@ -78,6 +81,48 @@ runs/<name>/
     episode_000_seed_7_failure.mp4   # 或 success
     stats.json
 ```
+
+## v2 CLI 边界
+
+三个 workflow 保持独立：
+
+```text
+smoke-random  -> 仿真器随机动作闭环
+smoke-policy  -> XR-1 policy 单局闭环
+eval-mini     -> task × seeds grid + optional long track
+```
+
+远程函数原本已有、但旧 wrapper 没暴露的参数现在直接进入唯一 CLI：
+
+```text
+crop_ratio
+num_denoise_steps
+save_every_video   # eval-mini
+```
+
+例如：
+
+```bash
+python main.py 017 smoke-policy --dry-run \
+  --horizon 120 --crop-ratio 0.9 --num-denoise-steps 7
+
+python main.py 017 eval-mini --dry-run \
+  --tasks OpenDrawer,CloseFridge \
+  --num-seeds 3 --no-long --no-save-every-video
+```
+
+纯文件拉取不再包装，直接使用 `modal volume get`。
+
+## 测试
+
+```bash
+python -m unittest discover -s 017-xr1-robocasa365-sim/tests -v
+python -m py_compile 017-xr1-robocasa365-sim/app.py
+python main.py 017 status
+python main.py 017 eval-mini --dry-run
+```
+
+以上测试不启动付费 GPU。
 
 ## 设计取舍
 

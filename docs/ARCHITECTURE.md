@@ -182,6 +182,7 @@ Modal Volume                  future upstream flags
 014-diffrhythm-2
 015-xiaomi-robotics-1-robocasa365
 016-musicgen
+017-xr1-robocasa365-sim
 020-triposr
 021-trellis2
 022-hunyuan3d-2.1

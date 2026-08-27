@@ -12,10 +12,12 @@ Full 2500-episode eval is intentionally out of scope.
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
 import subprocess
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -1482,88 +1484,228 @@ def eval_mini_fn(
 
 
 
+ATTN_CHOICES = ("sdpa", "flash_attention_2", "eager")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="017 XR-1 RoboCasa365 simulation on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("check", help="远程检查权重 / assets / 最近 runs")
+
+    dw = sub.add_parser("download-weights", help="下载 XR-1 权重")
+    dw.add_argument("--force", action="store_true")
+    dw.add_argument("--dry-run", action="store_true")
+
+    da = sub.add_parser("download-assets", help="下载 RoboCasa kitchen assets")
+    da.add_argument("--force", action="store_true")
+    da.add_argument("--dry-run", action="store_true")
+
+    rnd = sub.add_parser("smoke-random", help="随机策略闭环 → mp4")
+    rnd.add_argument("--gpu", default=DEFAULT_GPU)
+    rnd.add_argument("--task", default=DEFAULT_TASK)
+    rnd.add_argument("--steps", type=int, default=80)
+    rnd.add_argument("--seed", type=int, default=7)
+    rnd.add_argument("--split", default="pretrain")
+    rnd.add_argument("--run-name", default="")
+    rnd.add_argument("--dry-run", action="store_true")
+
+    pol = sub.add_parser("smoke-policy", help="XR-1 闭环策略 → mp4")
+    pol.add_argument("--gpu", default=DEFAULT_GPU)
+    pol.add_argument("--task", default=DEFAULT_TASK)
+    pol.add_argument("--horizon", type=int, default=DEFAULT_POLICY_HORIZON)
+    pol.add_argument("--seed", type=int, default=7)
+    pol.add_argument("--split", default="pretrain")
+    pol.add_argument("--run-name", default="")
+    pol.add_argument("--attn", choices=ATTN_CHOICES, default="sdpa")
+    pol.add_argument("--crop-ratio", type=float, default=0.95)
+    pol.add_argument("--num-denoise-steps", type=int, default=5)
+    pol.add_argument("--dry-run", action="store_true")
+
+    ev = sub.add_parser("eval-mini", help="mini eval grid + optional long track")
+    ev.add_argument("--gpu", default=DEFAULT_GPU)
+    ev.add_argument("--tasks", default=",".join(MINI_EVAL_TASKS))
+    ev.add_argument("--num-seeds", type=int, default=5)
+    ev.add_argument("--seed", type=int, default=7)
+    ev.add_argument("--horizon", type=int, default=DEFAULT_EVAL_HORIZON)
+    ev.add_argument("--long-horizon", type=int, default=DEFAULT_EVAL_LONG_HORIZON)
+    ev.add_argument("--long-task", default=DEFAULT_TASK)
+    ev.add_argument("--no-long", action="store_true")
+    ev.add_argument("--split", default="pretrain")
+    ev.add_argument("--run-name", default="")
+    ev.add_argument("--attn", choices=ATTN_CHOICES, default="sdpa")
+    ev.add_argument("--crop-ratio", type=float, default=0.95)
+    ev.add_argument("--num-denoise-steps", type=int, default=5)
+    ev.add_argument("--no-save-every-video", action="store_true")
+    ev.add_argument("--dry-run", action="store_true")
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "017-xr1-robocasa365-sim",
+        "app": APP_NAME,
+        "hf_repo": HF_REPO,
+        "default_gpu": DEFAULT_GPU,
+        "default_task": DEFAULT_TASK,
+        "policy_horizon": DEFAULT_POLICY_HORIZON,
+        "eval_horizon": DEFAULT_EVAL_HORIZON,
+        "eval_long_horizon": DEFAULT_EVAL_LONG_HORIZON,
+        "mini_eval_tasks": list(MINI_EVAL_TASKS),
+        "robot_type": ROBOT_TYPE,
+        "state_dim": STATE_DIM,
+        "action_dim": ACTION_DIM,
+        "obs_history": OBS_HISTORY,
+        "obs_interval": OBS_INTERVAL,
+        "replan_steps": REPLAN_STEPS,
+        "policy_image_size_wh": list(POLICY_IMAGE_SIZE),
+        "weights_volume": VOLUME_WEIGHTS,
+        "assets_volume": VOLUME_ASSETS,
+        "outputs_volume": VOLUME_OUTPUTS,
+        "scope": "closed-loop RoboCasa simulation; full 2500-episode eval intentionally out of scope",
+    }
+
+
+def random_plan(args: argparse.Namespace) -> dict[str, Any]:
+    task = args.task.strip()
+    if not task:
+        raise ValueError("task 不能为空")
+    if args.steps <= 0:
+        raise ValueError("--steps 必须 > 0")
+    return {
+        "action": "smoke-random",
+        "gpu": args.gpu,
+        "task": task,
+        "steps": args.steps,
+        "seed": args.seed,
+        "split": args.split,
+        "run_name": args.run_name,
+    }
+
+
+def policy_plan(args: argparse.Namespace) -> dict[str, Any]:
+    task = args.task.strip()
+    if not task:
+        raise ValueError("task 不能为空")
+    if args.horizon <= 0:
+        raise ValueError("--horizon 必须 > 0")
+    if not 0 < args.crop_ratio <= 1:
+        raise ValueError("--crop-ratio 必须在 0..1 之间")
+    if args.num_denoise_steps <= 0:
+        raise ValueError("--num-denoise-steps 必须 > 0")
+    return {
+        "action": "smoke-policy",
+        "gpu": args.gpu,
+        "task": task,
+        "horizon": args.horizon,
+        "seed": args.seed,
+        "split": args.split,
+        "run_name": args.run_name,
+        "attn": args.attn,
+        "crop_ratio": args.crop_ratio,
+        "num_denoise_steps": args.num_denoise_steps,
+    }
+
+
+def eval_plan(args: argparse.Namespace) -> dict[str, Any]:
+    tasks = [task.strip() for task in args.tasks.split(",") if task.strip()]
+    if not tasks:
+        raise ValueError("--tasks 至少需要一个 task")
+    if args.num_seeds <= 0:
+        raise ValueError("--num-seeds 必须 > 0")
+    if args.horizon <= 0 or args.long_horizon <= 0:
+        raise ValueError("--horizon / --long-horizon 必须 > 0")
+    if not 0 < args.crop_ratio <= 1:
+        raise ValueError("--crop-ratio 必须在 0..1 之间")
+    if args.num_denoise_steps <= 0:
+        raise ValueError("--num-denoise-steps 必须 > 0")
+    return {
+        "action": "eval-mini",
+        "gpu": args.gpu,
+        "tasks": tasks,
+        "tasks_csv": ",".join(tasks),
+        "num_seeds": args.num_seeds,
+        "base_seed": args.seed,
+        "horizon": args.horizon,
+        "long_horizon": args.long_horizon,
+        "long_task": args.long_task,
+        "run_long_track": not args.no_long,
+        "split": args.split,
+        "run_name": args.run_name,
+        "attn": args.attn,
+        "crop_ratio": args.crop_ratio,
+        "num_denoise_steps": args.num_denoise_steps,
+        "save_every_video": not args.no_save_every_video,
+    }
+
+
+def _remote_fn(fn, gpu: str):
+    return fn if gpu == DEFAULT_GPU else fn.with_options(gpu=gpu)
+
+
 @app.local_entrypoint()
-def main(
-    action: str = "status",
-    force: bool = False,
-    gpu: str = DEFAULT_GPU,
-    task: str = DEFAULT_TASK,
-    steps: int = 80,
-    horizon: int = DEFAULT_POLICY_HORIZON,
-    seed: int = 7,
-    split: str = "pretrain",
-    run_name: str = "",
-    attn: str = "sdpa",
-    tasks_csv: str = "",
-    num_seeds: int = 5,
-    long_horizon: int = DEFAULT_EVAL_LONG_HORIZON,
-    long_task: str = "CloseBlenderLid",
-    run_long_track: bool = True,
-) -> None:
-    action = action.strip().lower()
-    if action == "status":
-        print(status_fn.remote())
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
         return
-    if action in {"download-weights", "download_weights"}:
-        print(download_weights.remote(force=force))
+    if args.command == "check":
+        print(json.dumps(status_fn.remote(), ensure_ascii=False, indent=2))
         return
-    if action in {"download-assets", "download_assets"}:
-        print(download_assets.remote(force=force))
-        return
-    if action in {"smoke-random", "random"}:
-        fn = smoke_random_fn
-        if gpu != DEFAULT_GPU:
-            fn = smoke_random_fn.with_options(gpu=gpu)
-        r = fn.remote(
-            task=task,
-            steps=steps,
-            seed=seed,
-            split=split,
-            gpu_label=gpu,
-            run_name=run_name,
+    if args.command == "download-weights":
+        plan = {"action": "download-weights", "force": args.force}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2)); return
+        print(json.dumps(download_weights.remote(force=args.force), ensure_ascii=False, indent=2)); return
+    if args.command == "download-assets":
+        plan = {"action": "download-assets", "force": args.force}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2)); return
+        print(json.dumps(download_assets.remote(force=args.force), ensure_ascii=False, indent=2)); return
+
+    try:
+        if args.command == "smoke-random":
+            plan = random_plan(args)
+        elif args.command == "smoke-policy":
+            plan = policy_plan(args)
+        else:
+            plan = eval_plan(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2)); return
+
+    if args.command == "smoke-random":
+        result = _remote_fn(smoke_random_fn, plan["gpu"]).remote(
+            task=plan["task"], steps=plan["steps"], seed=plan["seed"],
+            split=plan["split"], gpu_label=plan["gpu"], run_name=plan["run_name"],
         )
-        print(json.dumps(r, indent=2, default=str))
-        if not r.get("success"):
-            raise SystemExit(1)
-        return
-    if action in {"smoke-policy", "policy", "smoke"}:
-        fn = smoke_policy_fn
-        if gpu != DEFAULT_GPU:
-            fn = smoke_policy_fn.with_options(gpu=gpu)
-        r = fn.remote(
-            task=task,
-            horizon=horizon,
-            seed=seed,
-            split=split,
-            gpu_label=gpu,
-            run_name=run_name,
-            attn=attn,
+    elif args.command == "smoke-policy":
+        result = _remote_fn(smoke_policy_fn, plan["gpu"]).remote(
+            task=plan["task"], horizon=plan["horizon"], seed=plan["seed"],
+            split=plan["split"], crop_ratio=plan["crop_ratio"], gpu_label=plan["gpu"],
+            run_name=plan["run_name"], attn=plan["attn"],
+            num_denoise_steps=plan["num_denoise_steps"],
         )
-        print(json.dumps(r, indent=2, default=str))
-        if not r.get("success"):
-            raise SystemExit(1)
-        return
-    if action in {"eval-mini", "eval_mini", "mini"}:
-        fn = eval_mini_fn
-        if gpu != DEFAULT_GPU:
-            fn = eval_mini_fn.with_options(gpu=gpu)
-        r = fn.remote(
-            tasks_csv=tasks_csv,
-            num_seeds=num_seeds,
-            base_seed=seed,
-            horizon=horizon,
-            long_horizon=long_horizon,
-            long_task=long_task,
-            run_long_track=run_long_track,
-            split=split,
-            gpu_label=gpu,
-            run_name=run_name,
-            attn=attn,
+    else:
+        result = _remote_fn(eval_mini_fn, plan["gpu"]).remote(
+            tasks_csv=plan["tasks_csv"], num_seeds=plan["num_seeds"],
+            base_seed=plan["base_seed"], horizon=plan["horizon"],
+            long_horizon=plan["long_horizon"], long_task=plan["long_task"],
+            run_long_track=plan["run_long_track"], split=plan["split"],
+            crop_ratio=plan["crop_ratio"], gpu_label=plan["gpu"],
+            run_name=plan["run_name"], attn=plan["attn"],
+            num_denoise_steps=plan["num_denoise_steps"],
+            save_every_video=plan["save_every_video"],
         )
-        print(json.dumps({k: r.get(k) for k in ("success","grid","long","overall","wall_s","cost_est_usd","run_name") if isinstance(r, dict)}, indent=2, default=str))
-        if not (isinstance(r, dict) and r.get("success")):
-            raise SystemExit(1)
-        return
-    raise SystemExit(
-        "unknown action; use status|download-weights|download-assets|smoke-random|smoke-policy|eval-mini"
-    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
+    if not (isinstance(result, dict) and result.get("success")):
+        raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])
