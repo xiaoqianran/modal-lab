@@ -14,10 +14,12 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
 import subprocess
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -466,73 +468,161 @@ def list_outputs_fn(prefix: str = "runs") -> dict[str, Any]:
     return out
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="010 ACE-Step 1.5 on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("check", help="远程检查权重 / outputs Volume")
+    sub.add_parser("list-outputs", help="结构化汇总远程 run meta")
+
+    download = sub.add_parser("download", help="CPU 下载 ACE-Step 主包")
+    download.add_argument("--force", action="store_true")
+    download.add_argument("--dry-run", action="store_true")
+
+    smoke = sub.add_parser("smoke", help="固定 lo-fi instrumental benchmark")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke.add_argument("--duration", type=float, default=20.0)
+    smoke.add_argument("--seed", type=int, default=42)
+    smoke.add_argument("--run-name", default="smoke_lofi")
+
+    t2m = sub.add_parser("t2m", help="Text-to-Music")
+    t2m.add_argument("--dry-run", action="store_true")
+    t2m.add_argument("--gpu", default=DEFAULT_GPU)
+    t2m.add_argument("--example", default="smoke_lofi")
+    t2m.add_argument("--caption", default="")
+    t2m.add_argument("--lyrics", default="")
+    t2m.add_argument("--duration", type=float, default=30.0)
+    t2m.add_argument("--bpm", type=int, default=0)
+    t2m.add_argument("--seed", type=int, default=42)
+    t2m.add_argument("--thinking", action="store_true")
+    t2m.add_argument("--init-lm", action="store_true")
+    t2m.add_argument("--vocal", action="store_true")
+    t2m.add_argument("--steps", type=int, default=8)
+    t2m.add_argument("--format", dest="audio_format", choices=["flac", "wav"], default="flac")
+    t2m.add_argument("--run-name", default="")
+    t2m.add_argument("--dit", default=DEFAULT_DIT)
+    t2m.add_argument("--lm", default=DEFAULT_LM)
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "010-ace-step-1.5",
+        "app": APP_NAME,
+        "default_gpu": DEFAULT_GPU,
+        "default_dit": DEFAULT_DIT,
+        "default_lm": DEFAULT_LM,
+        "hf_repo": HF_MAIN_REPO,
+        "upstream": UPSTREAM,
+        "upstream_commit": UPSTREAM_COMMIT,
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+        "smoke": {"duration": 20.0, "thinking": False, "init_lm": False, "instrumental": True, "steps": 8},
+    }
+
+
+def generation_plan(args: argparse.Namespace) -> dict[str, Any]:
+    if args.command == "smoke":
+        duration = args.duration if args.duration > 0 else 20.0
+        return {
+            "action": "smoke",
+            "gpu": args.gpu,
+            "run_name": args.run_name or "smoke_lofi",
+            "example": "smoke_lofi",
+            "caption": "",
+            "lyrics": "",
+            "duration": duration,
+            "bpm": 0,
+            "seed": args.seed,
+            "thinking": False,
+            "init_lm": False,
+            "instrumental": True,
+            "inference_steps": 8,
+            "audio_format": "flac",
+            "dit_model": DEFAULT_DIT,
+            "lm_model": DEFAULT_LM,
+        }
+    if args.duration <= 0:
+        raise ValueError("--duration 必须 > 0")
+    if args.steps <= 0:
+        raise ValueError("--steps 必须 > 0")
+    if args.bpm < 0:
+        raise ValueError("--bpm 必须 >= 0")
+    return {
+        "action": "t2m",
+        "gpu": args.gpu,
+        "run_name": args.run_name,
+        "example": args.example,
+        "caption": args.caption,
+        "lyrics": args.lyrics.replace("\\n", "\n"),
+        "duration": args.duration,
+        "bpm": args.bpm,
+        "seed": args.seed,
+        "thinking": args.thinking,
+        "init_lm": args.init_lm,
+        "instrumental": not args.vocal,
+        "inference_steps": args.steps,
+        "audio_format": args.audio_format,
+        "dit_model": args.dit,
+        "lm_model": args.lm,
+    }
+
+
 @app.local_entrypoint()
-def main(
-    action: str = "status",
-    force_download: bool = False,
-    gpu: str = DEFAULT_GPU,
-    run_name: str = "",
-    example: str = "smoke_lofi",
-    caption: str = "",
-    lyrics: str = "",
-    duration: float = 20.0,
-    bpm: int = 0,
-    seed: int = 42,
-    thinking: bool = False,
-    init_lm: bool = False,
-    instrumental: bool = True,
-    inference_steps: int = 8,
-    audio_format: str = "flac",
-    dit_model: str = DEFAULT_DIT,
-    lm_model: str = DEFAULT_LM,
-) -> None:
-    """
-    modal run modal_app.py --action status|download|smoke|t2m|list-outputs
-    """
-    action = action.strip().lower()
-    if action == "status":
-        print(status_fn.remote())
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
         return
-    if action == "download":
-        print(download_weights.remote(force=force_download))
+    if args.command == "check":
+        print(json.dumps(status_fn.remote(), ensure_ascii=False, indent=2))
         return
-    if action == "list-outputs":
-        print(list_outputs_fn.remote())
+    if args.command == "list-outputs":
+        print(json.dumps(list_outputs_fn.remote(), ensure_ascii=False, indent=2))
         return
-    if action in {"smoke", "t2m", "generate"}:
-        if action == "smoke":
-            example = example or "smoke_lofi"
-            if duration <= 0:
-                duration = 20.0
-            thinking = False
-            init_lm = False
-            instrumental = True
-            if not run_name:
-                run_name = "smoke_lofi"
-        fn = generate_music_fn
-        if gpu and gpu != DEFAULT_GPU:
-            fn = generate_music_fn.with_options(gpu=gpu)
-        result = fn.remote(
-            run_name=run_name,
-            example=example,
-            caption=caption,
-            lyrics=lyrics,
-            duration=duration,
-            bpm=bpm,
-            seed=seed,
-            thinking=thinking,
-            init_lm=init_lm,
-            instrumental=instrumental,
-            inference_steps=inference_steps,
-            audio_format=audio_format,
-            dit_model=dit_model,
-            lm_model=lm_model,
-            gpu_label=gpu,
-        )
-        print(json.dumps(result, ensure_ascii=False, indent=2))
-        if not result.get("success"):
-            raise SystemExit(1)
+    if args.command == "download":
+        plan = {"action": "download", "force": args.force}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        print(json.dumps(download_weights.remote(force=args.force), ensure_ascii=False, indent=2))
         return
-    raise SystemExit(
-        f"unknown action={action!r}; use status|download|smoke|t2m|list-outputs"
+
+    try:
+        plan = generation_plan(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
+        return
+
+    fn = generate_music_fn if plan["gpu"] == DEFAULT_GPU else generate_music_fn.with_options(gpu=plan["gpu"])
+    result = fn.remote(
+        run_name=plan["run_name"],
+        example=plan["example"],
+        caption=plan["caption"],
+        lyrics=plan["lyrics"],
+        duration=plan["duration"],
+        bpm=plan["bpm"],
+        seed=plan["seed"],
+        thinking=plan["thinking"],
+        init_lm=plan["init_lm"],
+        instrumental=plan["instrumental"],
+        inference_steps=plan["inference_steps"],
+        audio_format=plan["audio_format"],
+        dit_model=plan["dit_model"],
+        lm_model=plan["lm_model"],
+        gpu_label=plan["gpu"],
     )
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    if not result.get("success"):
+        raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])

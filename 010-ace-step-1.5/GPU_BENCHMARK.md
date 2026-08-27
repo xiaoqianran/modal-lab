@@ -54,7 +54,7 @@
 若要比音质，应固定 GPU，横比：
 
 ```bash
-python run.py t2m --example example_01 --duration 30 --thinking   # + LM
+python main.py 010 t2m --example example_01 --duration 30 --thinking   # + LM
 # 或换 --dit acestep-v15-sft / xl-turbo（需另下子模型）
 ```
 
@@ -62,12 +62,12 @@ python run.py t2m --example example_01 --duration 30 --thinking   # + LM
 
 ```bash
 cd 010-ace-step-1.5
-python run.py download
+python main.py 010 download
 for g in T4 L4 A10 L40S A100-40GB A100-80GB H100 RTX-PRO-6000; do
   safe=$(echo "$g" | tr '-' '_')
-  python run.py smoke --gpu "$g" --run-name "bench_${safe}"
+  python main.py 010 smoke --gpu "$g" --run-name "bench_${safe}"
 done
-python run.py ls
+modal volume ls modal-lab-ace-step-1.5-outputs runs
 ```
 
 ## 与默认策略

@@ -167,6 +167,7 @@ Modal Volume                  future upstream flags
 006-hunyuanworld-mirror
 007-worldmirror-2.0
 008-hy-pano
+010-ace-step-1.5
 011-stable-audio-3
 012-levo-2
 013-yue
