@@ -12,9 +12,11 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
+import sys
 import time
 import urllib.request
 from datetime import datetime, timezone
@@ -506,81 +508,154 @@ SMOKE_CLONE = (
 )
 
 
-@app.local_entrypoint()
-def main(
-    action: str = "status",
-    gpu: str = DEFAULT_GPU,
-    text: str = "",
-    run_name: str = "",
-    force_download: bool = False,
-    smoke_kind: str = "en",
-    reference_wav: str = "",
-    prompt_wav: str = "",
-    prompt_text: str = "",
-    cfg_value: float = 2.0,
-    inference_timesteps: int = 10,
-    seed: int = 42,
-    optimize: bool = False,
-):
-    if action == "status":
-        status_fn.remote()
-        return
-    if action == "download":
-        download_weights.remote(force=force_download)
-        return
-    if action == "smoke":
-        kind = smoke_kind.lower().strip()
-        ref = reference_wav
-        if kind in ("zh", "chinese"):
-            text_use, run = SMOKE_ZH, run_name or "smoke_zh"
-        elif kind in ("design", "voice_design"):
-            text_use, run = SMOKE_DESIGN, run_name or "smoke_design"
-        elif kind in ("clone", "clone_en"):
-            text_use, run = SMOKE_CLONE, run_name or "smoke_clone"
-            if not ref:
-                ref = "reference_speaker"
-        else:
-            text_use, run = SMOKE_EN, run_name or "smoke_en"
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="029 VoxCPM2 on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("check", help="远程检查模型 / prompts / outputs Volume")
 
-        download_weights.remote(force=False)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            text=text_use,
-            run_name=run,
-            gpu_label=gpu,
-            reference_wav=ref,
-            prompt_wav=prompt_wav,
-            prompt_text=prompt_text,
-            cfg_value=cfg_value,
-            inference_timesteps=inference_timesteps,
-            seed=seed,
-            optimize=optimize,
-        )
-        print("SMOKE_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
+    download = sub.add_parser("download", help="下载模型与官方 clone reference")
+    download.add_argument("--force", action="store_true")
+    download.add_argument("--dry-run", action="store_true")
+
+    smoke = sub.add_parser("smoke", help="固定 EN / ZH / design / clone smoke")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke.add_argument("--kind", default="en", choices=["en", "zh", "design", "clone"])
+    smoke.add_argument("--run-name", default="")
+    smoke.add_argument("--reference-wav", default="")
+    smoke.add_argument("--prompt-wav", default="")
+    smoke.add_argument("--prompt-text", default="")
+    smoke.add_argument("--cfg-value", type=float, default=2.0)
+    smoke.add_argument("--timesteps", type=int, default=10)
+    smoke.add_argument("--seed", type=int, default=42)
+    smoke.add_argument("--optimize", action="store_true")
+
+    t2s = sub.add_parser("t2s", help="通用 VoxCPM2 TTS")
+    t2s.add_argument("--dry-run", action="store_true")
+    t2s.add_argument("--gpu", default=DEFAULT_GPU)
+    t2s.add_argument("--text", required=True)
+    t2s.add_argument("--reference-wav", default="")
+    t2s.add_argument("--prompt-wav", default="")
+    t2s.add_argument("--prompt-text", default="")
+    t2s.add_argument("--cfg-value", type=float, default=2.0)
+    t2s.add_argument("--timesteps", type=int, default=10)
+    t2s.add_argument("--seed", type=int, default=42)
+    t2s.add_argument("--run-name", default="")
+    t2s.add_argument("--optimize", action="store_true")
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "029-voxcpm2",
+        "app": APP_NAME,
+        "default_gpu": DEFAULT_GPU,
+        "default_model": DEFAULT_MODEL,
+        "hf_repo": HF_REPO,
+        "reference_url": REF_URL,
+        "default_clone_reference": "reference_speaker",
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+        "prompts_volume": VOLUME_PROMPTS,
+    }
+
+
+def smoke_plan(args: argparse.Namespace) -> dict[str, Any]:
+    ref = args.reference_wav
+    if args.kind == "zh":
+        text, run_name = SMOKE_ZH, args.run_name or "smoke_zh"
+    elif args.kind == "design":
+        text, run_name = SMOKE_DESIGN, args.run_name or "smoke_design"
+    elif args.kind == "clone":
+        text, run_name = SMOKE_CLONE, args.run_name or "smoke_clone"
+        if not ref:
+            ref = "reference_speaker"
+    else:
+        text, run_name = SMOKE_EN, args.run_name or "smoke_en"
+    return {
+        "action": "smoke",
+        "gpu": args.gpu,
+        "kind": args.kind,
+        "text": text,
+        "run_name": run_name,
+        "reference_wav": ref,
+        "prompt_wav": args.prompt_wav,
+        "prompt_text": args.prompt_text,
+        "cfg_value": args.cfg_value,
+        "inference_timesteps": args.timesteps,
+        "seed": args.seed,
+        "optimize": args.optimize,
+    }
+
+
+def t2s_plan(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "action": "t2s",
+        "gpu": args.gpu,
+        "text": args.text.strip(),
+        "run_name": args.run_name,
+        "reference_wav": args.reference_wav,
+        "prompt_wav": args.prompt_wav,
+        "prompt_text": args.prompt_text,
+        "cfg_value": args.cfg_value,
+        "inference_timesteps": args.timesteps,
+        "seed": args.seed,
+        "optimize": args.optimize,
+    }
+
+
+@app.local_entrypoint()
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
+        return
+    if args.command == "check":
+        print(json.dumps(status_fn.remote(), ensure_ascii=False, indent=2))
+        return
+    if args.command == "download":
+        plan = {"action": "download", "force": args.force}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        print(json.dumps(download_weights.remote(force=args.force), ensure_ascii=False, indent=2))
+        return
+
+    plan = smoke_plan(args) if args.command == "smoke" else t2s_plan(args)
+    if not plan["text"]:
+        raise SystemExit("t2s requires non-empty --text")
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
+        return
+
+    download_weights.remote(force=False)
+    out = generate_fn.with_options(gpu=args.gpu).remote(
+        text=plan["text"],
+        run_name=plan["run_name"],
+        gpu_label=args.gpu,
+        reference_wav=plan["reference_wav"],
+        prompt_wav=plan["prompt_wav"],
+        prompt_text=plan["prompt_text"],
+        cfg_value=plan["cfg_value"],
+        inference_timesteps=plan["inference_timesteps"],
+        seed=plan["seed"],
+        optimize=plan["optimize"],
+    )
+    label = "SMOKE_RESULT" if args.command == "smoke" else "T2S_RESULT"
+    print(label, json.dumps(out, ensure_ascii=False), flush=True)
+    if not out.get("success"):
+        raise SystemExit(2)
+    if args.command == "smoke":
         if (out.get("audio") or {}).get("duration_s", 0) < 0.5:
             raise SystemExit("smoke audio too short")
         if (out.get("audio") or {}).get("rms", 0) < 1e-4:
             raise SystemExit("smoke audio near silent")
-        return
-    if action == "t2s":
-        if not text.strip():
-            raise SystemExit("t2s requires --text")
-        download_weights.remote(force=False)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            text=text,
-            run_name=run_name,
-            gpu_label=gpu,
-            reference_wav=reference_wav,
-            prompt_wav=prompt_wav,
-            prompt_text=prompt_text,
-            cfg_value=cfg_value,
-            inference_timesteps=inference_timesteps,
-            seed=seed,
-            optimize=optimize,
-        )
-        print("T2S_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
-        return
-    raise SystemExit(f"unknown action {action!r}")
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])

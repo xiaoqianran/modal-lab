@@ -170,6 +170,7 @@ Modal Volume                  future upstream flags
 023-a-spar3d
 023-b-sf3d
 027-qwen3-tts
+029-voxcpm2
 030-vibevoice
 031-cosyvoice3
 032-indextts2
