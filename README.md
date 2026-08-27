@@ -146,7 +146,7 @@ python main.py 020 status
 python main.py 021 status
 python main.py 022 probe --gpu L40S
 
-# 040/041 是 provider/integration 客户端验证脚本，不定义 Modal App
+# 040/041/042 是 provider/integration 客户端验证脚本，不定义 Modal App
 python main.py 040
 python main.py 041
 ```

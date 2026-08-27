@@ -1,7 +1,7 @@
 """Workspace launcher — 只负责把实验 ID 分发到实验入口。
 
 普通 Modal 实验使用 ``app.py`` + ``local_entrypoint``；少数 provider / integration
-验证目录（040/041）是纯客户端脚本，保留独立 ``run.py``。两者是不同入口类型，
+验证目录（040/041/042）是纯客户端脚本，保留独立 ``run.py``。两者是不同入口类型，
 不是迁移前后关系。
 
 示例：
