@@ -10,9 +10,11 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import shutil
 import subprocess
+import sys
 import threading
 import time
 from datetime import datetime, timezone
@@ -514,81 +516,115 @@ def infer_pano(
     return meta
 
 
-@app.function(
-    image=download_image,
-    volumes={OUTPUTS_MOUNT: outputs_vol},
-    timeout=300,
-)
-def list_runs() -> list[str]:
-    root = Path(OUTPUTS_MOUNT) / "runs"
-    if not root.is_dir():
-        return []
-    return sorted(p.name for p in root.iterdir() if p.is_dir())
+BACKEND_CHOICES = ("qwen", "full")
+DOWNLOAD_BACKEND_CHOICES = ("qwen", "full", "both")
+LOAD_MODE_CHOICES = ("gpu", "cpu_offload", "sequential_offload")
+DEFAULT_PROMPT = "Expand this image to a 360-degree equirectangular panorama. Maintain realistic style."
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="008 HY-Pano 2.0 on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+
+    download = sub.add_parser("download", help="下载 Qwen+LoRA / full 权重")
+    download.add_argument("--backend", choices=DOWNLOAD_BACKEND_CHOICES, default=DEFAULT_BACKEND)
+    download.add_argument("--dry-run", action="store_true")
+
+    for name in ("smoke", "infer"):
+        cmd = sub.add_parser(name, help="样例全景" if name == "smoke" else "自定义全景推理")
+        cmd.add_argument("--dry-run", action="store_true")
+        cmd.add_argument("--backend", choices=BACKEND_CHOICES, default=DEFAULT_BACKEND)
+        cmd.add_argument("--gpu", default="", help="为空时按 backend 选择默认 GPU")
+        cmd.add_argument("--image", default="desk.jpg")
+        cmd.add_argument("--prompt", default=DEFAULT_PROMPT)
+        cmd.add_argument("--seed", type=int, default=42)
+        cmd.add_argument("--height", type=int, default=960)
+        cmd.add_argument("--width", type=int, default=1952)
+        cmd.add_argument("--steps", type=int, default=40)
+        cmd.add_argument("--load-mode", choices=LOAD_MODE_CHOICES, default="gpu")
+        cmd.add_argument("--use-taylor-cache", action="store_true")
+        cmd.add_argument("--run-name", default="")
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def default_gpu_for(backend: str) -> str:
+    return DEFAULT_GPU_FULL if backend == "full" else DEFAULT_GPU_QWEN
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "008-hy-pano",
+        "app": APP_NAME,
+        "upstream": UPSTREAM,
+        "default_backend": DEFAULT_BACKEND,
+        "default_gpu_qwen": DEFAULT_GPU_QWEN,
+        "default_gpu_full": DEFAULT_GPU_FULL,
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+        "note": "Qwen+LoRA 默认；full 约 80B / 多 GPU，显式 --backend full",
+    }
+
+
+def inference_plan(args: argparse.Namespace) -> dict[str, Any]:
+    gpu = args.gpu or default_gpu_for(args.backend)
+    run_name = args.run_name or (f"smoke_{args.backend}" if args.command == "smoke" else "")
+    return {
+        "action": args.command,
+        "backend": args.backend,
+        "gpu": gpu,
+        "image": args.image,
+        "prompt": args.prompt,
+        "seed": args.seed,
+        "height": args.height,
+        "width": args.width,
+        "steps": args.steps,
+        "load_mode": args.load_mode,
+        "use_taylor_cache": args.use_taylor_cache,
+        "run_name": run_name,
+    }
 
 
 @app.local_entrypoint()
-def main(
-    action: str = "status",
-    backend: str = DEFAULT_BACKEND,
-    gpu: str | None = None,
-    image: str = "desk.jpg",
-    prompt: str = "Expand this image to a 360-degree equirectangular panorama. Maintain realistic style.",
-    seed: int = 42,
-    run_name: str | None = None,
-    height: int = 960,
-    width: int = 1952,
-    diff_infer_steps: int = 40,
-    use_taylor_cache: bool = False,
-    load_mode: str = "gpu",
-):
-    action = action.lower().strip()
-    backend = backend.lower().strip()
-    if gpu is None:
-        gpu = DEFAULT_GPU_FULL if backend == "full" else DEFAULT_GPU_QWEN
-
-    if action == "status":
-        print(
-            json.dumps(
-                {
-                    "app": APP_NAME,
-                    "upstream": UPSTREAM,
-                    "default_backend": DEFAULT_BACKEND,
-                    "default_gpu_qwen": DEFAULT_GPU_QWEN,
-                    "default_gpu_full": DEFAULT_GPU_FULL,
-                    "volumes": [VOLUME_WEIGHTS, VOLUME_OUTPUTS],
-                    "plan": "see PLAN.md — lightweight Qwen only by default",
-                },
-                indent=2,
-            )
-        )
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
+        return
+    if args.command == "download":
+        plan = {"action": "download", "backend": args.backend}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        print(json.dumps(download_weights.remote(backend=args.backend), ensure_ascii=False, indent=2))
         return
 
-    if action == "download":
-        print(download_weights.remote(backend=backend))
+    plan = inference_plan(args)
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
         return
+    if plan["backend"] == "full":
+        print("[warn] full backend is expensive (multi-GPU + ~169GB). Continuing…", flush=True)
+    fn = infer_pano.with_options(gpu=plan["gpu"])
+    meta = fn.remote(
+        backend=plan["backend"],
+        image_name=plan["image"],
+        prompt=plan["prompt"],
+        seed=plan["seed"],
+        height=plan["height"],
+        width=plan["width"],
+        diff_infer_steps=plan["steps"],
+        use_taylor_cache=plan["use_taylor_cache"],
+        load_mode=plan["load_mode"],
+        run_name=plan["run_name"] or None,
+        gpu_label=plan["gpu"],
+    )
+    print(json.dumps(meta, ensure_ascii=False, indent=2))
 
-    if action == "ls":
-        print(json.dumps(list_runs.remote(), indent=2))
-        return
 
-    if action in ("smoke", "infer"):
-        if backend == "full":
-            print("[warn] full backend is expensive (multi-GPU + ~169GB). Continuing…")
-        fn = infer_pano.with_options(gpu=gpu)
-        meta = fn.remote(
-            backend=backend,
-            image_name=image,
-            prompt=prompt,
-            seed=seed,
-            height=height,
-            width=width,
-            diff_infer_steps=diff_infer_steps,
-            use_taylor_cache=use_taylor_cache,
-            load_mode=load_mode,
-            run_name=run_name or (f"smoke_{backend}" if action == "smoke" else None),
-            gpu_label=gpu,
-        )
-        print(json.dumps(meta, indent=2))
-        return
-
-    raise SystemExit(f"unknown action: {action}")
+if __name__ == "__main__":
+    main(*sys.argv[1:])

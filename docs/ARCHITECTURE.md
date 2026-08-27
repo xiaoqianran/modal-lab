@@ -164,6 +164,7 @@ Modal Volume                  future upstream flags
 
 ```text
 001-longcat-video
+008-hy-pano
 013-yue
 014-diffrhythm-2
 016-musicgen
