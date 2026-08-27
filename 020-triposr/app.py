@@ -7,6 +7,7 @@ MIT · https://github.com/VAST-AI-Research/TripoSR
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
@@ -500,27 +501,82 @@ class TripoSRPro6000:
         )
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="020 TripoSR image -> 3D")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验状态；纯本地")
+
+    probe = sub.add_parser("probe", help="远程 GPU / CUDA probe")
+    probe.add_argument("--gpu", default="L40S", choices=["L40S", "RTX-PRO-6000"])
+
+    smoke = sub.add_parser("smoke", help="运行 image -> GLB smoke")
+    smoke.add_argument("--i-know-this-costs-money", action="store_true")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--gpu", default="L40S", choices=["L40S", "RTX-PRO-6000"])
+    smoke.add_argument("--output-name", default="")
+    smoke.add_argument("--image-url", default=SAMPLE_URL)
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def _is_pro6000(gpu: str) -> bool:
+    return gpu.upper().replace("_", "-") in {"RTX-PRO-6000", "PRO-6000", "PRO6000"}
+
+
+def local_status() -> dict:
+    return {
+        "experiment": "020-triposr",
+        "app": APP_NAME,
+        "model": HF_MODEL,
+        "default_gpu": DEFAULT_GPU,
+        "gpus": ["L40S", "RTX-PRO-6000"],
+        "outputs_volume": VOLUME_OUTPUTS,
+        "sample_url": SAMPLE_URL,
+    }
+
+
+def smoke_plan(args: argparse.Namespace) -> dict:
+    use_pro = _is_pro6000(args.gpu)
+    return {
+        "action": "smoke",
+        "gpu": "RTX-PRO-6000" if use_pro else "L40S",
+        "image_url": args.image_url,
+        "output_name": args.output_name or ("smoke_pro6000" if use_pro else "smoke_l40s"),
+    }
+
+
 @app.local_entrypoint()
-def main(
-    action: str = "probe",
-    gpu: str = "L40S",
-    output_name: str = "",
-    image_url: str = SAMPLE_URL,
-):
-    g = gpu.upper().replace("_", "-")
-    use_pro = g in {"RTX-PRO-6000", "PRO-6000", "PRO6000"}
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
+        return
+
+    use_pro = _is_pro6000(args.gpu)
     worker = TripoSRPro6000() if use_pro else TripoSRWorker()
-    default_name = "smoke_pro6000" if use_pro else "smoke_l40s"
-    name = output_name or default_name
-    if action in {"probe", "status"}:
+    if args.command == "probe":
         print(worker.probe.remote())
-    elif action in {"smoke", "i2v"}:
-        print(
-            worker.image_to_3d.remote(
-                image_url=image_url,
-                output_name=name,
-                model_format="glb",
-            )
+        return
+
+    plan = smoke_plan(args)
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
+        return
+    if not args.i_know_this_costs_money:
+        raise SystemExit("smoke requires --i-know-this-costs-money")
+
+    print(
+        worker.image_to_3d.remote(
+            image_url=args.image_url,
+            output_name=plan["output_name"],
+            model_format="glb",
         )
-    else:
-        raise SystemExit(f"unknown action: {action}")
+    )
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])

@@ -1,4 +1,4 @@
-# 020-triposr — **TripoSR** 速度基线（image → mesh）
+# 020-triposr — TripoSR 速度基线（image → mesh）
 
 | | |
 |--|--|
@@ -8,6 +8,8 @@
 | 可选 | **RTX-PRO-6000**（独立镜像 torch+cu128 / sm_120） |
 | 定位 | 开源 image→3D **速度基线** |
 | 状态 | ✅ L40S + PRO 6000 smoke 已出 GLB |
+
+020 已迁移到 v2：一个 `app.py` 同时拥有 Modal worker 和本地 CLI，不再使用 `run.py -> modal_app.py` 翻译层。
 
 ## 实测（smoke · chair.png）
 
@@ -21,13 +23,29 @@
 ## 用法
 
 ```bash
-python run.py status
-python run.py probe --gpu L40S
-python run.py smoke --i-know-this-costs-money --gpu L40S
-python run.py smoke --i-know-this-costs-money --gpu RTX-PRO-6000
+# 本地状态，不启动 GPU
+python main.py 020 status
+
+# 远程 probe
+python main.py 020 probe --gpu L40S
+
+# 不提交任务，只看 smoke 计划
+python main.py 020 smoke --dry-run --gpu RTX-PRO-6000
+
+# 真正 smoke
+python main.py 020 smoke --i-know-this-costs-money --gpu L40S
+python main.py 020 smoke --i-know-this-costs-money --gpu RTX-PRO-6000
 ```
 
-拉结果：
+也可以直接使用 Modal：
+
+```bash
+cd 020-triposr
+modal run app.py probe --gpu L40S
+modal run app.py smoke --i-know-this-costs-money --gpu L40S
+```
+
+拉结果直接使用 Modal Volume CLI：
 
 ```bash
 modal volume get modal-lab-triposr-outputs meshes/smoke_l40s.glb ./viewer/
@@ -42,6 +60,19 @@ modal volume get modal-lab-triposr-outputs meshes/smoke_pro6000.glb ./viewer/
 | PRO 6000 | 2.11+cu128 | 12.8 | torchmcubes ARCH=12.0 |
 
 `numpy==1.26.4`（trimesh 4.0.x 与 numpy 2 不兼容）。
+
+旧 `run.py` 曾暴露 `--no-bake-texture`，但底层实现始终记录 `bake_texture=False`，远端入口也不接受该参数；v2 删除了这个无效选项，避免伪能力继续存在。
+
+## 测试
+
+```bash
+python -m unittest discover -s 020-triposr/tests -v
+python -m py_compile 020-triposr/app.py
+python main.py 020 status
+python main.py 020 smoke --dry-run
+```
+
+以上测试不启动付费 GPU。
 
 ## 对照计划
 
