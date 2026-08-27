@@ -5,6 +5,7 @@ Gates: probe → build-sm120 → verify → smoke.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
@@ -729,34 +730,147 @@ class Pixal3DPro6000:
         return _jsonable(result)
 
 
-@app.local_entrypoint()
-def main(
-    action: str = "probe",
-    only: str = "",
-    output_name: str = "smoke_pro6000",
-    seed: int = 42,
-    low_vram: bool = True,
-    resolution: int = 1024,
-):
-    worker = Pixal3DPro6000()
-    if action in {"probe", "status"}:
-        print(worker.probe.remote())
-    elif action == "build-sm120":
-        print(worker.build_sm120.remote(only=only or ""))
-    elif action == "verify":
-        print(worker.install_wheels_and_verify.remote())
-    elif action == "download":
-        print(worker.download_weights.remote())
-    elif action in {"smoke", "i2v"}:
-        print(
-            worker.image_to_3d.remote(
-                image_bytes=None,
-                image_url=SAMPLE_IMAGE_URL,
-                output_name=output_name if action == "i2v" else "smoke_pro6000",
-                seed=seed,
-                low_vram=low_vram,
-                resolution=resolution,
-            )
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="005-v3 Pixal3D RTX PRO 6000 / sm_120")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    sub.add_parser("status", help="打印固定栈；纯本地")
+
+    probe = sub.add_parser("probe", help="远程检查 PRO 6000 / torch / sm_120")
+    probe.add_argument("--dry-run", action="store_true")
+
+    build = sub.add_parser("build-sm120", help="源码编译并缓存 sm_120 wheels")
+    build.add_argument("--i-know-this-costs-money", action="store_true")
+    build.add_argument("--dry-run", action="store_true")
+    build.add_argument("--only", default="", help="只构建一个 package；由远程 builder 校验")
+
+    verify = sub.add_parser("verify", help="安装缓存 wheels 并验证 sm_120")
+    verify.add_argument("--i-know-this-costs-money", action="store_true")
+    verify.add_argument("--dry-run", action="store_true")
+
+    download = sub.add_parser("download", help="下载 Pixal3D 权重")
+    download.add_argument("--i-know-this-costs-money", action="store_true")
+    download.add_argument("--dry-run", action="store_true")
+    download.add_argument("--force", action="store_true")
+
+    smoke = sub.add_parser("smoke", help="官方样例图 end-to-end -> GLB")
+    smoke.add_argument("--i-know-this-costs-money", action="store_true")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--output-name", default="smoke_pro6000")
+    smoke.add_argument("--seed", type=int, default=42)
+    smoke.add_argument("--resolution", type=int, default=1024)
+    smoke.add_argument("--fov", type=float, default=-1.0)
+    low_vram = smoke.add_mutually_exclusive_group()
+    low_vram.add_argument("--low-vram", action="store_true", dest="low_vram")
+    low_vram.add_argument("--no-low-vram", action="store_false", dest="low_vram")
+    smoke.set_defaults(low_vram=True)
+
+    i2v = sub.add_parser("i2v", help="自定义图片 URL -> GLB")
+    i2v.add_argument("--i-know-this-costs-money", action="store_true")
+    i2v.add_argument("--dry-run", action="store_true")
+    i2v.add_argument("--image-url", required=True)
+    i2v.add_argument("--output-name", default="demo_pro6000")
+    i2v.add_argument("--seed", type=int, default=42)
+    i2v.add_argument("--resolution", type=int, default=1024)
+    i2v.add_argument("--fov", type=float, default=-1.0)
+    low_vram_i2v = i2v.add_mutually_exclusive_group()
+    low_vram_i2v.add_argument("--low-vram", action="store_true", dest="low_vram")
+    low_vram_i2v.add_argument("--no-low-vram", action="store_false", dest="low_vram")
+    i2v.set_defaults(low_vram=True)
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "005-v3-pixal3d-pro6000",
+        "app": APP_NAME,
+        "plan": "A*",
+        "gpu": DEFAULT_GPU,
+        "cuda_arch": CUDA_ARCH,
+        "natten_arch": NATTEN_ARCH,
+        "torch": "2.11.0+cu128",
+        "torch_index": TORCH_INDEX,
+        "model": HF_MODEL_REPO,
+        "wheels_volume": VOLUME_WHEELS,
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+        "sample_image_url": SAMPLE_IMAGE_URL,
+    }
+
+
+def command_plan(args: argparse.Namespace) -> dict[str, Any]:
+    plan: dict[str, Any] = {"action": args.command, "gpu": DEFAULT_GPU}
+    if args.command == "build-sm120":
+        plan["only"] = args.only
+    elif args.command == "download":
+        plan["force"] = args.force
+    elif args.command in {"smoke", "i2v"}:
+        plan.update(
+            {
+                "image_url": SAMPLE_IMAGE_URL if args.command == "smoke" else args.image_url,
+                "output_name": args.output_name,
+                "seed": args.seed,
+                "low_vram": args.low_vram,
+                "resolution": args.resolution,
+                "fov": args.fov,
+            }
         )
-    else:
-        raise SystemExit(f"unknown action: {action}")
+    return plan
+
+
+def require_cost_ack(args: argparse.Namespace) -> None:
+    if not args.i_know_this_costs_money:
+        raise SystemExit(f"{args.command} requires --i-know-this-costs-money")
+
+
+@app.local_entrypoint()
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
+        return
+
+    worker = Pixal3DPro6000()
+    if args.command == "probe":
+        if args.dry_run:
+            print(json.dumps(command_plan(args), ensure_ascii=False, indent=2))
+            return
+        print(worker.probe.remote())
+        return
+
+    plan = command_plan(args)
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
+        return
+    require_cost_ack(args)
+
+    if args.command == "build-sm120":
+        print(worker.build_sm120.remote(only=args.only))
+        return
+    if args.command == "verify":
+        print(worker.install_wheels_and_verify.remote())
+        return
+    if args.command == "download":
+        print(worker.download_weights.remote(force=args.force))
+        return
+
+    print(
+        worker.image_to_3d.remote(
+            image_bytes=None,
+            image_url=plan["image_url"],
+            output_name=plan["output_name"],
+            seed=plan["seed"],
+            low_vram=plan["low_vram"],
+            resolution=plan["resolution"],
+            fov=plan["fov"],
+        )
+    )
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])
