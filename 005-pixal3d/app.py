@@ -115,11 +115,11 @@ image = (
         "libxrender1", "wget", "curl", "ca-certificates",
         "build-essential", "ninja-build", "cmake",
     )
-    .pip_install(
+    .uv_pip_install(
         "torch==2.6.0", "torchvision==0.21.0", "triton==3.2.0",
         index_url="https://download.pytorch.org/whl/cu124",
     )
-    .pip_install(
+    .uv_pip_install(
         "pillow==12.0.0", "imageio==2.37.2", "imageio-ffmpeg==0.6.0",
         "tqdm==4.67.1", "easydict==1.13", "opencv-python-headless==4.12.0.88",
         "trimesh==4.10.1", "transformers==4.57.3", "zstandard==0.25.0",
@@ -158,7 +158,7 @@ image = (
 
 serve_image = (
     modal.Image.debian_slim(python_version="3.12")
-    .pip_install("fastapi", "python-multipart")
+    .uv_pip_install("fastapi", "python-multipart")
     .env({"PYTHONUNBUFFERED": "1"})
 )
 

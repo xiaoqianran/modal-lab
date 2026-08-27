@@ -134,14 +134,14 @@ image_l40s = (
         add_python="3.10",
     )
     .apt_install(*_APT_COMMON, "libglib2.0-0")
-    .pip_install(*_PIP_COMMON)
-    .pip_install(
+    .uv_pip_install(*_PIP_COMMON)
+    .uv_pip_install(
         "torch==2.6.0",
         "torchvision==0.21.0",
         "triton==3.2.0",
         index_url="https://download.pytorch.org/whl/cu124",
     )
-    .pip_install(
+    .uv_pip_install(
         "xformers==0.0.29.post3",
         index_url="https://download.pytorch.org/whl/cu124",
     )
@@ -188,14 +188,14 @@ image_pro6000 = (
         add_python="3.10",
     )
     .apt_install(*_APT_COMMON, "libglib2.0-0t64")
-    .pip_install(*_PIP_COMMON)
-    .pip_install(
+    .uv_pip_install(*_PIP_COMMON)
+    .uv_pip_install(
         "torch==2.11.0",
         "torchvision==0.26.0",
         index_url="https://download.pytorch.org/whl/cu128",
     )
     # xformers for torch 2.11+cu128 — pin loosely if exact wheel missing
-    .pip_install(
+    .uv_pip_install(
         "xformers",
         index_url="https://download.pytorch.org/whl/cu128",
     )

@@ -78,7 +78,7 @@ app = modal.App(APP_NAME)
 
 download_image = (
     modal.Image.debian_slim(python_version="3.11")
-    .pip_install("huggingface_hub[hf_transfer]>=0.26.0")
+    .uv_pip_install("huggingface_hub[hf_transfer]>=0.26.0")
     .env(
         {
             "HF_HOME": str(WEIGHTS_CACHE),
@@ -105,12 +105,12 @@ inference_image = (
         "ca-certificates",
         "build-essential",
     )
-    .pip_install(
+    .uv_pip_install(
         "torch==2.7.1",
         "torchvision==0.22.1",
         index_url="https://download.pytorch.org/whl/cu128",
     )
-    .pip_install(
+    .uv_pip_install(
         "einops==0.8.1",
         "numpy==2.2.0",
         "pillow",

@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import subprocess
 import sys
 import time
@@ -69,7 +68,7 @@ outputs_vol = modal.Volume.from_name(VOLUME_OUTPUTS, create_if_missing=True)
 
 download_image = (
     modal.Image.debian_slim(python_version="3.11")
-    .pip_install("huggingface_hub[hf_transfer]>=0.26.0")
+    .uv_pip_install("huggingface_hub[hf_transfer]>=0.26.0")
     .env(
         {
             "HF_HUB_ENABLE_HF_TRANSFER": "1",
@@ -94,13 +93,13 @@ inference_image = (
         "libgomp1",
         "ca-certificates",
     )
-    .pip_install(
+    .uv_pip_install(
         "torch==2.8.0",
         "torchvision==0.23.0",
         "torchaudio==2.8.0",
         extra_index_url="https://download.pytorch.org/whl/cu128",
     )
-    .pip_install(
+    .uv_pip_install(
         "transformers==4.57.1",
         "accelerate>=1.0.0",
         "safetensors>=0.4.0",

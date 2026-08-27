@@ -28,7 +28,7 @@ modal-lab/
 │   └── storyboard.py      # 真实独立领域 workflow 才拆
 │
 ├── 002-.../
-│   └── run.py             # legacy，逐实验迁移
+│   └── app.py
 │
 └── ...
 ```
@@ -130,14 +130,40 @@ run.py
 022 -> 022-hunyuan3d-2.1
 ```
 
-迁移期：
+入口类型：
 
 ```text
-app.py 优先
-run.py legacy fallback
+普通 Modal 实验           -> app.py
+provider/integration 验证 -> standalone run.py
 ```
 
-纯本地操作（`status/setup/help/dry-run`）直接运行 `app.py`，避免无意义地初始化 Modal App；真正云端操作才进入 `modal run`。
+`run.py` 不是 legacy fallback，只用于不定义 Modal App 的 provider/integration 客户端脚本。
+
+纯本地操作（`status/setup/help/dry-run`）直接运行 `app.py`，避免无意义地初始化 Modal App；真正云端操作才进入 Modal remote execution。
+
+
+## Image Python 依赖
+
+默认使用 Modal 原生 `Image.uv_pip_install(...)`：
+
+```python
+image = (
+    modal.Image.debian_slim(python_version="3.11")
+    .uv_pip_install("torch==2.7.1", "numpy")
+)
+```
+
+仅当安装步骤明确依赖 pip 构建语义时保留 shell `pip install`，例如：
+
+```text
+--no-build-isolation
+--no-deps
+-e / editable install
+本地 / Git 源码扩展构建
+第三方 requirements.txt 且尚未验证 uv 等价性
+```
+
+不要为了统一表面形式把 CUDA/custom extension 的源码构建机械改成 uv；普通 PyPI / wheel / 自定义 index 依赖则优先 `uv_pip_install`。
 
 ## 参数所有权
 

@@ -64,7 +64,7 @@ outputs_vol = modal.Volume.from_name(VOLUME_OUTPUTS, create_if_missing=True)
 
 download_image = (
     modal.Image.debian_slim(python_version="3.11")
-    .pip_install("huggingface_hub[hf_transfer]>=0.26.0")
+    .uv_pip_install("huggingface_hub[hf_transfer]>=0.26.0")
     .env(
         {
             "HF_HOME": str(WEIGHTS_CACHE),
@@ -95,18 +95,18 @@ inference_image = (
         "build-essential",
         "ninja-build",
     )
-    .pip_install(
+    .uv_pip_install(
         "torch==2.7.1",
         "torchvision==0.22.1",
         index_url="https://download.pytorch.org/whl/cu128",
     )
-    .pip_install("ninja", "packaging", "wheel", "setuptools")
+    .uv_pip_install("ninja", "packaging", "wheel", "setuptools")
     .run_commands(
         "python -m pip install --no-cache-dir 'gsplat' || "
         "python -m pip install --no-cache-dir --no-build-isolation "
         "'git+https://github.com/nerfstudio-project/gsplat.git'",
     )
-    .pip_install(
+    .uv_pip_install(
         "numpy==1.26.4",
         "omegaconf",
         "einops",

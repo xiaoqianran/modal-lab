@@ -49,7 +49,7 @@ data_volume = modal.Volume.from_name(
 
 download_image = (
     modal.Image.debian_slim(python_version="3.12")
-    .pip_install("huggingface_hub[hf_xet]==0.36.2")
+    .uv_pip_install("huggingface_hub[hf_xet]==0.36.2")
     .env({"HF_XET_HIGH_PERFORMANCE": "1", "PYTHONUNBUFFERED": "1"})
 )
 

@@ -93,13 +93,13 @@ outputs_vol = modal.Volume.from_name(VOLUME_OUTPUTS, create_if_missing=True)
 
 status_image = (
     modal.Image.debian_slim(python_version="3.11")
-    .pip_install("huggingface_hub>=0.26.0")
+    .uv_pip_install("huggingface_hub>=0.26.0")
     .env({"PYTHONUNBUFFERED": "1"})
 )
 
 download_weights_image = (
     modal.Image.debian_slim(python_version="3.11")
-    .pip_install("huggingface_hub[hf_transfer]>=0.26.0")
+    .uv_pip_install("huggingface_hub[hf_transfer]>=0.26.0")
     .env({"HF_HUB_ENABLE_HF_TRANSFER": "1", "PYTHONUNBUFFERED": "1"})
 )
 
@@ -142,12 +142,12 @@ sim_image = (
         "linux-libc-dev",
     )
     .env({"CC": "gcc", "CXX": "g++"})
-    .pip_install(
+    .uv_pip_install(
         "torch==2.8.0",
         "torchvision==0.23.0",
         extra_index_url="https://download.pytorch.org/whl/cu128",
     )
-    .pip_install(
+    .uv_pip_install(
         "transformers==4.57.1",
         "accelerate",
         "safetensors",

@@ -67,7 +67,7 @@ outputs_vol = modal.Volume.from_name(VOLUME_OUTPUTS, create_if_missing=True)
 # CPU image: download only
 download_image = (
     modal.Image.debian_slim(python_version="3.10")
-    .pip_install("huggingface_hub[hf_transfer]>=0.26.0")
+    .uv_pip_install("huggingface_hub[hf_transfer]>=0.26.0")
     .env(
         {
             "HF_HOME": str(WEIGHTS_CACHE),
@@ -97,19 +97,19 @@ inference_image = (
         "curl",
         "ca-certificates",
     )
-    .pip_install(
+    .uv_pip_install(
         "torch==2.4.0",
         "torchvision==0.19.0",
         index_url="https://download.pytorch.org/whl/cu124",
     )
     # ninja must come from PyPI; gsplat wheel index does not host it
-    .pip_install("ninja")
-    .pip_install(
+    .uv_pip_install("ninja")
+    .uv_pip_install(
         "gsplat",
         index_url="https://docs.gsplat.studio/whl/pt24cu124",
         extra_index_url="https://pypi.org/simple",
     )
-    .pip_install(
+    .uv_pip_install(
         # inference-only subset (skip lightning / training stack extras)
         "numpy<2.0.0",
         "einops",

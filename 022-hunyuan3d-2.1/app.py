@@ -84,7 +84,7 @@ image = (
         "libxrender1",
         "wget",
     )
-    .pip_install(
+    .uv_pip_install(
         *PIP,
         extra_index_url="https://download.pytorch.org/whl/cu124",
     )

@@ -90,7 +90,7 @@ _ENV = {
 
 download_image = (
     modal.Image.debian_slim(python_version="3.10")
-    .pip_install("huggingface_hub[hf_transfer]>=0.26.0")
+    .uv_pip_install("huggingface_hub[hf_transfer]>=0.26.0")
     .env(_ENV)
 )
 

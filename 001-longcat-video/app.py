@@ -320,15 +320,15 @@ image = (
         "wget",
         "ninja-build",
     )
-    .pip_install(
+    .uv_pip_install(
         "torch==2.7.1",
         "torchvision==0.22.1",
         "torchaudio==2.7.1",
         index_url="https://download.pytorch.org/whl/cu128",
     )
-    .pip_install("ninja", "packaging", "wheel", "setuptools")
+    .uv_pip_install("ninja", "packaging", "wheel", "setuptools")
     .run_commands("MAX_JOBS=4 pip install flash_attn==2.7.4.post1 --no-build-isolation")
-    .pip_install(*_BASE_PIP)
+    .uv_pip_install(*_BASE_PIP)
     .env(
         {
             "HF_HOME": "/root/.cache/huggingface",

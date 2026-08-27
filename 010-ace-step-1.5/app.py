@@ -75,7 +75,7 @@ outputs_vol = modal.Volume.from_name(VOLUME_OUTPUTS, create_if_missing=True)
 
 download_image = (
     modal.Image.debian_slim(python_version="3.11")
-    .pip_install("huggingface_hub[hf_transfer]>=0.26.0")
+    .uv_pip_install("huggingface_hub[hf_transfer]>=0.26.0")
     .env(
         {
             "HF_HUB_ENABLE_HF_TRANSFER": "1",

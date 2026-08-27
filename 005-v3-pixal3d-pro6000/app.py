@@ -77,7 +77,7 @@ pixal_pro6000_image = (
         "ca-certificates",
     )
     .run_commands("gcc --version | head -1 && nvcc --version | tail -1 || true")
-    .pip_install(
+    .uv_pip_install(
         "pip",
         "wheel",
         "setuptools",
@@ -107,7 +107,7 @@ pixal_pro6000_image = (
         "onnxruntime",
         "fastapi",
     )
-    .pip_install(
+    .uv_pip_install(
         "torch==2.11.0",
         "torchvision==0.26.0",
         index_url=TORCH_INDEX,

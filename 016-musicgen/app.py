@@ -76,7 +76,7 @@ _HF_ENV = {
 
 download_image = (
     modal.Image.debian_slim(python_version="3.11")
-    .pip_install("huggingface_hub[hf_transfer]>=0.26.0")
+    .uv_pip_install("huggingface_hub[hf_transfer]>=0.26.0")
     .env(_HF_ENV)
 )
 
@@ -87,12 +87,12 @@ inference_image = (
     )
     .entrypoint([])
     .apt_install("ffmpeg", "libsndfile1", "git", "ca-certificates")
-    .pip_install(
+    .uv_pip_install(
         "torch==2.5.1",
         "torchaudio==2.5.1",
         extra_options="--index-url https://download.pytorch.org/whl/cu124",
     )
-    .pip_install(
+    .uv_pip_install(
         "transformers>=4.39.0,<4.48.0",
         "accelerate>=0.28.0",
         "scipy",

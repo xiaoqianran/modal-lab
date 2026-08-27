@@ -111,8 +111,8 @@ image = (
         add_python="3.10",
     )
     .apt_install(*_APT)
-    .pip_install(*_COMMON_PIP)
-    .pip_install(
+    .uv_pip_install(*_COMMON_PIP)
+    .uv_pip_install(
         "torch==2.5.1",
         "torchvision==0.20.1",
         index_url="https://download.pytorch.org/whl/cu124",
@@ -148,8 +148,8 @@ image_pro6000 = (
         add_python="3.10",
     )
     .apt_install(*_APT)
-    .pip_install(*_COMMON_PIP)
-    .pip_install(
+    .uv_pip_install(*_COMMON_PIP)
+    .uv_pip_install(
         "torch",
         "torchvision",
         index_url="https://download.pytorch.org/whl/cu128",

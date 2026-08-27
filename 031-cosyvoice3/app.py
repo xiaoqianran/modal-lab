@@ -75,7 +75,7 @@ _HF_ENV = {
 
 download_image = (
     modal.Image.debian_slim(python_version="3.11")
-    .pip_install("huggingface_hub[hf_transfer]>=0.26.0,<1.0")
+    .uv_pip_install("huggingface_hub[hf_transfer]>=0.26.0,<1.0")
     .env(_HF_ENV)
 )
 
@@ -93,14 +93,14 @@ inference_image = (
         "build-essential",
         "g++",
     )
-    .pip_install(
+    .uv_pip_install(
         "torch==2.5.1",
         "torchaudio==2.5.1",
         extra_options="--index-url https://download.pytorch.org/whl/cu124",
     )
-    .pip_install("setuptools", "wheel", "packaging")
-    .pip_install("openai-whisper")
-    .pip_install(
+    .uv_pip_install("setuptools", "wheel", "packaging")
+    .uv_pip_install("openai-whisper")
+    .uv_pip_install(
         "transformers==4.51.3",
         "accelerate",
         "numpy==1.26.4",

@@ -58,7 +58,7 @@ app = modal.App(APP_NAME)
 
 download_image = (
     modal.Image.debian_slim(python_version="3.11")
-    .pip_install("huggingface_hub[hf_transfer]>=0.34.0", "pillow")
+    .uv_pip_install("huggingface_hub[hf_transfer]>=0.34.0", "pillow")
     .env(
         {
             "HF_HOME": str(HF_HOME),
@@ -79,7 +79,7 @@ worldgen_image = (
         "libsm6", "libxext6", "libxrender1", "wget", "curl", "ca-certificates",
         "build-essential", "cmake", "ninja-build", "python3-dev",
     )
-    .pip_install(
+    .uv_pip_install(
         "torch==2.7.1", "torchvision==0.22.1",
         index_url="https://download.pytorch.org/whl/cu128",
     )
@@ -87,7 +87,7 @@ worldgen_image = (
         # skip full pytorch3d CUDA compile (20–40min). Stage1/2 use pure-torch look_at stub.
         "pip install iopath",
     )
-    .pip_install(
+    .uv_pip_install(
         "numpy==1.26.4", "pillow", "opencv-python==4.10.0.84", "imageio[ffmpeg]",
         "decord", "imagesize", "matplotlib==3.10.3", "scikit-image==0.25.2",
         "scipy==1.14.1", "tqdm", "loguru==0.7.3", "einops", "omegaconf",
@@ -97,7 +97,7 @@ worldgen_image = (
         "huggingface_hub[hf_transfer]>=0.34.0", "sentencepiece", "protobuf",
         "torchmetrics", "tyro==0.9.14", "splines", "viser", "cupy-cuda12x==13.6.0",
     )
-    .pip_install("open3d==0.18.0")
+    .uv_pip_install("open3d==0.18.0")
     .run_commands(
         "pip install --no-deps 'git+https://github.com/EasternJournalist/utils3d.git@v0.0.2' || "
         "pip install --no-deps 'git+https://github.com/EasternJournalist/utils3d.git' || true",
@@ -205,7 +205,7 @@ def _ensure_vllm() -> None:
     import sys
     try:
         import vllm  # noqa: F401
-        print(f"[vlm] vllm ok")
+        print("[vlm] vllm ok")
         return
     except Exception as e:
         print(f"[vlm] importing vllm failed ({e}); pip install…")

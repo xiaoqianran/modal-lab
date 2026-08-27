@@ -72,7 +72,7 @@ _HF_ENV = {
 
 download_image = (
     modal.Image.debian_slim(python_version="3.11")
-    .pip_install("huggingface_hub[hf_transfer]>=0.26.0,<1.0")
+    .uv_pip_install("huggingface_hub[hf_transfer]>=0.26.0,<1.0")
     .env(_HF_ENV)
 )
 
@@ -92,12 +92,12 @@ inference_image = (
         "libsox-dev",
     )
     .run_commands("git lfs install")
-    .pip_install(
+    .uv_pip_install(
         "torch==2.8.0",
         "torchaudio==2.8.0",
         extra_options="--index-url https://download.pytorch.org/whl/cu126",
     )
-    .pip_install(
+    .uv_pip_install(
         "accelerate==1.8.1",
         "cn2an==0.5.22",
         "cython==3.0.7",

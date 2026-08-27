@@ -76,7 +76,7 @@ pixal_l40s_image = (
         "libjpeg-dev",
         "ffmpeg",
     )
-    .pip_install(
+    .uv_pip_install(
         "pip",
         "wheel",
         "setuptools",
@@ -106,7 +106,7 @@ pixal_l40s_image = (
         "onnxruntime",
         "fastapi",
     )
-    .pip_install(
+    .uv_pip_install(
         "torch==2.6.0",
         "torchvision==0.21.0",
         "triton==3.2.0",

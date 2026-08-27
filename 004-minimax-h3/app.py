@@ -97,7 +97,7 @@ image = (
         "curl",
         "ca-certificates",
     )
-    .pip_install(
+    .uv_pip_install(
         "torch==2.7.1",
         "torchvision==0.22.1",
         "torchaudio==2.7.1",
@@ -109,7 +109,7 @@ image = (
         "python -m pip install --no-cache-dir -r /opt/ComfyUI/requirements.txt",
         "python -c \"import torch; print('torch', torch.__version__)\"",
     )
-    .pip_install(
+    .uv_pip_install(
         "huggingface_hub[hf_transfer]>=0.26.0",
         "safetensors",
         "requests",
@@ -134,7 +134,7 @@ image = (
 
 serve_image = (
     modal.Image.debian_slim(python_version="3.12")
-    .pip_install("fastapi", "python-multipart")
+    .uv_pip_install("fastapi", "python-multipart")
     .env({"PYTHONUNBUFFERED": "1"})
 )
 

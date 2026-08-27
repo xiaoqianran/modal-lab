@@ -81,7 +81,7 @@ _HF_ENV = {
 
 download_image = (
     modal.Image.debian_slim(python_version="3.10")
-    .pip_install("huggingface_hub[hf_transfer]>=0.26.0")
+    .uv_pip_install("huggingface_hub[hf_transfer]>=0.26.0")
     .env(_HF_ENV)
 )
 
@@ -180,7 +180,6 @@ def _inject_venv_path() -> None:
 
 
 def _save_audio(tensor, sample_rate: int, path: Path) -> dict[str, Any]:
-    import torch
     import torchaudio
 
     if tensor.ndim == 3:

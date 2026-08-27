@@ -84,7 +84,7 @@ _ENV = {
 
 download_image = (
     modal.Image.debian_slim(python_version="3.11")
-    .pip_install("huggingface_hub>=0.26.0,<0.30")
+    .uv_pip_install("huggingface_hub>=0.26.0,<0.30")
     .env(_ENV)
 )
 
@@ -164,7 +164,7 @@ def _hub_has(repo_id: str) -> bool:
     # FacebookAI/xlm-roberta-base vs xlm-roberta-base
     alt = "models--" + repo_id.split("/")[-1]
     return any(hub.glob(f"{alt}/**/config.json")) or any(
-        hub.glob(f"models--FacebookAI--xlm-roberta-base/**/config.json")
+        hub.glob("models--FacebookAI--xlm-roberta-base/**/config.json")
     )
 
 
