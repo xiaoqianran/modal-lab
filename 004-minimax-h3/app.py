@@ -16,10 +16,12 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
 import subprocess
+import sys
 import threading
 import time
 import urllib.error
@@ -40,6 +42,14 @@ BENCH_DIR = Path(OUTPUTS_MOUNT) / "benchmarks"
 COMFY_PORT = 8188
 VOLUME_OUTPUTS_NAME = "modal-lab-minimax-h3-outputs"
 VOLUME_WEIGHTS_NAME = "modal-lab-minimax-h3-weights"
+
+DEFAULT_PROMPT = (
+    "新海诚风格车站偶遇的唯美画面："
+    "傍晚蓝色时刻，乡村小站月台上微风轻拂，金色夕阳从云隙洒下，"
+    "男女主角在列车进站的光影中不期而遇，樱花瓣缓缓飘落，"
+    "镜头缓慢推进，电影感构图，细腻光影，治愈而浪漫。"
+    "Audio: soft ambient wind, distant train horn, gentle piano score."
+)
 
 GPU_PRICE_PER_SEC = {
     "RTX-PRO-6000": 0.000842,
@@ -799,65 +809,124 @@ code{{background:#f4f4f4;padding:2px 6px}}</style></head>
     )
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="004 MiniMax H3 text-to-video on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("list-outputs", help="结构化列出远程 Volume 视频")
+
+    download_cmd = sub.add_parser("download", help="下载 MiniMax H3 权重")
+    download_cmd.add_argument("--force", action="store_true")
+    download_cmd.add_argument("--dry-run", action="store_true")
+
+    smoke_cmd = sub.add_parser("smoke", help="验证 GPU / CUDA / 权重挂载")
+    smoke_cmd.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke_cmd.add_argument("--dry-run", action="store_true")
+
+    t2v_cmd = sub.add_parser("t2v", help="Text-to-Video")
+    t2v_cmd.add_argument("--prompt", default=DEFAULT_PROMPT)
+    t2v_cmd.add_argument("--width", type=int, default=864)
+    t2v_cmd.add_argument("--height", type=int, default=480)
+    t2v_cmd.add_argument("--seconds", type=float, default=5.0)
+    t2v_cmd.add_argument("--steps", type=int, default=20)
+    t2v_cmd.add_argument("--seed", type=int, default=42)
+    t2v_cmd.add_argument("--output-name", default="t2v_shinkai")
+    t2v_cmd.add_argument("--gpu", default=DEFAULT_GPU)
+    t2v_cmd.add_argument("--dry-run", action="store_true")
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "004-minimax-h3",
+        "app": APP_NAME,
+        "default_gpu": DEFAULT_GPU,
+        "hf_repo": HF_REPO,
+        "weights_volume": VOLUME_WEIGHTS_NAME,
+        "outputs_volume": VOLUME_OUTPUTS_NAME,
+        "output_layout": {
+            "videos": "videos/<name>.mp4 + videos/latest.mp4",
+            "benchmarks": "benchmarks/<name>.json",
+        },
+        "index_endpoint": "https://seachenxyt--modal-lab-minimax-h3-index.modal.run",
+        "download_endpoint": "https://seachenxyt--modal-lab-minimax-h3-download.modal.run?name=latest",
+    }
+
+
+def t2v_plan(args: argparse.Namespace) -> dict[str, Any]:
+    prompt = args.prompt.strip()
+    output_name = args.output_name.strip()
+    if not prompt:
+        raise ValueError("prompt 不能为空")
+    if not output_name:
+        raise ValueError("--output-name 不能为空")
+    if args.width <= 0 or args.height <= 0:
+        raise ValueError("width/height 必须 > 0")
+    if args.seconds <= 0:
+        raise ValueError("--seconds 必须 > 0")
+    if args.steps <= 0:
+        raise ValueError("--steps 必须 > 0")
+    return {
+        "action": "t2v",
+        "prompt": prompt,
+        "width": args.width,
+        "height": args.height,
+        "seconds": args.seconds,
+        "steps": args.steps,
+        "seed": args.seed,
+        "output_name": output_name,
+        "gpu": args.gpu,
+    }
+
+
 @app.local_entrypoint()
-def main(
-    action: str = "status",
-    prompt: str = "",
-    width: int = 864,
-    height: int = 480,
-    seconds: float = 5.0,
-    steps: int = 20,
-    seed: int = 42,
-    output_name: str = "t2v",
-    gpu: str = DEFAULT_GPU,
-    force_download: bool = False,
-) -> None:
-    if action == "status":
-        print(
-            json.dumps(
-                {
-                    "app": APP_NAME,
-                    "default_gpu": DEFAULT_GPU,
-                    "output_volume": VOLUME_OUTPUTS_NAME,
-                    "output_layout": {
-                        "videos": "videos/<name>.mp4 + videos/latest.mp4",
-                        "benchmarks": "benchmarks/<name>.json",
-                    },
-                    "note": "成片只写远程 Volume；本机 outputs/ 不会自动出现文件",
-                    "see_videos": [
-                        f"modal volume ls {VOLUME_OUTPUTS_NAME} videos",
-                        "https://seachenxyt--modal-lab-minimax-h3-index.modal.run",
-                        "https://seachenxyt--modal-lab-minimax-h3-download.modal.run?name=latest",
-                    ],
-                },
-                ensure_ascii=False,
-                indent=2,
-            )
-        )
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
         return
-    if action == "download":
-        print(download_weights.remote(force=force_download))
+    if args.command == "list-outputs":
+        print(json.dumps(list_outputs.remote(), ensure_ascii=False, indent=2))
         return
-    if action == "smoke":
-        print(smoke.with_options(gpu=gpu).remote())
+    if args.command == "download":
+        plan = {"action": "download", "force": args.force}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        print(json.dumps(download_weights.remote(force=args.force), ensure_ascii=False, indent=2))
         return
-    if action == "list-outputs":
-        print(list_outputs.remote())
+    if args.command == "smoke":
+        plan = {"action": "smoke", "gpu": args.gpu}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        print(json.dumps(smoke.with_options(gpu=args.gpu).remote(), ensure_ascii=False, indent=2))
         return
-    if action == "t2v":
-        if not prompt.strip():
-            raise SystemExit("t2v 需要 --prompt")
-        print(
-            t2v.with_options(gpu=gpu).remote(
-                prompt=prompt,
-                width=width,
-                height=height,
-                seconds=seconds,
-                steps=steps,
-                seed=seed,
-                output_name=output_name,
-                gpu_label=gpu,
-            )
-        )
+
+    try:
+        plan = t2v_plan(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
         return
-    raise SystemExit(f"unknown action={action!r}")
+
+    result = t2v.with_options(gpu=plan["gpu"]).remote(
+        prompt=plan["prompt"],
+        width=plan["width"],
+        height=plan["height"],
+        seconds=plan["seconds"],
+        steps=plan["steps"],
+        seed=plan["seed"],
+        output_name=plan["output_name"],
+        gpu_label=plan["gpu"],
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])

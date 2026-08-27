@@ -2,6 +2,8 @@
 
 ComfyUI headless + Comfy-Org 量化包，脚本出片。
 
+004 已迁移到 v2：一个 `app.py` 同时拥有默认 prompt、CLI、ComfyUI workflow、Volume 发布和 Web 下载端点。
+
 | 项 | 选择 |
 |----|------|
 | 默认 GPU | **`RTX-PRO-6000`**（实测更快更省） |
@@ -28,12 +30,12 @@ benchmarks/<name>.json   # 含 peak VRAM / 墙钟 / 估价
 ## 用法
 
 ```bash
-python run.py download
-python run.py smoke --gpu A100-80GB
-python run.py t2v --gpu A100-80GB --output-name t2v_shinkai_a100
-python run.py t2v --gpu RTX-PRO-6000 --output-name t2v_shinkai_pro6000
-python run.py t2v --gpu L40S --output-name t2v_shinkai_l40s   # 下一测
-python run.py list-outputs
+python main.py 004 download
+python main.py 004 smoke --gpu A100-80GB
+python main.py 004 t2v --gpu A100-80GB --output-name t2v_shinkai_a100
+python main.py 004 t2v --gpu RTX-PRO-6000 --output-name t2v_shinkai_pro6000
+python main.py 004 t2v --gpu L40S --output-name t2v_shinkai_l40s   # 下一测
+python main.py 004 list-outputs
 ```
 
 默认出片：864×480 · 5s · 20 steps · seed 42。
