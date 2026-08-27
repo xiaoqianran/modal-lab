@@ -12,9 +12,11 @@ PyPI: qwen-tts
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -631,107 +633,216 @@ SMOKE_CLONE_EN = (
 )
 
 
-@app.local_entrypoint()
-def main(
-    action: str = "status",
-    gpu: str = DEFAULT_GPU,
-    model: str = DEFAULT_MODEL,
-    text: str = "",
-    lang: str = DEFAULT_LANG,
-    speaker: str = DEFAULT_SPEAKER,
-    instruct: str = "",
-    ref_audio: str = "",
-    ref_text: str = "",
-    run_name: str = "",
-    force_download: bool = False,
-    smoke_kind: str = "custom_zh",
-):
-    if action == "status":
-        status_fn.remote()
-        return
-    if action == "download":
-        download_weights.remote(force=force_download, model=model)
-        return
-    if action == "smoke":
-        kind = smoke_kind.lower().strip()
-        if kind in ("custom_en", "en"):
-            model_use = "custom_1.7"
-            text_use = SMOKE_CUSTOM_EN
-            lang_use = "English"
-            speaker_use = "Ryan"
-            instruct_use = "Speak cheerfully and clearly."
-            run = run_name or "smoke_custom_en_ryan"
-            ref_a, ref_t = "", ""
-        elif kind in ("design", "design_zh", "voice_design"):
-            model_use = "design_1.7"
-            text_use = SMOKE_DESIGN_ZH
-            lang_use = "Chinese"
-            speaker_use = ""
-            instruct_use = SMOKE_DESIGN_INSTRUCT
-            run = run_name or "smoke_design_zh"
-            ref_a, ref_t = "", ""
-        elif kind in ("clone", "clone_en", "base"):
-            model_use = "base_1.7"
-            text_use = SMOKE_CLONE_EN
-            lang_use = "English"
-            speaker_use = ""
-            instruct_use = ""
-            run = run_name or "smoke_clone_en"
-            ref_a, ref_t = DEFAULT_CLONE_REF_URL, DEFAULT_CLONE_REF_TEXT
-        else:
-            # custom_zh default
-            model_use = "custom_1.7"
-            text_use = SMOKE_CUSTOM_ZH
-            lang_use = "Chinese"
-            speaker_use = "Vivian"
-            instruct_use = "用自然、温和的语气说"
-            run = run_name or "smoke_custom_zh_vivian"
-            ref_a, ref_t = "", ""
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="027 Qwen3-TTS family on Modal")
+    sub = parser.add_subparsers(dest="command", required=True)
 
-        download_weights.remote(force=False, model=model_use)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            text=text_use,
-            model=model_use,
-            lang=lang_use,
-            speaker=speaker_use,
-            instruct=instruct_use,
-            ref_audio=ref_a,
-            ref_text=ref_t,
-            run_name=run,
-            gpu_label=gpu,
-        )
-        print("SMOKE_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
+    sub.add_parser("status", help="打印实验固定信息；纯本地")
+    sub.add_parser("check", help="远程检查模型 / prompts / outputs Volume")
+
+    download = sub.add_parser("download", help="下载 tokenizer + 指定模型")
+    download.add_argument("--force", action="store_true")
+    download.add_argument("--dry-run", action="store_true")
+    download.add_argument("--model", default=DEFAULT_MODEL, help="模型 key/alias 或 all")
+
+    smoke = sub.add_parser("smoke", help="四种固定 smoke 基线")
+    smoke.add_argument("--dry-run", action="store_true")
+    smoke.add_argument("--gpu", default=DEFAULT_GPU)
+    smoke.add_argument(
+        "--kind",
+        default="custom_zh",
+        choices=["custom_zh", "custom_en", "design", "clone"],
+    )
+    smoke.add_argument("--run-name", default="")
+
+    t2s = sub.add_parser("t2s", help="通用 Qwen3-TTS 生成")
+    t2s.add_argument("--dry-run", action="store_true")
+    t2s.add_argument("--gpu", default=DEFAULT_GPU)
+    t2s.add_argument("--model", default=DEFAULT_MODEL)
+    t2s.add_argument("--text", required=True)
+    t2s.add_argument("--lang", default=DEFAULT_LANG)
+    t2s.add_argument("--speaker", default=DEFAULT_SPEAKER)
+    t2s.add_argument("--instruct", default="")
+    t2s.add_argument("--ref-audio", default="")
+    t2s.add_argument("--ref-text", default="")
+    t2s.add_argument("--run-name", default="")
+
+    design = sub.add_parser("design", help="VoiceDesign shortcut")
+    design.add_argument("--dry-run", action="store_true")
+    design.add_argument("--gpu", default=DEFAULT_GPU)
+    design.add_argument("--text", required=True)
+    design.add_argument("--lang", default=DEFAULT_LANG)
+    design.add_argument("--instruct", required=True)
+    design.add_argument("--run-name", default="")
+
+    clone = sub.add_parser("clone", help="Base voice-clone shortcut")
+    clone.add_argument("--dry-run", action="store_true")
+    clone.add_argument("--gpu", default=DEFAULT_GPU)
+    clone.add_argument("--text", required=True)
+    clone.add_argument("--lang", default="English")
+    clone.add_argument("--ref-audio", default=DEFAULT_CLONE_REF_URL)
+    clone.add_argument("--ref-text", default=DEFAULT_CLONE_REF_TEXT)
+    clone.add_argument("--run-name", default="")
+    return parser
+
+
+def parse_cli(argv: list[str] | tuple[str, ...]) -> argparse.Namespace:
+    return build_parser().parse_args(list(argv))
+
+
+def local_status() -> dict[str, Any]:
+    return {
+        "experiment": "027-qwen3-tts",
+        "app": APP_NAME,
+        "default_gpu": DEFAULT_GPU,
+        "default_model": DEFAULT_MODEL,
+        "default_speaker": DEFAULT_SPEAKER,
+        "models": {k: v for k, v in HF_REPOS.items() if k != "tokenizer"},
+        "tokenizer": HF_REPOS["tokenizer"],
+        "weights_volume": VOLUME_WEIGHTS,
+        "outputs_volume": VOLUME_OUTPUTS,
+        "prompts_volume": VOLUME_PROMPTS,
+    }
+
+
+def smoke_plan(args: argparse.Namespace) -> dict[str, Any]:
+    if args.kind == "custom_en":
+        return {
+            "action": "smoke",
+            "gpu": args.gpu,
+            "model": "custom_1.7",
+            "text": SMOKE_CUSTOM_EN,
+            "lang": "English",
+            "speaker": "Ryan",
+            "instruct": "Speak cheerfully and clearly.",
+            "ref_audio": "",
+            "ref_text": "",
+            "run_name": args.run_name or "smoke_custom_en_ryan",
+        }
+    if args.kind == "design":
+        return {
+            "action": "smoke",
+            "gpu": args.gpu,
+            "model": "design_1.7",
+            "text": SMOKE_DESIGN_ZH,
+            "lang": "Chinese",
+            "speaker": "",
+            "instruct": SMOKE_DESIGN_INSTRUCT,
+            "ref_audio": "",
+            "ref_text": "",
+            "run_name": args.run_name or "smoke_design_zh",
+        }
+    if args.kind == "clone":
+        return {
+            "action": "smoke",
+            "gpu": args.gpu,
+            "model": "base_1.7",
+            "text": SMOKE_CLONE_EN,
+            "lang": "English",
+            "speaker": "",
+            "instruct": "",
+            "ref_audio": DEFAULT_CLONE_REF_URL,
+            "ref_text": DEFAULT_CLONE_REF_TEXT,
+            "run_name": args.run_name or "smoke_clone_en",
+        }
+    return {
+        "action": "smoke",
+        "gpu": args.gpu,
+        "model": "custom_1.7",
+        "text": SMOKE_CUSTOM_ZH,
+        "lang": "Chinese",
+        "speaker": "Vivian",
+        "instruct": "用自然、温和的语气说",
+        "ref_audio": "",
+        "ref_text": "",
+        "run_name": args.run_name or "smoke_custom_zh_vivian",
+    }
+
+
+def generation_plan(args: argparse.Namespace) -> dict[str, Any]:
+    if args.command == "design":
+        model = "design_1.7"
+        speaker = ""
+        ref_audio = ""
+        ref_text = ""
+    elif args.command == "clone":
+        model = "base_1.7"
+        speaker = ""
+        ref_audio = args.ref_audio
+        ref_text = args.ref_text
+    else:
+        model = _norm_model(args.model)
+        speaker = args.speaker
+        ref_audio = args.ref_audio
+        ref_text = args.ref_text
+    return {
+        "action": args.command,
+        "gpu": args.gpu,
+        "model": model,
+        "text": args.text.strip(),
+        "lang": _lang_label(args.lang),
+        "speaker": speaker,
+        "instruct": args.instruct if args.command != "clone" else "",
+        "ref_audio": ref_audio,
+        "ref_text": ref_text,
+        "run_name": args.run_name,
+    }
+
+
+@app.local_entrypoint()
+def main(*argv: str) -> None:
+    args = parse_cli(argv)
+
+    if args.command == "status":
+        print(json.dumps(local_status(), ensure_ascii=False, indent=2))
+        return
+    if args.command == "check":
+        print(json.dumps(status_fn.remote(), ensure_ascii=False, indent=2))
+        return
+    if args.command == "download":
+        model = args.model.strip()
+        if model.lower() not in {"all", "family"}:
+            model = _norm_model(model)
+        plan = {"action": "download", "model": model, "force": args.force}
+        if args.dry_run:
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+            return
+        print(json.dumps(download_weights.remote(force=args.force, model=model), ensure_ascii=False, indent=2))
+        return
+
+    if args.command == "smoke":
+        plan = smoke_plan(args)
+    else:
+        plan = generation_plan(args)
+        if not plan["text"]:
+            raise SystemExit(f"{args.command} requires non-empty --text")
+
+    if args.dry_run:
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
+        return
+
+    download_weights.remote(force=False, model=plan["model"])
+    out = generate_fn.with_options(gpu=args.gpu).remote(
+        text=plan["text"],
+        model=plan["model"],
+        lang=plan["lang"],
+        speaker=plan["speaker"],
+        instruct=plan["instruct"],
+        ref_audio=plan["ref_audio"],
+        ref_text=plan["ref_text"],
+        run_name=plan["run_name"],
+        gpu_label=args.gpu,
+    )
+    label = "SMOKE_RESULT" if args.command == "smoke" else "T2S_RESULT"
+    print(label, json.dumps(out, ensure_ascii=False), flush=True)
+    if not out.get("success"):
+        raise SystemExit(2)
+    if args.command == "smoke":
         if (out.get("audio") or {}).get("duration_s", 0) < 0.5:
             raise SystemExit("smoke audio too short")
         if (out.get("audio") or {}).get("rms", 0) < 1e-4:
             raise SystemExit("smoke audio near silent")
-        return
-    if action in ("t2s", "custom", "design", "clone"):
-        if not text.strip():
-            raise SystemExit("t2s requires --text")
-        model_use = model
-        if action == "design":
-            model_use = "design_1.7"
-        elif action == "clone":
-            model_use = "base_1.7"
-        elif action == "custom":
-            model_use = model if _norm_model(model).startswith("custom") else "custom_1.7"
-        download_weights.remote(force=False, model=model_use)
-        out = generate_fn.with_options(gpu=gpu).remote(
-            text=text,
-            model=model_use,
-            lang=lang,
-            speaker=speaker,
-            instruct=instruct,
-            ref_audio=ref_audio,
-            ref_text=ref_text,
-            run_name=run_name,
-            gpu_label=gpu,
-        )
-        print("T2S_RESULT", json.dumps(out, ensure_ascii=False), flush=True)
-        if not out.get("success"):
-            raise SystemExit(2)
-        return
-    raise SystemExit(f"unknown action {action!r}")
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])

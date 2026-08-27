@@ -169,6 +169,7 @@ Modal Volume                  future upstream flags
 022-hunyuan3d-2.1
 023-a-spar3d
 023-b-sf3d
+027-qwen3-tts
 031-cosyvoice3
 033-f5tts
 034-higgs
