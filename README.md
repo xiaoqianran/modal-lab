@@ -146,10 +146,13 @@ python main.py 020 status
 python main.py 021 status
 python main.py 022 probe
 
-# 040/041/042 是 provider/integration 客户端验证脚本，不定义 Modal App
+# 040–045 是 provider/integration 客户端验证脚本，不定义 Modal App
 python main.py 040 --check-env
 python main.py 041 --check-env
 python main.py 042 --check-env
+python main.py 043 --check-env
+python main.py 044 --check-env
+python main.py 045 --check-env
 ```
 
 ## 实验一览
@@ -190,6 +193,12 @@ python main.py 042 --check-env
 | `032-indextts2` | IndexTTS-2；**L4 · ~$0.008 · [Gallery](https://xiaoqianran.github.io/modal-lab/032-indextts2/)** |
 | `033-f5tts` | F5-TTS v1；**L4 · ~$0.0025 · [Gallery](https://xiaoqianran.github.io/modal-lab/033-f5tts/)** |
 | `034-higgs` | Higgs Audio v2 3B；**L40S · ~$0.01–0.027 · [Gallery](https://xiaoqianran.github.io/modal-lab/034-higgs/)** · **TTS 收官** |
+| `040-modal-2d-provider` | modal-2D provider contract / Artifact 验证 |
+| `041-modal-3d-provider` | modal-3D provider contract / Artifact 验证 |
+| `042-modal-3d-source-provider` | 2D Artifact → 3D sourceArtifact 跨 Provider 验证 |
+| `043-qwen-image-2512` | **Qwen-Image-2512 · RTX PRO 6000 · 50 steps ~17.3s** |
+| `044-z-image-turbo` | **Z-Image-Turbo · L40S · 9 steps** |
+| `045-hidream-o1` | **HiDream-O1 · RTX PRO 6000 ~33.5s / L40S ~50.6s** |
 | `tts-gallery` | **TTS Signal Desk** 025–034 全量试听与成本可视化 · [Room](https://xiaoqianran.github.io/modal-lab/tts-gallery/) |
 | `gpu-gallery` | **L40S × PRO 6000 对照预览**（020 / 021 / 005） |
 | — | 音乐队列见 [MUSIC_ROADMAP.md](MUSIC_ROADMAP.md) · TTS 见 [TTS_ROADMAP.md](TTS_ROADMAP.md) · image→3D 见 [I2V_GPU_ROADMAP.md](I2V_GPU_ROADMAP.md) |
